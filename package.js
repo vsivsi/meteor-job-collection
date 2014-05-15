@@ -13,7 +13,7 @@ Npm.depends({});
 
 Package.on_use(function(api) {
   api.use('coffeescript', ['server','client']);
-  api.add_files('job-class/src/job_class.coffee', ['server','client']);
+  api.add_files('job/src/job_class.coffee', ['server','client']);
   api.add_files('shared.coffee', ['server','client']);
   api.add_files('server.coffee', 'server');
   api.add_files('client.coffee', 'client');

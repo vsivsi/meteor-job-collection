@@ -1,0 +1,9 @@
+{
+  "name": "jobCollection",
+  "description": "WIP: Reactive and distributed job queue for Meteor.js using MongoDB",
+  "homepage": "https://github.com/vsivsi/meteor-job-collection",
+  "author": "Vaughn Iverson (https://github.com/vsivsi)",
+  "version": "0.0.0",
+  "git": "https://github.com/vsivsi/meteor-job-collection.git",
+  "packages" : {}
+}

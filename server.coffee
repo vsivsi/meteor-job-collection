@@ -122,7 +122,7 @@ if Meteor.isServer
           console.warn "Missing running job"
       else
         console.log "Didn't find a job to process"
-      return null
+      return { docs: [] }
 
     jobProgress: (id, runId, progress) ->
       if id and runId and progress

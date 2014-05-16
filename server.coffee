@@ -114,14 +114,14 @@ if Meteor.isServer
           dd = @find({ _id: { $in: ids }, runId: runId }, { fields: { log: 0 } }).fetch()
           if dd?.length
             console.log "find was successful", dd?.length
-            return { docs: dd }
+            return dd
           else
             console.warn "find after update failed"
         else
           console.warn "Missing running job"
       else
         console.log "Didn't find a job to process"
-      return { docs: [] }
+      return []
 
     jobProgress: (id, runId, progress) ->
       if id and runId and progress

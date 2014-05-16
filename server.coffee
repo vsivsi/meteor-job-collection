@@ -27,6 +27,19 @@ if Meteor.isServer
         console.warn "Bad id in get", id
       return null
 
+    getLog: (id) ->
+      console.log "Get: ", id
+      if id
+        d = @findOne({_id: id}, { fields: { log: 1 } })
+        if d
+          console.log "get method Got a log", d
+          return d
+        else
+          console.warn "Get failed log"
+      else
+        console.warn "Bad id in get log", id
+      return null
+
     jobRemove: (id) ->
       if id
         num = @remove({ _id: id, status: {$in: ["cancelled", "failed", "completed"] }})
@@ -90,7 +103,7 @@ if Meteor.isServer
       time = new Date()
       d = @findOne(
         { type: { $in: type }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
-        { sort: { priority: -1, after: 1 } })
+        { sort: { priority: -1, after: 1 }, fields: { _id: 1 } })
 
       if d
         console.log "Found a job to process!", d
@@ -100,7 +113,7 @@ if Meteor.isServer
           { $set: { status: 'running', runId: run_id, updated: time }, $inc: { attempts: -1, attempted: 1 } })
         if num is 1
           console.log "Update was successful", d._id
-          dd = @findOne { _id: d._id }
+          dd = @findOne { _id: d._id }, { fields: { log: 0 } }
           if dd
             console.log "findOne was successful"
             return dd

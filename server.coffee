@@ -94,29 +94,28 @@ if Meteor.isServer
 
     # Worker methods
 
-    getWork: (type) ->
+    getWork: (type, max = 1) ->
       # Support string types or arrays of string types
       if typeof type is 'string'
         type = [ type ]
 
       console.log "Process: ", type
       time = new Date()
-      d = @findOne(
+      ids = @find(
         { type: { $in: type }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
-        { sort: { priority: -1, after: 1 }, fields: { _id: 1 } })
-
-      if d
-        console.log "Found a job to process!", d
-        run_id = new Meteor.Collection.ObjectID()
+        { sort: { priority: -1, after: 1 }, limit: max, fields: { _id: 1 } }).map((d) -> d._id)
+      if ids?.length
+        console.log "Found job(s) to process!", ids
+        runId = new Meteor.Collection.ObjectID()
         num = @update(
-          { _id: d._id, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
-          { $set: { status: 'running', runId: run_id, updated: time }, $inc: { attempts: -1, attempted: 1 } })
-        if num is 1
-          console.log "Update was successful", d._id
-          dd = @findOne { _id: d._id }, { fields: { log: 0 } }
-          if dd
+          { _id: { $in: ids }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
+          { $set: { status: 'running', runId: runId, updated: time }, $inc: { attempts: -1, attempted: 1 } })
+        if num >= 1
+          console.log "Update was successful", num
+          dd = @find({ _id: { $in: ids }, runId: runId }, { fields: { log: 0 } }).fetch()
+          if dd?.length
             console.log "findOne was successful"
-            return dd
+            return { docs: dd }
           else
             console.warn "findOne after update failed"
         else

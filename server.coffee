@@ -103,17 +103,14 @@ if Meteor.isServer
         { type: { $in: type }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
         { sort: { priority: -1, after: 1 }, limit: max, fields: { _id: 1 } }).map((d) -> d._id)
       if ids?.length
-        console.log "Found job(s) to process!", ids
         runId = new Meteor.Collection.ObjectID()
         num = @update(
           { _id: { $in: ids }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
           { $set: { status: 'running', runId: runId, updated: time }, $inc: { attempts: -1, attempted: 1 }}
           { multi: true })
         if num >= 1
-          console.log "Update was successful", num
           dd = @find({ _id: { $in: ids }, runId: runId }, { fields: { log: 0 } }).fetch()
           if dd?.length
-            console.log "find was successful", dd?.length
             return dd
           else
             console.warn "find after update failed"

@@ -98,8 +98,6 @@ if Meteor.isServer
       # Support string types or arrays of string types
       if typeof type is 'string'
         type = [ type ]
-
-      console.log "Process: ", type
       time = new Date()
       ids = @find(
         { type: { $in: type }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
@@ -109,15 +107,16 @@ if Meteor.isServer
         runId = new Meteor.Collection.ObjectID()
         num = @update(
           { _id: { $in: ids }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
-          { $set: { status: 'running', runId: runId, updated: time }, $inc: { attempts: -1, attempted: 1 } })
+          { $set: { status: 'running', runId: runId, updated: time }, $inc: { attempts: -1, attempted: 1 }}
+          { multi: true })
         if num >= 1
           console.log "Update was successful", num
           dd = @find({ _id: { $in: ids }, runId: runId }, { fields: { log: 0 } }).fetch()
           if dd?.length
-            console.log "findOne was successful"
+            console.log "find was successful", dd?.length
             return { docs: dd }
           else
-            console.warn "findOne after update failed"
+            console.warn "find after update failed"
         else
           console.warn "Missing running job"
       else

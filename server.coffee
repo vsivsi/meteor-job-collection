@@ -174,8 +174,10 @@ if Meteor.isServer
                 runId: null
                 status: "waiting"
                 retries: doc.retries + doc.retried
+                retryWait: doc.retryWait
                 retried: 0
                 repeats: doc.repeats - 1
+                repeatWait: doc.repeatWait
                 repeated: doc.repeated + 1
                 updated: time
                 progress:

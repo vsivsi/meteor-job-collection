@@ -236,6 +236,13 @@ if Meteor.isServer
           }
         )
         if num is 1
+          # Cancel the entire tree of dependents
+          @find(
+            {
+              depends:
+                $all: [ id ]
+            }
+          ).forEach (d) => serverMethods.jobRestart.bind(@)(d._id)
           console.log "jobRestart succeeded"
           return true
         else

@@ -6,20 +6,72 @@
 
 if Meteor.isServer
 
+  ###############################################################
+  # jobCollection server DDP methods
 
-  ################################################################
-  ## jobCollection server DDP methods
+  validIntGTEZero = (v) ->
+    Match.test(v, Match.Integer) and v >= 0
+
+  validIntGTEOne = (v) ->
+    Match.test(v, Match.Integer) and v >= 1
+
+  validNumGTEZero = (v) ->
+    Match.test(v, Number) and v >= 0.0
+
+  validStatus = (v) ->
+    Match.test(v, String) and v in Job.jobStatuses
+
+  validLog = () ->
+    [ { time: Date, runId: Match.OneOf(Meteor.Collection.ObjectID, null), message: String } ]
+
+  validProgress = () ->
+    completed: Match.Where(validNumGTEZero)
+    total: Match.Where(validNumGTEZero)
+    percent: Match.Where(validNumGTEZero)
+
+  validJobDoc = () ->
+    _id: Match.Optional Match.OneOf(Meteor.Collection.ObjectID, null)
+    runId: Match.OneOf(Meteor.Collection.ObjectID, null)
+    type: String
+    status: Match.Where validStatus
+    data: Object
+    priority: Match.Integer
+    depends: [ Meteor.Collection.ObjectID ]
+    after: Date
+    updated: Date
+    log: Match.Optional validLog()
+    progress: validProgress()
+    retries: Match.Where validNumGTEZero
+    retried: Match.Where validNumGTEZero
+    retryWait: Match.Where validNumGTEZero
+    repeats: Match.Where validNumGTEZero
+    repeated: Match.Where validNumGTEZero
+    repeatWait: Match.Where validNumGTEZero
 
   serverMethods =
-
     # Job manager methods
+    pauseJobs: (state = true, types = []) ->
+      check state, Boolean
+      check types, [String]
+      if types
+        for t in types
+          @paused[t] = state
+      else
+        @paused = state
+      return true
+
+    shutdownJobs: () ->
+      @shutdown = true
+      return true
 
     getJob: (id) ->
+      check id, Meteor.Collection.ObjectID
       console.log "Get: ", id
       if id
         d = @findOne({_id: id}, { fields: { log: 0 } })
         if d
           console.log "get method Got a job", d
+          check d, validJobDoc()
           return d
         else
           console.warn "Get failed job"
@@ -28,11 +80,13 @@ if Meteor.isServer
       return null
 
     getLog: (id) ->
+      check id, Meteor.Collection.ObjectID
       console.log "Get: ", id
       if id
         d = @findOne({_id: id}, { fields: { log: 1 } })
         if d
           console.log "get method Got a log", d
+          check d, validJobDoc()
           return d
         else
           console.warn "Get failed log"
@@ -41,6 +95,7 @@ if Meteor.isServer
       return null
 
     jobRemove: (id) ->
+      check id, Meteor.Collection.ObjectID
       if id
         num = @remove({ _id: id, status: {$in: ["cancelled", "failed", "completed"] }})
         if num is 1
@@ -53,6 +108,8 @@ if Meteor.isServer
       return false
 
     jobCancel: (id) ->
+      console.log "################################### In jobCancel", id
+      check id, Meteor.Collection.ObjectID
       if id
         time = new Date()
         num = @update(
@@ -67,7 +124,9 @@ if Meteor.isServer
         console.warn "jobCancel: something's wrong with done: #{id}", runId, err
       return false
 
-    jobRestart: (id, retries) ->
+    jobRestart: (id, retries = 1) ->
+      check id, Meteor.Collection.ObjectID
+      check retries, Match.Where validIntGTEOne
       if id
         time = new Date()
         num = @update(
@@ -85,16 +144,20 @@ if Meteor.isServer
     # Job creator methods
 
     jobSubmit: (doc) ->
+      check doc, validJobDoc()
       if doc._id
         num = @update(
           { _id: doc._id, runId: null }
           { $set: { retries: doc.retries, retryWait: doc.retryWait, repeats: doc.repeats, repeatWait: doc.repeatWait, depends: doc.depends, priority: doc.priority, after: doc.after }})
       else
+        console.log doc
         return @insert doc
 
     # Worker methods
 
     getWork: (type, max = 1) ->
+      check type, Match.OneOf String, [ String ]
+      # check max, Match.Where validIntGTEOne
       # Support string types or arrays of string types
       if typeof type is 'string'
         type = [ type ]
@@ -111,6 +174,7 @@ if Meteor.isServer
         if num >= 1
           dd = @find({ _id: { $in: ids }, runId: runId }, { fields: { log: 0 } }).fetch()
           if dd?.length
+            check dd, [ validJobDoc() ]
             return dd
           else
             console.warn "find after update failed"
@@ -121,6 +185,9 @@ if Meteor.isServer
       return []
 
     jobProgress: (id, runId, progress) ->
+      check id, Meteor.Collection.ObjectID
+      check runId, Meteor.Collection.ObjectID
+      check progress, validProgress()
       if id and runId and progress
         time = new Date()
         console.log "Updating progress", id, runId, progress
@@ -137,6 +204,9 @@ if Meteor.isServer
       return false
 
     jobLog: (id, runId, message) ->
+      check id, Meteor.Collection.ObjectID
+      check runId, Meteor.Collection.ObjectID
+      check message, String
       if id and message
         time = new Date()
         console.log "Logging a message", id, runId, message
@@ -153,6 +223,9 @@ if Meteor.isServer
       return false
 
     jobDone: (id, runId, err) ->
+      check id, Meteor.Collection.ObjectID
+      check runId, Meteor.Collection.ObjectID
+      check err, Match.Optional String
       if id and runId
         time = new Date()
         doc = @findOne({ _id: id, runId: runId, status: "running" }, { fields: { log: 0, progress: 0, updated: 0, after: 0, runId: 0, status: 0 }})
@@ -208,6 +281,9 @@ if Meteor.isServer
 
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
+
+      @paused = false
+      @shutdown = false
 
       # No client mutators allowed
       @deny

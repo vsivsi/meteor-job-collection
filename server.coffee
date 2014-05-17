@@ -166,30 +166,17 @@ if Meteor.isServer
           if num
             if doc.repeats > 0
             # Repeat? if so, make a new job from the old one
-              doc =
-                type: doc.type
-                data: doc.data
-                priority: doc.priority
-                depends: []
-                runId: null
-                status: "waiting"
-                retries: doc.retries + doc.retried
-                retryWait: doc.retryWait
-                retried: 0
-                repeats: doc.repeats - 1
-                repeatWait: doc.repeatWait
-                repeated: doc.repeated + 1
-                updated: time
-                progress:
-                  completed: 0
-                  total: 1
-                  percent: 0
-                log: [{
-                   time: time
-                   runId: null
-                   message: "Repeating job #{id} from run #{runId}"
-                }]
-                after: new Date(time.valueOf() + doc.repeatWait)
+              delete doc._id
+              doc.runId = null
+              doc.status = "waiting"
+              doc.retries = doc.retries + doc.retried
+              doc.retried = 0
+              doc.repeats = doc.repeats - 1
+              doc.repeated = doc.repeated + 1
+              doc.updated = time
+              doc.progress = { completed: 0, total: 1, percent: 0 }
+              doc.log = [{ time: time, runId: null, message: "Repeating job #{id} from run #{runId}" }]
+              doc.after = new Date(time.valueOf() + doc.repeatWait)
               jobId = @insert doc
               unless jobId
                 console.warn "Repeating job failed to reschedule!", id, runId

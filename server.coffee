@@ -107,13 +107,35 @@ if Meteor.isServer
         console.warn "jobRemoved something's wrong with done: #{id}"
       return false
 
-    jobCancel: (id) ->
-      console.log "################################### In jobCancel", id
+    jobPause: (id) ->
       check id, Meteor.Collection.ObjectID
       if id
         time = new Date()
         num = @update(
-          { _id: id, status: {$in: ["ready", "waiting", "running"] }}
+          { _id: id, status: {$in: ["ready", "waiting"] }}
+          { $set: { status: "paused", updated: time }})
+        if num is 1
+          console.log "jobPause succeeded"
+          return true
+        else
+          num = @update(
+            { _id: id, status: "paused" }
+            { $set: { status: "waiting", updated: time }})
+          if num is 1
+            console.log "jobPause succeeded"
+            return true
+          else
+            console.warn "jobPause failed"
+      else
+        console.warn "jobPause: something's wrong with done: #{id}", runId, err
+      return false
+
+    jobCancel: (id) ->
+      check id, Meteor.Collection.ObjectID
+      if id
+        time = new Date()
+        num = @update(
+          { _id: id, status: {$in: ["ready", "waiting", "running", "paused"] }}
           { $set: { status: "cancelled", runId: null, progress: { completed: 0, total: 1, percent: 0 }, updated: time }})
         if num is 1
           console.log "jobCancel succeeded"
@@ -254,13 +276,68 @@ if Meteor.isServer
               unless jobId
                 console.warn "Repeating job failed to reschedule!", id, runId
             # Resolve depends
-            n = @update({status: "waiting", depends: { $all: [ id ]}}, { $pull: { depends: id }, $push: {log: { time: time, runId: null, message: "Dependency resolved for #{id} by #{runId}"}}})
+            n = @update(
+              {
+                depends:
+                  $all: [ id ]
+              }
+              {
+                $pull:
+                  depends: id
+                $push:
+                  log:
+                    time: time
+                    runId: null
+                    message: "Dependency resolved for #{id} by #{runId}"
+              }
+            )
             console.log "Job #{id} Resolved #{n} depends"
         else
           newStatus = if doc.retries > 0 then "waiting" else "failed"
           num = @update(
-            { _id: id, runId: runId, status: "running" }
-            { $set: { status: newStatus, runId: null, after: new Date(time.valueOf() + doc.retryWait), progress: { completed: 0, total: 1, percent: 0 }, updated: time }, $push: {log: { time: time, runId: runId, message: "Job Failed with Error #{err}"}}})
+            {
+              _id: id
+              runId: runId
+              status: "running" }
+            {
+              $set:
+                status: newStatus
+                runId: null
+                after: new Date(time.valueOf() + doc.retryWait)
+                progress:
+                  completed: 0
+                  total: 1
+                  percent: 0
+                updated: time
+              $push:
+                log:
+                  time: time
+                  runId: runId
+                  message: "Job Failed with Error #{err}"
+            }
+          )
+          if newStatus is "failed" and num is 1
+            # Fail any dependent jobs too
+            n = @update(
+              {
+                status: "waiting"
+                depends:
+                  $all: [ id ]
+              }
+              {
+                $set:
+                  status: "failed"
+                  runId: null
+                  updated: time
+                $push:
+                  log:
+                    time: time
+                    runId: null
+                    message: "Job Failed due to failure of dependancy #{id} with Error #{err}"
+              }
+              { multi: true }
+            )
+            console.log "Failed #{n} dependent jobs"
         if num is 1
           console.log "jobDone succeeded"
           return true
@@ -281,8 +358,6 @@ if Meteor.isServer
 
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
-
-      @paused = false
       @shutdown = false
 
       # No client mutators allowed
@@ -292,7 +367,7 @@ if Meteor.isServer
         remove: () => true
 
       @promote()
-      @expire()
+      @expire(60000)
 
       @logStream = options.logStream ? null
 
@@ -384,8 +459,34 @@ if Meteor.isServer
         { multi: true })
       console.log "Expired #{num} dead jobs, waiting to run"
 
-      num = @update(
-        { status: "running", updated: { $lte: exptime }, retries: 0}
-        { $set: { status: "failed", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to failure" }}}
-        { multi: true })
+      cursor = @find({ status: "running", updated: { $lte: exptime }, retries: 0})
+      num = cursor.count()
+      cursor.forEach (d) =>
+        id = d._id
+        n = @update(
+          { _id: id, status: "running", updated: { $lte: exptime }, retries: 0}
+          { $set: { status: "failed", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to failure" }}}
+        )
+        if n is 1
+          n = @update(
+            {
+              status: "waiting"
+              depends:
+                $all: [ id ]
+            }
+            {
+              $set:
+                status: "failed"
+                runId: null
+                updated: time
+              $push:
+                log:
+                  time: time
+                  runId: null
+                  message: "Job Failed due to failure of dependancy #{id} by expiration"
+            }
+            { multi: true }
+          )
+          console.log "Failed #{n} dependent jobs"
+
       console.log "Expired #{num} dead jobs, failed"

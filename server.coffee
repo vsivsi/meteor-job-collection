@@ -68,7 +68,15 @@ if Meteor.isServer
       check id, Meteor.Collection.ObjectID
       console.log "Get: ", id
       if id
-        d = @findOne({_id: id}, { fields: { log: 0 } })
+        d = @findOne(
+          {
+            _id: id
+          }
+          {
+            fields:
+              log: 0
+          }
+        )
         if d
           console.log "get method Got a job", d
           check d, validJobDoc()
@@ -83,7 +91,15 @@ if Meteor.isServer
       check id, Meteor.Collection.ObjectID
       console.log "Get: ", id
       if id
-        d = @findOne({_id: id}, { fields: { log: 1 } })
+        d = @findOne(
+          {
+            _id: id
+          }
+          {
+            fields:
+              log: 1
+          }
+        )
         if d
           console.log "get method Got a log", d
           check d, validJobDoc()
@@ -97,7 +113,13 @@ if Meteor.isServer
     jobRemove: (id) ->
       check id, Meteor.Collection.ObjectID
       if id
-        num = @remove({ _id: id, status: {$in: ["cancelled", "failed", "completed"] }})
+        num = @remove(
+          {
+            _id: id
+            status:
+              $in: ["cancelled", "failed", "completed"]
+          }
+        )
         if num is 1
           console.log "jobRemove succeeded"
           return true
@@ -112,15 +134,32 @@ if Meteor.isServer
       if id
         time = new Date()
         num = @update(
-          { _id: id, status: {$in: ["ready", "waiting"] }}
-          { $set: { status: "paused", updated: time }})
+          {
+            _id: id
+            status:
+              $in: ["ready", "waiting"]
+          }
+          {
+            $set:
+              status: "paused"
+              updated: time
+          }
+        )
         if num is 1
           console.log "jobPause succeeded"
           return true
         else
           num = @update(
-            { _id: id, status: "paused" }
-            { $set: { status: "waiting", updated: time }})
+            {
+              _id: id
+              status: "paused"
+            }
+            {
+              $set:
+                status: "waiting"
+                updated: time
+            }
+          )
           if num is 1
             console.log "jobPause succeeded"
             return true
@@ -135,8 +174,22 @@ if Meteor.isServer
       if id
         time = new Date()
         num = @update(
-          { _id: id, status: {$in: ["ready", "waiting", "running", "paused"] }}
-          { $set: { status: "cancelled", runId: null, progress: { completed: 0, total: 1, percent: 0 }, updated: time }})
+          {
+            _id: id
+            status:
+              $in: ["ready", "waiting", "running", "paused"]
+          }
+          {
+            $set:
+              status: "cancelled"
+              runId: null
+              progress:
+                completed: 0
+                total: 1
+                percent: 0
+              updated: time
+          }
+        )
         if num is 1
           console.log "jobCancel succeeded"
           return true
@@ -152,8 +205,23 @@ if Meteor.isServer
       if id
         time = new Date()
         num = @update(
-          { _id: id, status: {$in: ["cancelled", "failed"] }}
-          { $set: { status: "waiting", progress: { completed: 0, total: 1, percent: 0 }, updated: time }, $inc: { retries: retries }})
+          {
+            _id: id
+            status:
+              $in: ["cancelled", "failed"]
+          }
+          {
+            $set:
+              status: "waiting"
+              progress:
+                completed: 0
+                total: 1
+                percent: 0
+              updated: time
+            $inc:
+              retries: retries
+          }
+        )
         if num is 1
           console.log "jobRestart succeeded"
           return true
@@ -169,8 +237,21 @@ if Meteor.isServer
       check doc, validJobDoc()
       if doc._id
         num = @update(
-          { _id: doc._id, runId: null }
-          { $set: { retries: doc.retries, retryWait: doc.retryWait, repeats: doc.repeats, repeatWait: doc.repeatWait, depends: doc.depends, priority: doc.priority, after: doc.after }})
+          {
+            _id: doc._id
+            runId: null
+          }
+          {
+            $set:
+              retries: doc.retries
+              retryWait: doc.retryWait
+              repeats: doc.repeats
+              repeatWait: doc.repeatWait
+              depends: doc.depends
+              priority: doc.priority
+              after: doc.after
+          }
+        )
       else
         console.log doc
         return @insert doc
@@ -185,16 +266,63 @@ if Meteor.isServer
         type = [ type ]
       time = new Date()
       ids = @find(
-        { type: { $in: type }, status: 'ready', runId: null, after: { $lte: time }, retries: { $gt: 0 }}
-        { sort: { priority: -1, after: 1 }, limit: max, fields: { _id: 1 } }).map((d) -> d._id)
+        {
+          type:
+            $in: type
+          status: 'ready'
+          runId: null
+          after:
+            $lte: time
+          retries:
+            $gt: 0
+        }
+        {
+          sort:
+            priority: -1
+            after: 1
+          limit: max
+          fields:
+            _id: 1
+        }).map (d) -> d._id
+
       if ids?.length
         runId = new Meteor.Collection.ObjectID()
         num = @update(
-          { _id: { $in: ids }, status: 'ready', runId: null, after: { $lte: time }, retries: { $gt: 0 }}
-          { $set: { status: 'running', runId: runId, updated: time }, $inc: { retries: -1, retried: 1 }}
-          { multi: true })
+          {
+            _id:
+              $in: ids
+            status: 'ready'
+            runId: null
+            after:
+              $lte: time
+            retries:
+              $gt: 0
+          }
+          {
+            $set:
+              status: 'running'
+              runId: runId
+              updated: time
+            $inc:
+              retries: -1
+              retried: 1 
+          }
+          {
+            multi: true
+          }
+        )
         if num >= 1
-          dd = @find({ _id: { $in: ids }, runId: runId }, { fields: { log: 0 } }).fetch()
+          dd = @find(
+            {
+              _id:
+                $in: ids
+              runId: runId
+            }
+            {
+              fields:
+                log: 0
+            }
+          ).fetch()
           if dd?.length
             check dd, [ validJobDoc() ]
             return dd
@@ -214,8 +342,17 @@ if Meteor.isServer
         time = new Date()
         console.log "Updating progress", id, runId, progress
         num = @update(
-          { _id: id, runId: runId, status: "running" }
-          { $set: { progress: progress, updated: time }})
+          {
+            _id: id
+            runId: runId
+            status: "running"
+          }
+          {
+            $set:
+              progress: progress
+              updated: time
+          }
+        )
         if num is 1
           console.log "jobProgress succeeded", progress
           return true
@@ -233,8 +370,19 @@ if Meteor.isServer
         time = new Date()
         console.log "Logging a message", id, runId, message
         num = @update(
-          { _id: id }
-          { $push: { log: { time: time, runId: runId, message: message }}, $set: { updated: time }})
+          {
+            _id: id
+          }
+          {
+            $push:
+              log:
+                time: time
+                runId: runId
+                message: message
+            $set:
+              updated: time
+          }
+        )
         if num is 1
           console.log "jobLog succeeded", message
           return true
@@ -249,14 +397,41 @@ if Meteor.isServer
       check runId, Meteor.Collection.ObjectID
       if id and runId
         time = new Date()
-        doc = @findOne({ _id: id, runId: runId, status: "running" }, { fields: { log: 0, progress: 0, updated: 0, after: 0, runId: 0, status: 0 }})
+        doc = @findOne(
+          {
+            _id: id
+            runId: runId
+            status: "running"
+          }
+          {
+            fields:
+              log: 0
+              progress: 0
+              updated: 0
+              after: 0
+              runId: 0
+              status: 0
+          }
+        )
         unless doc?
           console.warn "Running job not found", id, runId
           return false
-
         num = @update(
-          { _id: id, runId: runId, status: "running" }
-          { $set: { status: "completed", progress: { completed: 1, total: 1, percent: 100 }, updated: time }})
+          {
+            _id: id
+            runId: runId
+            status: "running"
+          }
+          {
+            $set:
+              status: "completed"
+              progress:
+                completed: 1
+                total: 1
+                percent: 100
+              updated: time
+          }
+        )
         if num is 1
           if doc.repeats > 0
           # Repeat? if so, make a new job from the old one
@@ -305,7 +480,22 @@ if Meteor.isServer
       check err, String
       if id and runId
         time = new Date()
-        doc = @findOne({ _id: id, runId: runId, status: "running" }, { fields: { log: 0, progress: 0, updated: 0, after: 0, runId: 0, status: 0 }})
+        doc = @findOne(
+          {
+            _id: id
+            runId: runId
+            status: "running"
+          }
+          {
+            fields:
+              log: 0
+              progress: 0
+              updated: 0
+              after: 0
+              runId: 0
+              status: 0
+          }
+        )
         unless doc?
           console.warn "Running job not found", id, runId
           return false

@@ -222,7 +222,7 @@ if Meteor.isServer
         console.warn "jobLog: something's wrong with progress: #{id}", message
       return false
 
-    jobDone: (id, runId, err) ->
+    jobDone: (id, runId, err = undefined) ->
       check id, Meteor.Collection.ObjectID
       check runId, Meteor.Collection.ObjectID
       check err, Match.Optional String

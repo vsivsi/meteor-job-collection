@@ -196,28 +196,14 @@ if Meteor.isServer
           }
         )
         if num is 1
-          # Cancel depends
-          n = @update(
+          # Cancel the entire tree of dependents
+          @find(
             {
               depends:
                 $all: [ id ]
             }
-            {
-              $set:
-                status: "cancelled"
-                runId: null
-                progress:
-                  completed: 0
-                  total: 1
-                  percent: 0
-                updated: time
-              $push:
-                log:
-                  time: time
-                  runId: null
-                  message: "Cancelled when dependency #{id} cancelled"
-            }
-          )
+          ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
+
           console.log "jobCancel succeeded"
           return true
         else

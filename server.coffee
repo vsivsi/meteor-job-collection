@@ -169,6 +169,8 @@ if Meteor.isServer
               doc =
                 type: doc.type
                 data: doc.data
+                priority: doc.priority
+                depends: []
                 runId: null
                 status: "waiting"
                 retries: doc.retries + doc.retried
@@ -176,8 +178,15 @@ if Meteor.isServer
                 repeats: doc.repeats - 1
                 repeated: doc.repeated + 1
                 updated: time
-                progress: { completed: 0, total: 1, percent: 0 }
-                log: [{ time: time, runId: null, message: "Repeating job #{id} from run #{runId}"}} ]
+                progress:
+                  completed: 0
+                  total: 1
+                  percent: 0
+                log: [{
+                   time: time
+                   runId: null
+                   message: "Repeating job #{id} from run #{runId}"
+                }]
                 after: new Date(time.valueOf() + doc.repeatWait)
               jobId = @insert doc
               unless jobId

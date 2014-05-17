@@ -67,12 +67,12 @@ if Meteor.isServer
         console.warn "jobCancel: something's wrong with done: #{id}", runId, err
       return false
 
-    jobRestart: (id, attempts) ->
+    jobRestart: (id, retries) ->
       if id
         time = new Date()
         num = @update(
           { _id: id, status: {$in: ["cancelled", "failed"] }}
-          { $set: { status: "waiting", progress: { completed: 0, total: 1, percent: 0 }, updated: time }, $inc: { attempts: attempts }})
+          { $set: { status: "waiting", progress: { completed: 0, total: 1, percent: 0 }, updated: time }, $inc: { retries: retries }})
         if num is 1
           console.log "jobRestart succeeded"
           return true
@@ -88,7 +88,7 @@ if Meteor.isServer
       if doc._id
         num = @update(
           { _id: doc._id, runId: null }
-          { $set: { attempts: doc.attempts, attemptsWait: doc.attemptsWait, depends: doc.depends, priority: doc.priority, after: doc.after }})
+          { $set: { retries: doc.retries, retryWait: doc.retryWait, repeats: doc.repeats, repeatWait: doc.repeatWait, depends: doc.depends, priority: doc.priority, after: doc.after }})
       else
         return @insert doc
 
@@ -100,13 +100,13 @@ if Meteor.isServer
         type = [ type ]
       time = new Date()
       ids = @find(
-        { type: { $in: type }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
+        { type: { $in: type }, status: 'ready', runId: null, after: { $lte: time }, retries: { $gt: 0 }}
         { sort: { priority: -1, after: 1 }, limit: max, fields: { _id: 1 } }).map((d) -> d._id)
       if ids?.length
         runId = new Meteor.Collection.ObjectID()
         num = @update(
-          { _id: { $in: ids }, status: 'ready', runId: null, after: { $lte: time }, attempts: { $gt: 0 }}
-          { $set: { status: 'running', runId: runId, updated: time }, $inc: { attempts: -1, attempted: 1 }}
+          { _id: { $in: ids }, status: 'ready', runId: null, after: { $lte: time }, retries: { $gt: 0 }}
+          { $set: { status: 'running', runId: runId, updated: time }, $inc: { retries: -1, retried: 1 }}
           { multi: true })
         if num >= 1
           dd = @find({ _id: { $in: ids }, runId: runId }, { fields: { log: 0 } }).fetch()
@@ -152,21 +152,44 @@ if Meteor.isServer
         console.warn "jobLog: something's wrong with progress: #{id}", message
       return false
 
-    jobDone: (id, runId, err, wait) ->
+    jobDone: (id, runId, err) ->
       if id and runId
         time = new Date()
+        doc = @findOne({ _id: id, runId: runId, status: "running" }, { fields: { log: 0, progress: 0, updated: 0, after: 0, runId: 0, status: 0 }})
+        unless doc?
+          console.warn "Running job not found", id, runId
+          return false
         unless err?
           num = @update(
             { _id: id, runId: runId, status: "running" }
             { $set: { status: "completed", progress: { completed: 1, total: 1, percent: 100 }, updated: time }})
           if num
+            if doc.repeats > 0
+            # Repeat? if so, make a new job from the old one
+              doc =
+                type: doc.type
+                data: doc.data
+                runId: null
+                status: "waiting"
+                retries: doc.retries + doc.retried
+                retried: 0
+                repeats: doc.repeats - 1
+                repeated: doc.repeated + 1
+                updated: time
+                progress: { completed: 0, total: 1, percent: 0 }
+                log: [{ time: time, runId: null, message: "Repeating job #{id} from run #{runId}"}} ]
+                after: new Date(time.valueOf() + doc.repeatWait)
+              jobId = @insert doc
+              unless jobId
+                console.warn "Repeating job failed to reschedule!", id, runId
             # Resolve depends
             n = @update({status: "waiting", depends: { $all: [ id ]}}, { $pull: { depends: id }, $push: {log: { time: time, runId: null, message: "Dependency resolved for #{id} by #{runId}"}}})
             console.log "Job #{id} Resolved #{n} depends"
         else
+          newStatus = if doc.retries > 0 then "waiting" else "failed"
           num = @update(
             { _id: id, runId: runId, status: "running" }
-            { $set: { status: "failed", runId: null, after: new Date(time.valueOf() + wait), progress: { completed: 0, total: 1, percent: 0 }, updated: time }, $push: {log: { time: time, runId: runId, message: "Job Failed with Error #{err}"}}})
+            { $set: { status: newStatus, runId: null, after: new Date(time.valueOf() + doc.retryWait), progress: { completed: 0, total: 1, percent: 0 }, updated: time }, $push: {log: { time: time, runId: runId, message: "Job Failed with Error #{err}"}}})
         if num is 1
           console.log "jobDone succeeded"
           return true
@@ -282,13 +305,13 @@ if Meteor.isServer
       console.log "checking for expiration times before", exptime
 
       num = @update(
-        { status: "running", updated: { $lte: exptime }, attempts: { $gt: 0 }}
+        { status: "running", updated: { $lte: exptime }, retries: { $gt: 0 }}
         { $set: { status: "ready", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to retry" }}}
         { multi: true })
       console.log "Expired #{num} dead jobs, waiting to run"
 
       num = @update(
-        { status: "running", updated: { $lte: exptime }, attempts: 0}
+        { status: "running", updated: { $lte: exptime }, retries: 0}
         { $set: { status: "failed", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to failure" }}}
         { multi: true })
       console.log "Expired #{num} dead jobs, failed"

@@ -145,10 +145,7 @@ if Meteor.isServer
               updated: time
           }
         )
-        if num is 1
-          console.log "jobPause succeeded"
-          return true
-        else
+        unless num is 1
           num = @update(
             {
               _id: id
@@ -160,11 +157,11 @@ if Meteor.isServer
                 updated: time
             }
           )
-          if num is 1
-            console.log "jobPause succeeded"
-            return true
-          else
-            console.warn "jobPause failed"
+        if num is 1
+          console.log "jobPause succeeded"
+          return true
+        else
+          console.warn "jobPause failed"
       else
         console.warn "jobPause: something's wrong with done: #{id}", runId, err
       return false

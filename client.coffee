@@ -25,3 +25,10 @@ if Meteor.isClient
     getWork: (params...) -> Job.getWork @root, params...
 
     stopJobs: (params...) -> Job.stopJobs @root, params...
+
+    jobPriorities: Job.jobPriorities
+    jobStatuses: Job.jobPriorities
+    jobStatusCancellable: Job.jobStatusCancellable
+    jobStatusPausable: Job.jobStatusPausable
+    jobStatusRemovable: Job.jobStatusRemovable
+    jobStatusRestartable: Job.jobStatusRestartable

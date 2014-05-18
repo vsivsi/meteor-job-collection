@@ -697,6 +697,13 @@ if Meteor.isServer
       methodsOut["#{methodName}_#{root}"] = @_method_wrapper(methodName, methodFunc.bind(@)) for methodName, methodFunc of methods
       return methodsOut
 
+    jobPriorities: Job.jobPriorities
+    jobStatuses: Job.jobPriorities
+    jobStatusCancellable: Job.jobStatusCancellable
+    jobStatusPausable: Job.jobStatusPausable
+    jobStatusRemovable: Job.jobStatusRemovable
+    jobStatusRestartable: Job.jobStatusRestartable
+
     createJob: (params...) -> new Job @root, params...
 
     getJob: (params...) -> Job.getJob @root, params...

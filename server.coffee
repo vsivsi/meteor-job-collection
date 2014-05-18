@@ -50,26 +50,35 @@ if Meteor.isServer
 
   serverMethods =
     # Job manager methods
-    shutdownJobs: (timeout = 60*1000) ->
-      check timeout, Match.Where validIntGTEOne
+    stopJobs: (timeout = 60*1000) ->
+      check timeout, Match.Where validIntGTEZero
 
-      Meteor.clearTimeout(@shutdown) if @shutdown
+      Meteor.clearTimeout(@stopped) if @stopped
 
       if timeout
-        @shutdown = Meteor.setTimeout(
+        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        console.warn "  Stopping all jobs in #{timeout/1000} secs!"
+        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        @stopped = Meteor.setTimeout(
           () =>
+            console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            console.warn "  Stopping all NOW!!"
+            console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+
             cursor = @find(
               {
-                depends:
-                  $all: [ id ]
+                status: 'running'
               }
             )
-            console.warn "Failing #{cursor.count()} jobs on shutdown."
-            cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at shutdown.")
+            console.warn "Failing #{cursor.count()} jobs on queue stop."
+            cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
           timeout
         )
       else
-        @shutdown = null
+        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        console.warn "  Shutting down cancelled!!"
+        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        @stopped = null
 
       return true
 
@@ -315,7 +324,7 @@ if Meteor.isServer
       check max, Match.Where validIntGTEOne
 
       # Don't put out any more jobs while shutting down
-      if @shutdown
+      if @stopped
         return []
 
       # Support string types or arrays of string types
@@ -402,7 +411,7 @@ if Meteor.isServer
       check progress, validProgress()
 
       # Notify the worker to stop running if we are shutting down
-      if @shutdown
+      if @stopped
         return null
 
       if id and runId and progress
@@ -622,7 +631,7 @@ if Meteor.isServer
 
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
-      @shutdown = null
+      @stopped = null
 
       # No client mutators allowed
       @deny
@@ -694,6 +703,8 @@ if Meteor.isServer
 
     getWork: (params...) -> Job.getWork @root, params...
 
+    stopJobs: (params...) -> Job.stopJobs @root, params...
+
     promote: (milliseconds = 15*1000) ->
       if typeof milliseconds is 'number' and milliseconds > 1000
         if @interval
@@ -707,50 +718,56 @@ if Meteor.isServer
         @expireAfter = milliseconds
 
     _poll: () ->
-      time = new Date()
-      num = @update(
-        { status: "waiting", after: { $lte: time }, depends: { $size: 0 }}
-        { $set: { status: "ready", updated: time }, $push: { log: { time: time, runId: null, message: "Promoted to ready" }}}
-        { multi: true })
-      console.log "Ready fired: #{num} jobs promoted"
+      if @stopped
+        console.log "Run status: STOPPED"
+        return
+      else
+        console.log "Run status: Running..."
 
-      exptime = new Date( time.valueOf() - @expireAfter )
-      console.log "checking for expiration times before", exptime
+        time = new Date()
+        num = @update(
+          { status: "waiting", after: { $lte: time }, depends: { $size: 0 }}
+          { $set: { status: "ready", updated: time }, $push: { log: { time: time, runId: null, message: "Promoted to ready" }}}
+          { multi: true })
+        console.log "Ready fired: #{num} jobs promoted"
 
-      num = @update(
-        { status: "running", updated: { $lte: exptime }, retries: { $gt: 0 }}
-        { $set: { status: "ready", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to retry" }}}
-        { multi: true })
-      console.log "Expired #{num} dead jobs, waiting to run"
+        exptime = new Date( time.valueOf() - @expireAfter )
+        console.log "checking for expiration times before", exptime
 
-      cursor = @find({ status: "running", updated: { $lte: exptime }, retries: 0})
-      num = cursor.count()
-      cursor.forEach (d) =>
-        id = d._id
-        n = @update(
-          { _id: id, status: "running", updated: { $lte: exptime }, retries: 0}
-          { $set: { status: "failed", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to failure" }}}
-        )
-        if n is 1
+        num = @update(
+          { status: "running", updated: { $lte: exptime }, retries: { $gt: 0 }}
+          { $set: { status: "ready", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to retry" }}}
+          { multi: true })
+        console.log "Expired #{num} dead jobs, waiting to run"
+
+        cursor = @find({ status: "running", updated: { $lte: exptime }, retries: 0})
+        num = cursor.count()
+        cursor.forEach (d) =>
+          id = d._id
           n = @update(
-            {
-              status: "waiting"
-              depends:
-                $all: [ id ]
-            }
-            {
-              $set:
-                status: "failed"
-                runId: null
-                updated: time
-              $push:
-                log:
-                  time: time
-                  runId: null
-                  message: "Job Failed due to failure of dependancy #{id} by expiration"
-            }
-            { multi: true }
+            { _id: id, status: "running", updated: { $lte: exptime }, retries: 0}
+            { $set: { status: "failed", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to failure" }}}
           )
-          console.log "Failed #{n} dependent jobs"
+          if n is 1
+            n = @update(
+              {
+                status: "waiting"
+                depends:
+                  $all: [ id ]
+              }
+              {
+                $set:
+                  status: "failed"
+                  runId: null
+                  updated: time
+                $push:
+                  log:
+                    time: time
+                    runId: null
+                    message: "Job Failed due to failure of dependancy #{id} by expiration"
+              }
+              { multi: true }
+            )
+            console.log "Failed #{n} dependent jobs"
 
-      console.log "Expired #{num} dead jobs, failed"
+        console.log "Expired #{num} dead jobs, failed"

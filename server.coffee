@@ -50,18 +50,8 @@ if Meteor.isServer
 
   serverMethods =
     # Job manager methods
-    pauseJobs: (state = true, types = []) ->
-      check state, Boolean
-      check types, [String]
-      if types
-        for t in types
-          @paused[t] = state
-      else
-        @paused = state
-      return true
-
-    shutdownJobs: () ->
-      @shutdown = true
+    shutdownJobs: (timeout = 60*1000) ->
+      @shutdown = timeout
       return true
 
     getJob: (id) ->
@@ -143,6 +133,11 @@ if Meteor.isServer
             $set:
               status: "paused"
               updated: time
+            $push:
+              log:
+                time: time
+                runId: null
+                message: "Job Paused"
           }
         )
         unless num is 1
@@ -155,6 +150,11 @@ if Meteor.isServer
               $set:
                 status: "waiting"
                 updated: time
+              $push:
+                log:
+                  time: time
+                  runId: null
+                  message: "Job Unpaused"
             }
           )
         if num is 1
@@ -189,7 +189,7 @@ if Meteor.isServer
               log:
                 time: time
                 runId: null
-                message: "Cancelled"
+                message: "Job cancelled"
           }
         )
         if num is 1
@@ -230,6 +230,11 @@ if Meteor.isServer
               updated: time
             $inc:
               retries: retries
+            $push:
+              log:
+                time: time
+                runId: null
+                message: "Job Restarted"
           }
         )
         if num is 1
@@ -252,6 +257,7 @@ if Meteor.isServer
 
     jobSubmit: (doc) ->
       check doc, validJobDoc()
+      time = new Date()
       if doc._id
         num = @update(
           {
@@ -267,10 +273,20 @@ if Meteor.isServer
               depends: doc.depends
               priority: doc.priority
               after: doc.after
+              updated: time
+            $push:
+              log:
+                time: time
+                runId: null
+                message: "Job Resubmitted"
           }
         )
       else
         console.log doc
+        doc.log.push
+          time: time
+          runId: null
+          message: "Job Submitted"
         return @insert doc
 
     # Worker methods
@@ -322,7 +338,12 @@ if Meteor.isServer
               updated: time
             $inc:
               retries: -1
-              retried: 1 
+              retried: 1
+            $push:
+              log:
+                time: time
+                runId: runId
+                message: "Job Running"
           }
           {
             multi: true
@@ -447,6 +468,11 @@ if Meteor.isServer
                 total: 1
                 percent: 100
               updated: time
+            $push:
+              log:
+                time: time
+                runId: runId
+                message: "Job Completed Successfully"
           }
         )
         if num is 1

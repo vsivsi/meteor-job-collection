@@ -135,7 +135,7 @@ if Meteor.isServer
           {
             _id: id
             status:
-              $in: ["cancelled", "failed", "completed"]
+              $in: Job.jobStatusRemovable
           }
         )
         if num is 1
@@ -202,7 +202,7 @@ if Meteor.isServer
           {
             _id: id
             status:
-              $in: ["ready", "waiting", "running", "paused"]
+              $in: Job.jobStatusCancellable
           }
           {
             $set:
@@ -246,7 +246,7 @@ if Meteor.isServer
           {
             _id: id
             status:
-              $in: ["cancelled", "failed"]
+              $in: Job.jobStatusRestartable
           }
           {
             $set:

@@ -540,27 +540,13 @@ if Meteor.isServer
           }
         )
         if newStatus is "failed" and num is 1
-          # Fail any dependent jobs too
-          n = @update(
+          # Cancel any dependent jobs too
+          @find(
             {
-              status: "waiting"
               depends:
                 $all: [ id ]
             }
-            {
-              $set:
-                status: "failed"
-                runId: null
-                updated: time
-              $push:
-                log:
-                  time: time
-                  runId: null
-                  message: "Job Failed due to failure of dependancy #{id} with Error #{err}"
-            }
-            { multi: true }
-          )
-          console.log "Failed #{n} dependent jobs"
+          ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
         if num is 1
           console.log "jobFail succeeded"
           return true

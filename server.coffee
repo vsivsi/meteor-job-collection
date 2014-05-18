@@ -51,7 +51,26 @@ if Meteor.isServer
   serverMethods =
     # Job manager methods
     shutdownJobs: (timeout = 60*1000) ->
-      @shutdown = timeout
+      check timeout, Match.Where validIntGTEOne
+
+      Meteor.clearTimeout(@shutdown) if @shutdown
+
+      if timeout
+        @shutdown = Meteor.setTimeout(
+          () =>
+            cursor = @find(
+              {
+                depends:
+                  $all: [ id ]
+              }
+            )
+            console.warn "Failing #{cursor.count()} jobs on shutdown."
+            cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at shutdown.")
+          timeout
+        )
+      else
+        @shutdown = null
+
       return true
 
     getJob: (id) ->
@@ -293,7 +312,12 @@ if Meteor.isServer
 
     getWork: (type, max = 1) ->
       check type, Match.OneOf String, [ String ]
-      # check max, Match.Where validIntGTEOne
+      check max, Match.Where validIntGTEOne
+
+      # Don't put out any more jobs while shutting down
+      if @shutdown
+        return []
+
       # Support string types or arrays of string types
       if typeof type is 'string'
         type = [ type ]
@@ -376,6 +400,11 @@ if Meteor.isServer
       check id, Meteor.Collection.ObjectID
       check runId, Meteor.Collection.ObjectID
       check progress, validProgress()
+
+      # Notify the worker to stop running if we are shutting down
+      if @shutdown
+        return null
+
       if id and runId and progress
         time = new Date()
         console.log "Updating progress", id, runId, progress
@@ -593,7 +622,7 @@ if Meteor.isServer
 
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
-      @shutdown = false
+      @shutdown = null
 
       # No client mutators allowed
       @deny

@@ -51,13 +51,16 @@ if Meteor.isServer
   serverMethods =
     # Job manager methods
 
-    startJobs: () ->
+    startJobs: (options) ->
+      check options, Match.Optional {}
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = false
       return true
 
-    stopJobs: (timeout = 60*1000) ->
-      check timeout, Match.Where validIntGTEOne
+    stopJobs: (options) ->
+      check options, Match.Optional
+        timeout: Match.Optional(Match.Where validIntGTEOne)
+      options.timeout ?= 60*1000
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = Meteor.setTimeout(
         () =>
@@ -68,12 +71,13 @@ if Meteor.isServer
           )
           console.warn "Failing #{cursor.count()} jobs on queue stop."
           cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
-        timeout
+        options.timeout
       )
       return true
 
-    getJob: (id) ->
+    getJob: (id, options) ->
       check id, Meteor.Collection.ObjectID
+      check options, Match.Optional {}
       console.log "Get: ", id
       if id
         d = @findOne(
@@ -94,6 +98,93 @@ if Meteor.isServer
       else
         console.warn "Bad id in get", id
       return null
+
+    getWork: (type, options) ->
+      check type, Match.OneOf String, [ String ]
+      check options, Match.Optional
+        maxJobs: Match.Optional(Match.Where validIntGTEOne)
+
+      # Don't put out any more jobs while shutting down
+      if @stopped
+        return []
+
+      # Support string types or arrays of string types
+      if typeof type is 'string'
+        type = [ type ]
+      time = new Date()
+      ids = @find(
+        {
+          type:
+            $in: type
+          status: 'ready'
+          runId: null
+          after:
+            $lte: time
+          retries:
+            $gt: 0
+        }
+        {
+          sort:
+            priority: -1
+            after: 1
+          limit: options.maxJobs
+          fields:
+            _id: 1
+        }).map (d) -> d._id
+
+      if ids?.length
+        runId = new Meteor.Collection.ObjectID()
+        num = @update(
+          {
+            _id:
+              $in: ids
+            status: 'ready'
+            runId: null
+            after:
+              $lte: time
+            retries:
+              $gt: 0
+          }
+          {
+            $set:
+              status: 'running'
+              runId: runId
+              updated: time
+            $inc:
+              retries: -1
+              retried: 1
+            $push:
+              log:
+                time: time
+                runId: runId
+                message: "Job Running"
+          }
+          {
+            multi: true
+          }
+        )
+        if num >= 1
+          dd = @find(
+            {
+              _id:
+                $in: ids
+              runId: runId
+            }
+            {
+              fields:
+                log: 0
+            }
+          ).fetch()
+          if dd?.length
+            check dd, [ validJobDoc() ]
+            return dd
+          else
+            console.warn "find after update failed"
+        else
+          console.warn "Missing running job"
+      else
+        # console.log "Didn't find a job to process"
+      return []
 
     getLog: (id) ->
       check id, Meteor.Collection.ObjectID
@@ -367,92 +458,6 @@ if Meteor.isServer
         return @insert doc
 
     # Worker methods
-
-    getWork: (type, max = 1) ->
-      check type, Match.OneOf String, [ String ]
-      check max, Match.Where validIntGTEOne
-
-      # Don't put out any more jobs while shutting down
-      if @stopped
-        return []
-
-      # Support string types or arrays of string types
-      if typeof type is 'string'
-        type = [ type ]
-      time = new Date()
-      ids = @find(
-        {
-          type:
-            $in: type
-          status: 'ready'
-          runId: null
-          after:
-            $lte: time
-          retries:
-            $gt: 0
-        }
-        {
-          sort:
-            priority: -1
-            after: 1
-          limit: max
-          fields:
-            _id: 1
-        }).map (d) -> d._id
-
-      if ids?.length
-        runId = new Meteor.Collection.ObjectID()
-        num = @update(
-          {
-            _id:
-              $in: ids
-            status: 'ready'
-            runId: null
-            after:
-              $lte: time
-            retries:
-              $gt: 0
-          }
-          {
-            $set:
-              status: 'running'
-              runId: runId
-              updated: time
-            $inc:
-              retries: -1
-              retried: 1
-            $push:
-              log:
-                time: time
-                runId: runId
-                message: "Job Running"
-          }
-          {
-            multi: true
-          }
-        )
-        if num >= 1
-          dd = @find(
-            {
-              _id:
-                $in: ids
-              runId: runId
-            }
-            {
-              fields:
-                log: 0
-            }
-          ).fetch()
-          if dd?.length
-            check dd, [ validJobDoc() ]
-            return dd
-          else
-            console.warn "find after update failed"
-        else
-          console.warn "Missing running job"
-      else
-        # console.log "Didn't find a job to process"
-      return []
 
     jobProgress: (id, runId, progress) ->
       check id, Meteor.Collection.ObjectID
@@ -743,7 +748,9 @@ if Meteor.isServer
 
     _generateMethods: (methods) ->
       methodsOut = {}
-      methodsOut["#{methodName}_#{root}"] = @_method_wrapper(methodName, methodFunc.bind(@)) for methodName, methodFunc of methods
+      for methodName, methodFunc of methods
+        console.log "Generating Method: #{methodName}_#{root}"
+        methodsOut["#{methodName}_#{root}"] = @_method_wrapper(methodName, methodFunc.bind(@))
       return methodsOut
 
     jobPriorities: Job.jobPriorities

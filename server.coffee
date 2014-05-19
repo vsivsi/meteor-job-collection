@@ -785,8 +785,8 @@ if Meteor.isServer
     _generateMethods: (methods) ->
       methodsOut = {}
       for methodName, methodFunc of methods
-        console.log "Generating Method: #{methodName}_#{root}"
-        methodsOut["#{methodName}_#{root}"] = @_method_wrapper(methodName, methodFunc.bind(@))
+        console.log "Generating Method: #{root}_#{methodName}"
+        methodsOut["#{root}_#{methodName}"] = @_method_wrapper(methodName, methodFunc.bind(@))
       return methodsOut
 
     jobLogLevels: Job.jobLogLevels

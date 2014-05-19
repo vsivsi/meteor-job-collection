@@ -50,36 +50,26 @@ if Meteor.isServer
 
   serverMethods =
     # Job manager methods
-    stopJobs: (timeout = 60*1000) ->
-      check timeout, Match.Where validIntGTEZero
 
+    startJobs: () ->
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
+      @stopped = false
+      return true
 
-      if timeout
-        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        console.warn "  Stopping all jobs in #{timeout/1000} secs!"
-        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        @stopped = Meteor.setTimeout(
-          () =>
-            console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            console.warn "  Stopping all NOW!!"
-            console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-
-            cursor = @find(
-              {
-                status: 'running'
-              }
-            )
-            console.warn "Failing #{cursor.count()} jobs on queue stop."
-            cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
-          timeout
-        )
-      else
-        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        console.warn "  Shutting down cancelled!!"
-        console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        @stopped = null
-
+    stopJobs: (timeout = 60*1000) ->
+      check timeout, Match.Where validIntGTEOne
+      Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
+      @stopped = Meteor.setTimeout(
+        () =>
+          cursor = @find(
+            {
+              status: 'running'
+            }
+          )
+          console.warn "Failing #{cursor.count()} jobs on queue stop."
+          cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
+        timeout
+      )
       return true
 
     getJob: (id) ->
@@ -704,14 +694,13 @@ if Meteor.isServer
     jobStatusRemovable: Job.jobStatusRemovable
     jobStatusRestartable: Job.jobStatusRestartable
 
-    startJobs: () ->
-      @stopped = false
-
     createJob: (params...) -> new Job @root, params...
 
     getJob: (params...) -> Job.getJob @root, params...
 
     getWork: (params...) -> Job.getWork @root, params...
+
+    startJobs: (params...) -> Job.startJobs @root, params...
 
     stopJobs: (params...) -> Job.stopJobs @root, params...
 

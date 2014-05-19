@@ -184,8 +184,9 @@ if Meteor.isServer
         console.warn "jobPause: something's wrong with done: #{id}", runId, err
       return false
 
-    jobCancel: (id) ->
+    jobCancel: (id, antecedents = false) ->
       check id, Meteor.Collection.ObjectID
+      check antecedents, Boolean
       if id
         time = new Date()
         num = @update(
@@ -212,10 +213,29 @@ if Meteor.isServer
         )
         if num is 1
           # Cancel the entire tree of dependents
+          dependQuery = [
+            depends:
+              $all: [ id ]
+          ]
+          if antecedents
+            doc = @findOne(
+              {
+                _id: id
+              }
+              {
+                fields:
+                  depends: 1
+              }
+            )
+            if doc
+              dependQuery.push
+                _id:
+                  $in: doc.depends
           @find(
             {
-              depends:
-                $all: [ id ]
+              status:
+                $in: Job.jobStatusCancellable
+              $or: dependQuery
             }
           ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
 
@@ -227,9 +247,11 @@ if Meteor.isServer
         console.warn "jobCancel: something's wrong with done: #{id}", runId, err
       return false
 
-    jobRestart: (id, retries = 1) ->
+    jobRestart: (id, retries = 1, dependents = false) ->
       check id, Meteor.Collection.ObjectID
       check retries, Match.Where validIntGTEOne
+      check dependents, Boolean
+      console.log "Restarting: #{id}"
       if id
         time = new Date()
         num = @update(
@@ -257,12 +279,39 @@ if Meteor.isServer
         )
         if num is 1
           # Cancel the entire tree of dependents
-          @find(
+          console.log "Restarting deps"
+          doc = @findOne(
             {
-              depends:
-                $all: [ id ]
+              _id: id
             }
-          ).forEach (d) => serverMethods.jobRestart.bind(@)(d._id)
+            {
+              fields:
+                depends: 1
+            }
+          )
+          if doc
+            dependQuery = [
+              _id:
+                $in: doc.depends
+            ]
+            if dependents
+              dependQuery.push
+                depends:
+                  $all: [ id ]
+
+            cursor = @find(
+              {
+                status:
+                  $in: Job.jobStatusRestartable
+                $or: dependQuery
+              }
+              {
+                fields:
+                  _id: 1
+              }
+            ).forEach (d) =>
+              console.log "restarting #{d._id}"
+              serverMethods.jobRestart.bind(@)(d._id, retries)
           console.log "jobRestart succeeded"
           return true
         else
@@ -280,10 +329,12 @@ if Meteor.isServer
         num = @update(
           {
             _id: doc._id
+            status: { $in: Job.jobStatusPausable }
             runId: null
           }
           {
             $set:
+              data: doc.data
               retries: doc.retries
               retryWait: doc.retryWait
               repeats: doc.repeats
@@ -400,7 +451,7 @@ if Meteor.isServer
         else
           console.warn "Missing running job"
       else
-        console.log "Didn't find a job to process"
+        # console.log "Didn't find a job to process"
       return []
 
     jobProgress: (id, runId, progress) ->

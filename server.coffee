@@ -18,6 +18,9 @@ if Meteor.isServer
   validNumGTEZero = (v) ->
     Match.test(v, Number) and v >= 0.0
 
+  validNumGTZero = (v) ->
+    Match.test(v, Number) and v > 0.0
+
   validStatus = (v) ->
     Match.test(v, String) and v in Job.jobStatuses
 
@@ -466,38 +469,45 @@ if Meteor.isServer
 
     # Worker methods
 
-    jobProgress: (id, runId, progress) ->
+    jobProgress: (id, runId, completed, total, options) ->
       check id, Meteor.Collection.ObjectID
       check runId, Meteor.Collection.ObjectID
-      check progress, validProgress()
+      check completed, Match.Where validNumGTEZero
+      check total, Match.Where validNumGTZero
+      check options, Match.Optional {}
 
       # Notify the worker to stop running if we are shutting down
       if @stopped
         return null
 
-      if id and runId and progress
-        time = new Date()
-        console.log "Updating progress", id, runId, progress
-        num = @update(
-          {
-            _id: id
-            runId: runId
-            status: "running"
-          }
-          {
-            $set:
-              progress: progress
-              updated: time
-          }
-        )
-        if num is 1
-          console.log "jobProgress succeeded", progress
-          return true
-        else
-          console.warn "jobProgress failed"
+      progress =
+        completed: completed
+        total: total
+        percent: 100*completed/total
+
+      check progress, Match.Where (v) ->
+        v.total >= v.completed and 0 <= v.percent <= 100
+
+      time = new Date()
+      console.log "Updating progress", id, runId, progress
+      num = @update(
+        {
+          _id: id
+          runId: runId
+          status: "running"
+        }
+        {
+          $set:
+            progress: progress
+            updated: time
+        }
+      )
+      if num is 1
+        console.log "jobProgress succeeded", progress
+        return true
       else
-        console.warn "jobProgress: something's wrong with progress: #{id}", progress
-      return false
+        console.warn "jobProgress failed"
+        return false
 
     jobLog: (id, runId, message, options) ->
       check id, Meteor.Collection.ObjectID

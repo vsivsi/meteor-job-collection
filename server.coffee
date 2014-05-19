@@ -53,7 +53,7 @@ if Meteor.isServer
     stopJobs: (timeout = 60*1000) ->
       check timeout, Match.Where validIntGTEZero
 
-      Meteor.clearTimeout(@stopped) if @stopped
+      Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
 
       if timeout
         console.warn "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -631,7 +631,7 @@ if Meteor.isServer
 
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
-      @stopped = null
+      @stopped = true
 
       # No client mutators allowed
       @deny
@@ -703,6 +703,9 @@ if Meteor.isServer
     jobStatusPausable: Job.jobStatusPausable
     jobStatusRemovable: Job.jobStatusRemovable
     jobStatusRestartable: Job.jobStatusRestartable
+
+    startJobs: () ->
+      @stopped = false
 
     createJob: (params...) -> new Job @root, params...
 

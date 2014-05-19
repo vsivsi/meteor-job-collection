@@ -127,7 +127,7 @@ if Meteor.isServer
           sort:
             priority: -1
             after: 1
-          limit: options.maxJobs
+          limit: options.maxJobs ? 1
           fields:
             _id: 1
         }).map (d) -> d._id

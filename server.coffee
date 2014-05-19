@@ -325,7 +325,7 @@ if Meteor.isServer
                 $in: Job.jobStatusCancellable
               $or: dependQuery
             }
-          ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
+          ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id, options)
 
           console.log "jobCancel succeeded"
           return true
@@ -404,7 +404,7 @@ if Meteor.isServer
               }
             ).forEach (d) =>
               console.log "restarting #{d._id}"
-              serverMethods.jobRestart.bind(@)(d._id, options.retries)
+              serverMethods.jobRestart.bind(@)(d._id, options)
           console.log "jobRestart succeeded"
           return true
         else

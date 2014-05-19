@@ -83,7 +83,9 @@ if Meteor.isServer
 
     getJob: (id, options) ->
       check id, Meteor.Collection.ObjectID
-      check options, Match.Optional {}
+      check options, Match.Optional
+        getLog: Match.Optional Boolean
+      options.getLog ?= false
       console.log "Get: ", id
       if id
         d = @findOne(
@@ -92,7 +94,7 @@ if Meteor.isServer
           }
           {
             fields:
-              log: 0
+              log: if options.getLog then 1 else 0
           }
         )
         if d
@@ -191,29 +193,6 @@ if Meteor.isServer
       else
         # console.log "Didn't find a job to process"
       return []
-
-    getLog: (id) ->
-      check id, Meteor.Collection.ObjectID
-      console.log "Get: ", id
-      if id
-        d = @findOne(
-          {
-            _id: id
-          }
-          {
-            fields:
-              log: 1
-          }
-        )
-        if d
-          console.log "get method Got a log", d
-          check d.log, validLog()
-          return d
-        else
-          console.warn "Get failed log"
-      else
-        console.warn "Bad id in get log", id
-      return null
 
     jobRemove: (id) ->
       check id, Meteor.Collection.ObjectID

@@ -204,7 +204,7 @@ if Meteor.isServer
         )
         if d
           console.log "get method Got a log", d
-          check d, validJobDoc()
+          check d.log, validLog()
           return d
         else
           console.warn "Get failed log"
@@ -302,6 +302,7 @@ if Meteor.isServer
               log:
                 time: time
                 runId: null
+                level: 'warning'
                 message: "Job cancelled"
           }
         )
@@ -368,6 +369,7 @@ if Meteor.isServer
               log:
                 time: time
                 runId: null
+                level: 'info'
                 message: "Job Restarted"
           }
         )
@@ -441,6 +443,7 @@ if Meteor.isServer
               log:
                 time: time
                 runId: null
+                level: 'info'
                 message: "Job Resubmitted"
           }
         )
@@ -457,6 +460,7 @@ if Meteor.isServer
         doc.log.push
           time: time
           runId: null
+          level: 'info'
           message: "Job Submitted"
         return @insert doc
 
@@ -500,7 +504,7 @@ if Meteor.isServer
       check runId, Meteor.Collection.ObjectID
       check message, String
       check options, Match.Optional
-        level: Match.Optional(Match.Where validIntGTEOne)
+        level: Match.Optional(Match.Where validLogLevel)
       if id and message
         time = new Date()
         console.log "Logging a message", id, runId, message
@@ -584,8 +588,16 @@ if Meteor.isServer
             doc.repeats = doc.repeats - 1
             doc.repeated = doc.repeated + 1
             doc.updated = time
-            doc.progress = { completed: 0, total: 1, percent: 0 }
-            doc.log = [{ time: time, runId: null, message: "Repeating job #{id} from run #{runId}" }]
+            doc.progress =
+              completed: 0
+              total: 1
+              percent: 0
+            doc.log = [
+              time: time
+              runId: null
+              level: 'info'
+              message: "Repeating job #{id} from run #{runId}"
+            ]
             doc.after = new Date(time.valueOf() + doc.repeatWait)
             jobId = @insert doc
             unless jobId
@@ -603,6 +615,7 @@ if Meteor.isServer
                 log:
                   time: time
                   runId: null
+                  level: 'info'
                   message: "Dependency resolved for #{id} by #{runId}"
             }
           )
@@ -660,6 +673,7 @@ if Meteor.isServer
               log:
                 time: time
                 runId: runId
+                level: if newStatus is 'failed' then 'danger' else 'warning'
                 message: "Job Failed with Error #{err}"
           }
         )
@@ -798,27 +812,98 @@ if Meteor.isServer
 
         time = new Date()
         num = @update(
-          { status: "waiting", after: { $lte: time }, depends: { $size: 0 }}
-          { $set: { status: "ready", updated: time }, $push: { log: { time: time, runId: null, message: "Promoted to ready" }}}
-          { multi: true })
+          {
+            status: "waiting"
+            after:
+              $lte: time
+            depends:
+              $size: 0
+          }
+          {
+            $set:
+              status: "ready"
+              updated: time
+            $push:
+              log:
+                time: time
+                runId: null
+                level: 'success'
+                message: "Promoted to ready"
+          }
+          {
+            multi: true
+          }
+        )
         console.log "Ready fired: #{num} jobs promoted"
 
         exptime = new Date( time.valueOf() - @expireAfter )
         console.log "checking for expiration times before", exptime
 
         num = @update(
-          { status: "running", updated: { $lte: exptime }, retries: { $gt: 0 }}
-          { $set: { status: "ready", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to retry" }}}
-          { multi: true })
+          {
+            status: "running"
+            updated:
+              $lte: exptime
+            retries:
+              $gt: 0
+          }
+          {
+            $set:
+              status: "ready"
+              runId: null
+              updated: time
+              progress:
+                completed: 0
+                total: 1
+                percent: 0
+            $push:
+              log:
+                time: time
+                runId: null
+                level: 'warning'
+                message: "Expired to retry"
+          }
+          {
+            multi: true
+          }
+        )
         console.log "Expired #{num} dead jobs, waiting to run"
 
-        cursor = @find({ status: "running", updated: { $lte: exptime }, retries: 0})
+        cursor = @find(
+          {
+            status: "running"
+            updated:
+              $lte: exptime
+            retries: 0
+          }
+        )
         num = cursor.count()
         cursor.forEach (d) =>
           id = d._id
           n = @update(
-            { _id: id, status: "running", updated: { $lte: exptime }, retries: 0}
-            { $set: { status: "failed", runId: null, updated: time, progress: { completed: 0, total: 1, percent: 0 } }, $push: { log: { time: time, runId: null, message: "Expired to failure" }}}
+            {
+              _id: id
+              status: "running"
+              updated:
+                $lte: exptime
+              retries: 0
+            }
+            {
+              $set:
+                status: "failed"
+                runId: null
+                updated: time
+                progress:
+                  completed: 0
+                  total: 1
+                  percent: 0
+              $push:
+                log:
+                  time: time
+                  runId: null
+                  level: 'danger'
+                  message: "Expired to failure"
+            }
           )
           if n is 1
             n = @update(
@@ -836,9 +921,12 @@ if Meteor.isServer
                   log:
                     time: time
                     runId: null
+                    level: 'danger'
                     message: "Job Failed due to failure of dependancy #{id} by expiration"
               }
-              { multi: true }
+              {
+                multi: true
+              }
             )
             console.log "Failed #{n} dependent jobs"
 

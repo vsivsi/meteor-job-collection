@@ -404,7 +404,7 @@ if Meteor.isServer
               }
             ).forEach (d) =>
               console.log "restarting #{d._id}"
-              serverMethods.jobRestart.bind(@)(d._id, retries)
+              serverMethods.jobRestart.bind(@)(d._id, options.retries)
           console.log "jobRestart succeeded"
           return true
         else

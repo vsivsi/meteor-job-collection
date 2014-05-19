@@ -21,8 +21,11 @@ if Meteor.isServer
   validStatus = (v) ->
     Match.test(v, String) and v in Job.jobStatuses
 
+  validLogLevel = (v) ->
+    Match.test(v, String) and v in Job.jobLogLevels
+
   validLog = () ->
-    [ { time: Date, runId: Match.OneOf(Meteor.Collection.ObjectID, null), message: String } ]
+    [ { time: Date, runId: Match.OneOf(Meteor.Collection.ObjectID, null), level: String, message: String } ]
 
   validProgress = () ->
     completed: Match.Where(validNumGTEZero)
@@ -492,10 +495,12 @@ if Meteor.isServer
         console.warn "jobProgress: something's wrong with progress: #{id}", progress
       return false
 
-    jobLog: (id, runId, message) ->
+    jobLog: (id, runId, message, options) ->
       check id, Meteor.Collection.ObjectID
       check runId, Meteor.Collection.ObjectID
       check message, String
+      check options, Match.Optional
+        level: Match.Optional(Match.Where validIntGTEOne)
       if id and message
         time = new Date()
         console.log "Logging a message", id, runId, message
@@ -508,6 +513,7 @@ if Meteor.isServer
               log:
                 time: time
                 runId: runId
+                level: options.level ? 'default'
                 message: message
             $set:
               updated: time
@@ -753,6 +759,7 @@ if Meteor.isServer
         methodsOut["#{methodName}_#{root}"] = @_method_wrapper(methodName, methodFunc.bind(@))
       return methodsOut
 
+    jobLogLevels: Job.jobLogLevels
     jobPriorities: Job.jobPriorities
     jobStatuses: Job.jobPriorities
     jobStatusCancellable: Job.jobStatusCancellable

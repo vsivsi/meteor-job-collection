@@ -28,6 +28,7 @@ if Meteor.isClient
 
     stopJobs: (params...) -> Job.stopJobs @root, params...
 
+    jobLogLevels: Job.jobLogLevels
     jobPriorities: Job.jobPriorities
     jobStatuses: Job.jobPriorities
     jobStatusCancellable: Job.jobStatusCancellable

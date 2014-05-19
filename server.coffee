@@ -59,6 +59,7 @@ if Meteor.isServer
 
     startJobs: (options) ->
       check options, Match.Optional {}
+      options ?= {}
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = false
       return true
@@ -66,6 +67,7 @@ if Meteor.isServer
     stopJobs: (options) ->
       check options, Match.Optional
         timeout: Match.Optional(Match.Where validIntGTEOne)
+      options ?= {}
       options.timeout ?= 60*1000
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = Meteor.setTimeout(
@@ -85,6 +87,7 @@ if Meteor.isServer
       check id, Meteor.Collection.ObjectID
       check options, Match.Optional
         getLog: Match.Optional Boolean
+      options ?= {}
       options.getLog ?= false
       console.log "Get: ", id
       if id
@@ -111,6 +114,7 @@ if Meteor.isServer
       check type, Match.OneOf String, [ String ]
       check options, Match.Optional
         maxJobs: Match.Optional(Match.Where validIntGTEOne)
+      options ?= {}
 
       # Don't put out any more jobs while shutting down
       if @stopped
@@ -194,8 +198,10 @@ if Meteor.isServer
         # console.log "Didn't find a job to process"
       return []
 
-    jobRemove: (id) ->
+    jobRemove: (id, options) ->
       check id, Meteor.Collection.ObjectID
+      check options, Match.Optional {}
+      options ?= {}
       if id
         num = @remove(
           {
@@ -213,8 +219,10 @@ if Meteor.isServer
         console.warn "jobRemoved something's wrong with done: #{id}"
       return false
 
-    jobPause: (id) ->
+    jobPause: (id, options) ->
       check id, Meteor.Collection.ObjectID
+      check options, Match.Optional {}
+      options ?= {}
       if id
         time = new Date()
         num = @update(
@@ -260,9 +268,12 @@ if Meteor.isServer
         console.warn "jobPause: something's wrong with done: #{id}", runId, err
       return false
 
-    jobCancel: (id, antecedents = false) ->
+    jobCancel: (id, options) ->
       check id, Meteor.Collection.ObjectID
-      check antecedents, Boolean
+      check options, Match.Optional
+        antecedents: Match.Optional Boolean
+      options ?= {}
+      options.antecedents ?= true
       if id
         time = new Date()
         num = @update(
@@ -294,7 +305,7 @@ if Meteor.isServer
             depends:
               $all: [ id ]
           ]
-          if antecedents
+          if options.antecedents
             doc = @findOne(
               {
                 _id: id
@@ -324,10 +335,14 @@ if Meteor.isServer
         console.warn "jobCancel: something's wrong with done: #{id}", runId, err
       return false
 
-    jobRestart: (id, retries = 1, dependents = false) ->
+    jobRestart: (id, options) ->
       check id, Meteor.Collection.ObjectID
-      check retries, Match.Where validIntGTEOne
-      check dependents, Boolean
+      check options, Match.Optional
+        retries: Match.Optional(Match.Where validIntGTEOne)
+        dependents: Match.Optional Boolean
+      options ?= {}
+      options.retries ?= 1
+      options.dependents ?= true
       console.log "Restarting: #{id}"
       if id
         time = new Date()
@@ -346,7 +361,7 @@ if Meteor.isServer
                 percent: 0
               updated: time
             $inc:
-              retries: retries
+              retries: options.retries
             $push:
               log:
                 time: time
@@ -372,7 +387,7 @@ if Meteor.isServer
               _id:
                 $in: doc.depends
             ]
-            if dependents
+            if options.dependents
               dependQuery.push
                 depends:
                   $all: [ id ]
@@ -403,6 +418,7 @@ if Meteor.isServer
     jobSave: (doc, options) ->
       check doc, validJobDoc()
       check options, Match.Optional {}
+      options ?= {}
       time = new Date()
       if doc._id
         num = @update(
@@ -443,7 +459,7 @@ if Meteor.isServer
               status:
                 $in: Job.jobStatusCancellable
             }
-          ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
+          ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id, {})
         doc.log.push
           time: time
           runId: null
@@ -459,6 +475,7 @@ if Meteor.isServer
       check completed, Match.Where validNumGTEZero
       check total, Match.Where validNumGTZero
       check options, Match.Optional {}
+      options ?= {}
 
       # Notify the worker to stop running if we are shutting down
       if @stopped
@@ -499,6 +516,7 @@ if Meteor.isServer
       check message, String
       check options, Match.Optional
         level: Match.Optional(Match.Where validLogLevel)
+      options ?= {}
       if id and message
         time = new Date()
         console.log "Logging a message", id, runId, message
@@ -526,9 +544,11 @@ if Meteor.isServer
         console.warn "jobLog: something's wrong with progress: #{id}", message
       return false
 
-    jobDone: (id, runId) ->
+    jobDone: (id, runId, options) ->
       check id, Meteor.Collection.ObjectID
       check runId, Meteor.Collection.ObjectID
+      check options, Match.Optional {}
+      options ?= {}
       if id and runId
         time = new Date()
         doc = @findOne(
@@ -622,10 +642,12 @@ if Meteor.isServer
         console.warn "jobDone: something's wrong with done: #{id}", runId
       return false
 
-    jobFail: (id, runId, err) ->
+    jobFail: (id, runId, err, options) ->
       check id, Meteor.Collection.ObjectID
       check runId, Meteor.Collection.ObjectID
       check err, String
+      check options, Match.Optional {}
+      options ?= {}
       if id and runId
         time = new Date()
         doc = @findOne(

@@ -421,8 +421,9 @@ if Meteor.isServer
 
     # Job creator methods
 
-    jobSubmit: (doc) ->
+    jobSave: (doc, options) ->
       check doc, validJobDoc()
+      check options, Match.Optional {}
       time = new Date()
       if doc._id
         num = @update(
@@ -450,6 +451,10 @@ if Meteor.isServer
                 message: "Job Resubmitted"
           }
         )
+        if num
+          return doc._id
+        else
+          return null
       else
         if doc.repeats is Job.forever
           # If this is unlimited repeating job, then cancel any existing jobs of the same type

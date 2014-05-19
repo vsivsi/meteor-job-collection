@@ -300,7 +300,15 @@ if Meteor.isServer
           }
         )
       else
-        console.log doc
+        if doc.repeats is Job.forever
+          # If this is unlimited repeating job, then cancel any existing jobs of the same type
+          @find(
+            {
+              type: doc.type
+              status:
+                $in: Job.jobStatusCancellable
+            }
+          ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
         doc.log.push
           time: time
           runId: null

@@ -52,6 +52,46 @@ validJobDoc = () ->
   repeated: Match.Where validNumGTEZero
   repeatWait: Match.Where validNumGTEZero
 
+idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
+  # Cancel the entire tree of dependents
+  dependsQuery = []
+  if dependents
+    dependsQuery.push
+      depends:
+        $elemMatch:
+          $in: ids
+  if antecedents
+    antsArray = []
+    @find(
+      {
+        _id:
+          $in: ids
+      }
+      {
+        fields:
+          depends: 1
+      }
+    ).forEach (d) -> antsArray.push(i) for i in d.depends unless i in antsArray
+    if antsArray.length > 0
+      dependsQuery.push
+        _id:
+          $in: antsArray
+  if dependsQuery
+    dependsIds = []
+    @find(
+      {
+        status:
+          $in: jobStatuses
+        $or: dependsQuery
+      }
+      {
+        fields:
+          _id: 1
+      }
+    ).forEach (d) ->
+      dependsIds.push d._id unless d._id in dependsIds
+  return dependsIds
+
 serverMethods =
   # Job manager methods
 
@@ -81,31 +121,35 @@ serverMethods =
     )
     return true
 
-  getJob: (id, options) ->
-    check id, Meteor.Collection.ObjectID
+  getJob: (ids, options) ->
+    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
     check options, Match.Optional
       getLog: Match.Optional Boolean
     options ?= {}
     options.getLog ?= false
-    console.log "Get: ", id
-    if id
-      d = @findOne(
-        {
-          _id: id
-        }
-        {
-          fields:
-            log: if options.getLog then 1 else 0
-        }
-      )
-      if d
-        console.log "get method Got a job", d
-        check d, validJobDoc()
-        return d
+    single = false
+    if ids instanceof Meteor.Collection.ObjectID
+      ids = [ids]
+      single = true
+    return null if ids.length is 0
+    console.log "Get: ", ids
+    d = @find(
+      {
+        _id:
+          $in: ids
+      }
+      {
+        fields:
+          log: if options.getLog then 1 else 0
+      }
+    ).fetch()
+    if d
+      console.log "get method Got jobs:", d.length
+      check d, [validJobDoc()]
+      if single
+        return d[0]
       else
-        console.warn "Get failed job"
-    else
-      console.warn "Bad id in get", id
+        return d
     return null
 
   getWork: (type, options) ->
@@ -196,219 +240,195 @@ serverMethods =
       # console.log "Didn't find a job to process"
     return []
 
-  jobRemove: (id, options) ->
-    check id, Meteor.Collection.ObjectID
+  jobRemove: (ids, options) ->
+    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
     check options, Match.Optional {}
     options ?= {}
-    if id
-      num = @remove(
-        {
-          _id: id
-          status:
-            $in: Job.jobStatusRemovable
-        }
-      )
-      if num is 1
-        console.log "jobRemove succeeded"
-        return true
-      else
-        console.warn "jobRemove failed"
+    if ids instanceof Meteor.Collection.ObjectID
+      ids = [ids]
+    return false if ids.length is 0
+    num = @remove(
+      {
+        _id:
+          $in: ids
+        status:
+          $in: Job.jobStatusRemovable
+      }
+    )
+    if num > 0
+      console.log "jobRemove succeeded"
+      return true
     else
-      console.warn "jobRemoved something's wrong with done: #{id}"
+      console.warn "jobRemove failed"
     return false
 
-  jobPause: (id, options) ->
-    check id, Meteor.Collection.ObjectID
+  jobPause: (ids, options) ->
+    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
     check options, Match.Optional {}
     options ?= {}
-    if id
-      time = new Date()
-      num = @update(
-        {
-          _id: id
-          status:
-            $in: ["ready", "waiting"]
-        }
-        {
-          $set:
-            status: "paused"
-            updated: time
-          $push:
-            log:
-              time: time
-              runId: null
-              message: "Job Paused"
-        }
-      )
-      unless num is 1
-        num = @update(
-          {
-            _id: id
-            status: "paused"
-          }
-          {
-            $set:
-              status: "waiting"
-              updated: time
-            $push:
-              log:
-                time: time
-                runId: null
-                message: "Job Unpaused"
-          }
-        )
-      if num is 1
-        console.log "jobPause succeeded"
-        return true
-      else
-        console.warn "jobPause failed"
-    else
-      console.warn "jobPause: something's wrong with done: #{id}", runId, err
-    return false
-
-  jobCancel: (id, options) ->
-    check id, Meteor.Collection.ObjectID
-    check options, Match.Optional
-      antecedents: Match.Optional Boolean
-    options ?= {}
-    options.antecedents ?= true
-    if id
-      time = new Date()
-      num = @update(
-        {
-          _id: id
-          status:
-            $in: Job.jobStatusCancellable
-        }
-        {
-          $set:
-            status: "cancelled"
+    if ids instanceof Meteor.Collection.ObjectID
+      ids = [ids]
+    return false if ids.length is 0
+    time = new Date()
+    num = @update(
+      {
+        _id:
+          $in: ids
+        status:
+          $in: ["ready", "waiting"]
+      }
+      {
+        $set:
+          status: "paused"
+          updated: time
+        $push:
+          log:
+            time: time
             runId: null
-            progress:
-              completed: 0
-              total: 1
-              percent: 0
-            updated: time
-          $push:
-            log:
-              time: time
-              runId: null
-              level: 'warning'
-              message: "Job cancelled"
-        }
-      )
-      if num is 1
-        # Cancel the entire tree of dependents
-        dependQuery = [
-          depends:
-            $all: [ id ]
-        ]
-        if options.antecedents
-          doc = @findOne(
-            {
-              _id: id
-            }
-            {
-              fields:
-                depends: 1
-            }
-          )
-          if doc
-            dependQuery.push
-              _id:
-                $in: doc.depends
-        @find(
-          {
-            status:
-              $in: Job.jobStatusCancellable
-            $or: dependQuery
-          }
-        ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id, options)
-
-        console.log "jobCancel succeeded"
-        return true
-      else
-        console.warn "jobCancel failed"
-    else
-      console.warn "jobCancel: something's wrong with done: #{id}", runId, err
-    return false
-
-  jobRestart: (id, options) ->
-    check id, Meteor.Collection.ObjectID
-    check options, Match.Optional
-      retries: Match.Optional(Match.Where validIntGTEOne)
-      dependents: Match.Optional Boolean
-    options ?= {}
-    options.retries ?= 1
-    options.dependents ?= true
-    console.log "Restarting: #{id}"
-    if id
-      time = new Date()
-      num = @update(
+            message: "Job Paused"
+      }
+      {
+        multi: true
+      }
+    )
+    unless num is ids.length
+      num += @update(
         {
-          _id: id
-          status:
-            $in: Job.jobStatusRestartable
+          _id:
+            $in: ids
+          status: "paused"
+          updated:
+            $ne: time
         }
         {
           $set:
             status: "waiting"
-            progress:
-              completed: 0
-              total: 1
-              percent: 0
             updated: time
-          $inc:
-            retries: options.retries
           $push:
             log:
               time: time
               runId: null
-              level: 'info'
-              message: "Job Restarted"
+              message: "Job Unpaused"
+        }
+        {
+          multi: true
         }
       )
-      if num is 1
-        # Cancel the entire tree of dependents
-        console.log "Restarting deps"
-        doc = @findOne(
-          {
-            _id: id
-          }
-          {
-            fields:
-              depends: 1
-          }
-        )
-        if doc
-          dependQuery = [
-            _id:
-              $in: doc.depends
-          ]
-          if options.dependents
-            dependQuery.push
-              depends:
-                $all: [ id ]
-
-          cursor = @find(
-            {
-              status:
-                $in: Job.jobStatusRestartable
-              $or: dependQuery
-            }
-            {
-              fields:
-                _id: 1
-            }
-          ).forEach (d) =>
-            console.log "restarting #{d._id}"
-            serverMethods.jobRestart.bind(@)(d._id, options)
-        console.log "jobRestart succeeded"
-        return true
-      else
-        console.warn "jobRestart failed"
+    if num > 0
+      console.log "jobPause succeeded"
+      return true
     else
-      console.warn "jobRestart: something's wrong with done: #{id}", runId, err
+      console.warn "jobPause failed"
+    return false
+
+  jobCancel: (ids, options) ->
+    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check options, Match.Optional
+      antecedents: Match.Optional Boolean
+      dependents: Match.Optional Boolean
+    options ?= {}
+    options.antecedents ?= true
+    options.dependents ?= true
+    if ids instanceof Meteor.Collection.ObjectID
+      ids = [ids]
+    return false if ids.length is 0
+    time = new Date()
+    num = @update(
+      {
+        _id:
+          $in: ids
+        status:
+          $in: Job.jobStatusCancellable
+      }
+      {
+        $set:
+          status: "cancelled"
+          runId: null
+          progress:
+            completed: 0
+            total: 1
+            percent: 0
+          updated: time
+        $push:
+          log:
+            time: time
+            runId: null
+            level: 'warning'
+            message: "Job cancelled"
+      }
+      {
+        multi: true
+      }
+    )
+    # Cancel the entire tree of dependents
+    cancelIds = idsOfDeps.bind(@) ids, options.antecedents, options.dependents, Job.jobStatusCancellable
+
+    depsCancelled = false
+    if cancelIds.length > 0
+      depsCancelled = serverMethods.jobCancel.bind(@)(cancelIds, options)
+
+    if num > 0 or depsCancelled
+      console.log "jobCancel succeeded"
+      return true
+    else
+      console.warn "jobCancel failed"
+    return false
+
+  jobRestart: (ids, options) ->
+    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check options, Match.Optional
+      retries: Match.Optional(Match.Where validIntGTEOne)
+      antecedents: Match.Optional Boolean
+      dependents: Match.Optional Boolean
+    options ?= {}
+    options.retries ?= 1
+    options.dependents ?= true
+    options.antecedents ?= true
+    if ids instanceof Meteor.Collection.ObjectID
+      ids = [ids]
+    return false if ids.length is 0
+    console.log "Restarting: #{ids}"
+    time = new Date()
+    num = @update(
+      {
+        _id:
+          $in: ids
+        status:
+          $in: Job.jobStatusRestartable
+      }
+      {
+        $set:
+          status: "waiting"
+          progress:
+            completed: 0
+            total: 1
+            percent: 0
+          updated: time
+        $inc:
+          retries: options.retries
+        $push:
+          log:
+            time: time
+            runId: null
+            level: 'info'
+            message: "Job Restarted"
+      }
+      {
+        multi: true
+      }
+    )
+    # Restart the entire tree of dependents
+    restartIds = idsOfDeps.bind(@) ids, options.antecedents, options.dependents, Job.jobStatusRestartable
+
+    depsRestarted = false
+    if restartIds.length > 0
+      depsRestarted = serverMethods.jobRestart.bind(@)(restartIds, options)
+
+    if num > 0 or depsRestarted
+      console.log "jobRestart succeeded"
+      return true
+    else
+      console.warn "jobRestart failed"
     return false
 
   # Job creator methods

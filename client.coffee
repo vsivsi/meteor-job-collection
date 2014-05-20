@@ -18,6 +18,10 @@ if Meteor.isClient
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
 
+      @logStream = options.logStream ? false
+
+      Meteor.methods(@_generateMethods share.serverMethods)
+
     createJob: (params...) -> new Job @root, params...
 
     getJob: (params...) -> Job.getJob @root, params...
@@ -35,3 +39,23 @@ if Meteor.isClient
     jobStatusPausable: Job.jobStatusPausable
     jobStatusRemovable: Job.jobStatusRemovable
     jobStatusRestartable: Job.jobStatusRestartable
+
+    _method_wrapper: (method, func) ->
+
+      toLog = (userId, message) =>
+        if @logStream
+          console.log "#{new Date()}, #{userId}, #{method}, #{message}\n"
+
+      # Return the wrapper function that the Meteor method will actually invoke
+      return (params...) ->
+        user = this.userId ? "[UNAUTHENTICATED]"
+        toLog user, "params: " + JSON.stringify(params)
+        retval = func(params...)
+        toLog user, "returned: " + JSON.stringify(retval)
+        return retval
+
+    _generateMethods: (methods) ->
+      methodsOut = {}
+      for methodName, methodFunc of methods
+        methodsOut["#{root}_#{methodName}"] = @_method_wrapper(methodName, methodFunc.bind(@))
+      return methodsOut

@@ -275,7 +275,7 @@ serverMethods =
         _id:
           $in: ids
         status:
-          $in: ["ready", "waiting"]
+          $in: Job.jobStatusPausable
       }
       {
         $set:
@@ -291,34 +291,48 @@ serverMethods =
         multi: true
       }
     )
-    unless num is ids.length
-      num += @update(
-        {
-          _id:
-            $in: ids
-          status: "paused"
-          updated:
-            $ne: time
-        }
-        {
-          $set:
-            status: "waiting"
-            updated: time
-          $push:
-            log:
-              time: time
-              runId: null
-              message: "Job Unpaused"
-        }
-        {
-          multi: true
-        }
-      )
     if num > 0
       console.log "jobPause succeeded"
       return true
     else
       console.warn "jobPause failed"
+    return false
+
+  jobResume: (ids, options) ->
+    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check options, Match.Optional {}
+    options ?= {}
+    if ids instanceof Meteor.Collection.ObjectID
+      ids = [ids]
+    return false if ids.length is 0
+    time = new Date()
+    num = @update(
+      {
+        _id:
+          $in: ids
+        status: "paused"
+        updated:
+          $ne: time
+      }
+      {
+        $set:
+          status: "waiting"
+          updated: time
+        $push:
+          log:
+            time: time
+            runId: null
+            message: "Job Resumed"
+      }
+      {
+        multi: true
+      }
+    )
+    if num > 0
+      console.log "jobResume succeeded"
+      return true
+    else
+      console.warn "jobResume failed"
     return false
 
   jobCancel: (ids, options) ->

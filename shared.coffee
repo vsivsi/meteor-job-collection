@@ -639,8 +639,12 @@ serverMethods =
     check id, Meteor.Collection.ObjectID
     check runId, Meteor.Collection.ObjectID
     check err, String
-    check options, Match.Optional {}
+    check options, Match.Optional
+      fatal: Match.Optional Boolean
+
     options ?= {}
+    options.fatal ?= false
+
     if id and runId
       time = new Date()
       doc = @findOne(
@@ -662,7 +666,7 @@ serverMethods =
       unless doc?
         console.warn "Running job not found", id, runId
         return false
-      newStatus = if doc.retries > 0 then "waiting" else "failed"
+      newStatus = if (doc.retries > 0 and not options.fatal) then "waiting" else "failed"
       num = @update(
         {
           _id: id
@@ -683,7 +687,7 @@ serverMethods =
               time: time
               runId: runId
               level: if newStatus is 'failed' then 'danger' else 'warning'
-              message: "Job Failed with Error #{err}"
+              message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err}"
         }
       )
       if newStatus is "failed" and num is 1

@@ -456,11 +456,12 @@ serverMethods =
       num = @update(
         {
           _id: doc._id
-          status: { $in: Job.jobStatusPausable }
+          status: { $in: Job.jobStatusSavable }
           runId: null
         }
         {
           $set:
+            status: "waiting"
             data: doc.data
             retries: doc.retries
             retryWait: doc.retryWait

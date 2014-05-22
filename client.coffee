@@ -53,6 +53,7 @@ if Meteor.isClient
     jobStatuses: Job.jobPriorities
     jobStatusCancellable: Job.jobStatusCancellable
     jobStatusPausable: Job.jobStatusPausable
+    jobStatusSavable: Job.jobStatusSavable
     jobStatusRemovable: Job.jobStatusRemovable
     jobStatusRestartable: Job.jobStatusRestartable
 

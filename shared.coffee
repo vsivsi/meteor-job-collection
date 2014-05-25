@@ -39,8 +39,10 @@ validJobDoc = () ->
   type: String
   status: Match.Where validStatus
   data: Object
+  result: Match.Optional Object
   priority: Match.Integer
   depends: [ Meteor.Collection.ObjectID ]
+  resolved: [ Meteor.Collection.ObjectID ]
   after: Date
   updated: Date
   log: Match.Optional validLog()
@@ -98,6 +100,7 @@ rerun_job = (doc, repeat = doc.repeats - 1, wait = doc.repeatWait) ->
   runId = doc.runId
   time = new Date()
   delete doc._id
+  delete doc.result
   doc.runId = null
   doc.status = "waiting"
   doc.retries = doc.retries + doc.retried
@@ -641,12 +644,12 @@ serverMethods =
 
     return false
 
-  jobDone: (id, runId, options) ->
+  jobDone: (id, runId, result, options) ->
     check id, Meteor.Collection.ObjectID
     check runId, Meteor.Collection.ObjectID
+    check result, Object
     check options, Match.Optional {}
     options ?= {}
-
     time = new Date()
     doc = @findOne(
       {
@@ -675,6 +678,7 @@ serverMethods =
       {
         $set:
           status: "completed"
+          result: result
           progress:
             completed: 1
             total: 1
@@ -701,6 +705,7 @@ serverMethods =
           $pull:
             depends: id
           $push:
+            resolved: id
             log:
               time: time
               runId: null

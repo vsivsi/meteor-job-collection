@@ -92,6 +92,40 @@ idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
       dependsIds.push d._id unless d._id in dependsIds
   return dependsIds
 
+rerun_job = (doc, repeat = doc.repeats - 1, wait = doc.repeatWait) ->
+  # Repeat? if so, make a new job from the old one
+  id = doc._id
+  runId = doc.runId
+  time = new Date()
+  delete doc._id
+  doc.runId = null
+  doc.status = "waiting"
+  doc.retries = doc.retries + doc.retried
+  doc.retried = 0
+  doc.repeats = repeat
+  doc.repeated = doc.repeated + 1
+  doc.updated = time
+  doc.progress =
+    completed: 0
+    total: 1
+    percent: 0
+  doc.log = [
+    time: time
+    runId: null
+    level: 'info'
+    message: "Repeating job #{id} from run #{runId}"
+  ]
+  doc.after = new Date(time.valueOf() + wait)
+  if jobId = @insert doc
+    return jobId
+  else
+    console.warn "Job rerun/repeat failed to reschedule!", id, runId
+  return null
+
+####################################
+# Define Meteor.methods
+####################################
+
 serverMethods =
   # Job manager methods
 
@@ -449,19 +483,23 @@ serverMethods =
 
   jobSave: (doc, options) ->
     check doc, validJobDoc()
-    check options, Match.Optional {}
+    check options, Match.Optional
+      cancelRepeats: Match.Optional Boolean
+    check doc.status, Match.Where (v) ->
+      Match.test(v, String) and v in [ 'waiting', 'paused' ]
     options ?= {}
+    options.cancelRepeats ?= true
     time = new Date()
     if doc._id
       num = @update(
         {
           _id: doc._id
-          status: { $in: Job.jobStatusSavable }
+          status: 'paused'
           runId: null
         }
         {
           $set:
-            status: "waiting"
+            status: 'waiting'
             data: doc.data
             retries: doc.retries
             retryWait: doc.retryWait
@@ -476,7 +514,7 @@ serverMethods =
               time: time
               runId: null
               level: 'info'
-              message: "Job Resubmitted"
+              message: 'Job Resubmitted'
         }
       )
       if num
@@ -484,7 +522,7 @@ serverMethods =
       else
         return null
     else
-      if doc.repeats is Job.forever
+      if doc.repeats is Job.forever and options.cancelRepeats
         # If this is unlimited repeating job, then cancel any existing jobs of the same type
         @find(
           {
@@ -498,6 +536,7 @@ serverMethods =
         runId: null
         level: 'info'
         message: "Job Submitted"
+
       return @insert doc
 
   # Worker methods
@@ -572,102 +611,108 @@ serverMethods =
       console.warn "jobLog failed"
     return false
 
+  jobRerun: (id, options) ->
+    check id, Meteor.Collection.ObjectID
+    check options, Match.Optional
+      repeat: Match.Optional(Match.Where validIntGTEZero)
+      wait: Match.Optional(Match.Where validIntGTEZero)
+
+    options ?= {}
+    options.repeat ?= 0
+    options.wait ?= 0
+
+    doc = @findOne(
+      {
+        _id: id
+        status: "completed"
+      }
+      {
+        fields:
+          log: 0
+          progress: 0
+          updated: 0
+          after: 0
+          status: 0
+      }
+    )
+
+    if doc?
+      return rerun_job.bind(@) doc, options.repeat, options.wait
+
+    return false
+
   jobDone: (id, runId, options) ->
     check id, Meteor.Collection.ObjectID
     check runId, Meteor.Collection.ObjectID
     check options, Match.Optional {}
     options ?= {}
-    if id and runId
-      time = new Date()
-      doc = @findOne(
+
+    time = new Date()
+    doc = @findOne(
+      {
+        _id: id
+        runId: runId
+        status: "running"
+      }
+      {
+        fields:
+          log: 0
+          progress: 0
+          updated: 0
+          after: 0
+          status: 0
+      }
+    )
+    unless doc?
+      console.warn "Running job not found", id, runId
+      return false
+    num = @update(
+      {
+        _id: id
+        runId: runId
+        status: "running"
+      }
+      {
+        $set:
+          status: "completed"
+          progress:
+            completed: 1
+            total: 1
+            percent: 100
+          updated: time
+        $push:
+          log:
+            time: time
+            runId: runId
+            message: "Job Completed Successfully"
+      }
+    )
+    if num is 1
+      if doc.repeats > 0
+        jobId = rerun_job.bind(@) doc
+
+      # Resolve depends
+      n = @update(
         {
-          _id: id
-          runId: runId
-          status: "running"
+          depends:
+            $all: [ id ]
         }
         {
-          fields:
-            log: 0
-            progress: 0
-            updated: 0
-            after: 0
-            runId: 0
-            status: 0
-        }
-      )
-      unless doc?
-        console.warn "Running job not found", id, runId
-        return false
-      num = @update(
-        {
-          _id: id
-          runId: runId
-          status: "running"
-        }
-        {
-          $set:
-            status: "completed"
-            progress:
-              completed: 1
-              total: 1
-              percent: 100
-            updated: time
+          $pull:
+            depends: id
           $push:
             log:
               time: time
-              runId: runId
-              message: "Job Completed Successfully"
+              runId: null
+              level: 'info'
+              message: "Dependency resolved for #{id} by #{runId}"
         }
       )
-      if num is 1
-        if doc.repeats > 0
-        # Repeat? if so, make a new job from the old one
-          delete doc._id
-          doc.runId = null
-          doc.status = "waiting"
-          doc.retries = doc.retries + doc.retried
-          doc.retried = 0
-          doc.repeats = doc.repeats - 1
-          doc.repeated = doc.repeated + 1
-          doc.updated = time
-          doc.progress =
-            completed: 0
-            total: 1
-            percent: 0
-          doc.log = [
-            time: time
-            runId: null
-            level: 'info'
-            message: "Repeating job #{id} from run #{runId}"
-          ]
-          doc.after = new Date(time.valueOf() + doc.repeatWait)
-          jobId = @insert doc
-          unless jobId
-            console.warn "Repeating job failed to reschedule!", id, runId
-        # Resolve depends
-        n = @update(
-          {
-            depends:
-              $all: [ id ]
-          }
-          {
-            $pull:
-              depends: id
-            $push:
-              log:
-                time: time
-                runId: null
-                level: 'info'
-                message: "Dependency resolved for #{id} by #{runId}"
-          }
-        )
-        console.log "Job #{id} Resolved #{n} depends"
-        console.log "jobDone succeeded"
-        return true
-      else
-        console.warn "jobDone failed"
+      console.log "Job #{id} Resolved #{n} depends"
+      console.log "jobDone succeeded"
+      return true
     else
-      console.warn "jobDone: something's wrong with done: #{id}", runId
+      console.warn "jobDone failed"
     return false
 
   jobFail: (id, runId, err, options) ->

@@ -94,7 +94,7 @@ idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
       dependsIds.push d._id unless d._id in dependsIds
   return dependsIds
 
-rerun_job = (doc, repeat = doc.repeats - 1, wait = doc.repeatWait) ->
+rerun_job = (doc, repeats = doc.repeats - 1, wait = doc.repeatWait) ->
   # Repeat? if so, make a new job from the old one
   id = doc._id
   runId = doc.runId
@@ -104,8 +104,10 @@ rerun_job = (doc, repeat = doc.repeats - 1, wait = doc.repeatWait) ->
   doc.runId = null
   doc.status = "waiting"
   doc.retries = doc.retries + doc.retried
+  doc.retries = Job.forever if doc.retries > Job.forever
   doc.retried = 0
-  doc.repeats = repeat
+  doc.repeats = repeats
+  doc.repeats = Job.forever if doc.repeats > Job.forever
   doc.repeated = doc.repeated + 1
   doc.updated = time
   doc.progress =
@@ -379,7 +381,7 @@ serverMethods =
       dependents: Match.Optional Boolean
     options ?= {}
     options.antecedents ?= true
-    options.dependents ?= true
+    options.dependents ?= false
     if ids instanceof Meteor.Collection.ObjectID
       ids = [ids]
     return false if ids.length is 0
@@ -433,7 +435,8 @@ serverMethods =
       dependents: Match.Optional Boolean
     options ?= {}
     options.retries ?= 1
-    options.dependents ?= true
+    options.retries = Job.forever if options.retries > Job.forever
+    options.dependents ?= false
     options.antecedents ?= true
     if ids instanceof Meteor.Collection.ObjectID
       ids = [ids]
@@ -492,6 +495,8 @@ serverMethods =
       Match.test(v, String) and v in [ 'waiting', 'paused' ]
     options ?= {}
     options.cancelRepeats ?= true
+    doc.repeats = Job.forever if doc.repeats > Job.forever
+    doc.retries = Job.forever if doc.retries > Job.forever
     time = new Date()
     if doc._id
       num = @update(
@@ -617,11 +622,12 @@ serverMethods =
   jobRerun: (id, options) ->
     check id, Meteor.Collection.ObjectID
     check options, Match.Optional
-      repeat: Match.Optional(Match.Where validIntGTEZero)
+      repeats: Match.Optional(Match.Where validIntGTEZero)
       wait: Match.Optional(Match.Where validIntGTEZero)
 
     options ?= {}
-    options.repeat ?= 0
+    options.repeats ?= 0
+    options.repeats = Job.forever if options.repeats > Job.forever
     options.wait ?= 0
 
     doc = @findOne(
@@ -640,7 +646,7 @@ serverMethods =
     )
 
     if doc?
-      return rerun_job.bind(@) doc, options.repeat, options.wait
+      return rerun_job.bind(@) doc, options.repeats, options.wait
 
     return false
 

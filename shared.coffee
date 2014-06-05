@@ -26,7 +26,7 @@ validLogLevel = (v) ->
   Match.test(v, String) and v in Job.jobLogLevels
 
 validLog = () ->
-  [ { time: Date, runId: Match.OneOf(Meteor.Collection.ObjectID, null), level: Match.Where validLogLevel, message: String } ]
+  [ { time: Date, runId: Match.OneOf(Meteor.Collection.ObjectID, null), level: Match.Where(validLogLevel), message: String } ]
 
 validProgress = () ->
   completed: Match.Where(validNumGTEZero)

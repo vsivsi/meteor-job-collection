@@ -208,11 +208,33 @@ Load `http://localhost:3000/` and the tests should run in your browser and on th
 
 ## API
 
-### jc = new JobCollection
+### jc = new jobCollection([name], [options])
+#### Creates a new jobCollection. - Server and Client
 
-## Job document data models
+**TBD**
 
-The definitions below use a slight shorthand of the Meteor [Match patterns](http://docs.meteor.com/#matchpatterns) to describe the valid structure of a job document. As a user of `jobCollection` this is mostly for your information because jobs are automatically built and maintained by the package.
+### jc.promote([milliseconds])
+#### Sets time between checking for delayed jobs that are ready - Server only
+
+Default: 15000, (15 seconds)
+
+### jc.makeJob(jobDoc)
+#### Make a Job object from a jobCollection document - Server or Client
+
+```js
+doc = jc.findOne({});
+if (doc) {
+   job = jc.makeJob('jobQueue', doc);
+}
+```
+
+
+
+## Advanced topics
+
+### Job document data models
+
+The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of `jobCollection` this is mostly for your information because jobs are automatically built and maintained by the package.
 
 ```js
 validStatus = (

@@ -151,7 +151,7 @@ ddp.connect(function (err) {
             } else {
                job.done();
             }
-            cb(); // Be sure to invoke the callback when this job has been completed or failed.
+            cb(); // Be sure to invoke the callback when work on this job has finished
          });
       });
    });
@@ -177,7 +177,7 @@ Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your p
 The package exposes a global object `jobCollection` on both client and server.
 
 
-**NOTE** Sample app and tests are not implemented yet!
+**NOTE!** Sample app and tests mentioned below are not implemented yet!
 
 If you'd like to try out the sample app, you can clone the repo from github:
 
@@ -202,9 +202,83 @@ To run tests (using Meteor tiny-test) run from within the `jobCollection` subdir
 
 Load `http://localhost:3000/` and the tests should run in your browser and on the server.
 
+## Use
 
+### Security
 
+## API
 
+### jc = new JobCollection
 
+## Job document data models
 
+The definitions below use a slight shorthand of the Meteor [Match patterns](http://docs.meteor.com/#matchpatterns) to describe the valid structure of a job document. As a user of `jobCollection` this is mostly for your information because jobs are automatically built and maintained by the package.
 
+```js
+validStatus = (
+   Match.test(v, String) &&
+   (v in [
+      'waiting',
+      'paused',
+      'ready',
+      'running',
+      'failed',
+      'cancelled',
+      'completed'
+   ])
+);
+
+validLogLevel = (
+   Match.test(v, String) &&
+   (v in [
+      'info',
+      'success',
+      'warning',
+      'danger'
+   ])
+);
+
+validLog = [{
+      time:    Date,
+      runId:   Match.OneOf(
+                  Meteor.Collection.ObjectID, null
+               ),
+      level:   Match.Where(validLogLevel),
+      message: String
+}];
+
+validProgress = {
+  completed: Match.Where(validNumGTEZero),
+  total:     Match.Where(validNumGTEZero),
+  percent:   Match.Where(validNumGTEZero)
+};
+
+validJobDoc = {
+   _id:       Match.Optional(
+                 Match.OneOf(
+                    Meteor.Collection.ObjectID,
+                    null
+              )),
+  runId:      Match.OneOf(
+                 Meteor.Collection.ObjectID,
+                 null
+              ),
+  type:       String,
+  status:     Match.Where(validStatus),
+  data:       Object
+  result:     Match.Optional(Object),
+  priority:   Match.Integer,
+  depends:    [ Meteor.Collection.ObjectID ],
+  resolved:   [ Meteor.Collection.ObjectID ],
+  after:      Date,
+  updated:    Date,
+  log:        Match.Optional(validLog()),
+  progress:   validProgress(),
+  retries:    Match.Where(validNumGTEZero),
+  retried:    Match.Where(validNumGTEZero),
+  retryWait:  Match.Where(validNumGTEZero),
+  repeats:    Match.Where(validNumGTEZero),
+  repeated:   Match.Where(validNumGTEZero),
+  repeatWait: Match.Where(validNumGTEZero)
+};
+```

@@ -35,7 +35,17 @@ if Meteor.isServer
                                 @logStream.end? and typeof @logStream.end is 'function'
         throw new Error "logStream must be a valid writable node.js Stream"
 
-      @permissions = options.permissions ? { allow: true, deny: false }
+      unless options.permissions
+        @permissions = { allow: false, deny: true }
+      else if options.permissions is true
+        @permissions = { allow: true, deny: false }
+      else
+        @permissions = options.permissions
+
+      unless typeof options.permissions is 'object' and
+             ( options.permissions.allow? or
+               options.permissions.deny? )
+        throw new Error 'options.permissions is invalid. Must be Boolean or an object with allow and/or deny attributes'
 
       Meteor.methods(@_generateMethods share.serverMethods)
 

@@ -11,33 +11,32 @@ It solves the following problems:
 *    Moving computationally expensive jobs out of the Meteor's single threaded event-loop
 *    Scheduling jobs to run (and repeat) in the future, persistenting across server restarts
 *    Permitting work on big jobs to run anywhere, not just on the machine running Meteor
-*    Track jobs and their progress, and automatically reschedule failed jobs to retry
-*    Easily build a management UI for all of the above using Meteor's reactivity and other strengths
+*    Track jobs and their progress, and automatically retry failed jobs
+*    Easily build a admin UI to manage all of the above using Meteor's reactivity and other goodies
 
 ### Quick example
 
-The code snippets below show a Meteor server that creates a jobCollection, a Meteor client that subscribes to it and creates a new job, and a pure node.js program that can run anywhere an work on such jobs.
+The code snippets below show a Meteor server that creates a `jobCollection`, a Meteor client that subscribes to it and creates a new job, and a pure node.js program that can run *anywhere* and work on such jobs.
 
 ```js
 ///////////////////
 // Server
-
 if (Meteor.isServer) {
 
    myJobs = jobCollection('myJobQueue', {
-      // Set remote access permission
+      // Set remote access permissions
+      // much finer grained control is possible!
       permissions: {
          allow: function (userId, method) {
             // Allow Client/Remote access for all methods...
             if userId
-               return true  // ...to any authenticated user
+               return true  // ...to any authenticated user!
             return false
          }
       }
    });
 
    Meteor.startup(function () {
-
       // Normal Meteor publish call, the server always
       // controls what each client can see
       Meteor.publish('allJobs', function () {
@@ -46,26 +45,25 @@ if (Meteor.isServer) {
 
       // Start the myJobs queue running
       myJobs.startJobs();
-
    }
 }
 ```
 
-Alright, the server is set-up and running, now let's add some client code.
+Alright, the server is set-up and running, now let's add some client code to create/manage a job.
 
 ```js
 ///////////////////
 // Client
-
 if (Meteor.isClient) {
 
    myJobs = jobCollection('myJobQueue');
-
    Meteor.subscribe('allJobs');
 
+   // Because of the server settings, the code below will only work
+   // if the client is authenticated.
+   // On the server all of it would run unconditionally
+
    // Create a job:
-   // This will only run if client is authenticated!
-   // On the server all ofthe code below would run unconditionally
    job = myJobs.createJob('sendEmail', // type of job
       // Job data, defined by you for type of job
       // whatever info is needed to complete it.
@@ -94,19 +92,20 @@ if (Meteor.isClient) {
    // Or a job can be fetched from the server by _id
    myJobs.getJob(_id, function (err, job) {
       // job is a Job object corresponding to _id
-      // assuming no error and that _id exists
+      // assuming no error and that _id exists in myJobs
 
-      // With a job object, you can remotely control
-      // the job's status (subject to server allow/deny rules):
+      // With a job object, you can remotely control the
+      // job's status (subject to server allow/deny rules)
+      // Here are a few...
+      job.pause();
       job.cancel();
-      job.restart();
       job.remove();
       // etc...
    });
 }
 ```
 
-**Q:** Okay, that's cool, but where does the work get done?
+**Q:** Okay, that's cool, but where does the actual work get done?
 **A:** Anywhere you want!
 
 Here's a pure node.js program that can get work from the server above and "get 'er done."
@@ -153,6 +152,8 @@ ddp.connect(function (err) {
   });
 });
 ```
+
+Code very similar to the above (without all of the DDP setup) can run on the Meteor server or even a Meteor client.
 
 ### Design
 

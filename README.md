@@ -6,13 +6,13 @@
 
 `jobCollection` is a powerful and easy to use job manager designed and built for Meteor.js
 
-It solves the following problems:
+It solves the following problems (and more):
 
-*    Moving computationally expensive jobs out of the Meteor's single threaded event-loop
-*    Scheduling jobs to run (and repeat) in the future, persistenting across server restarts
-*    Permitting work on big jobs to run anywhere, not just on the machine running Meteor
+*    Move computationally expensive jobs out of the Meteor's single threaded event-loop
+*    Schedule jobs to run (and repeat) in the future, persistenting across server restarts
+*    Permit work on big jobs to run anywhere, not just on the machine running Meteor
 *    Track jobs and their progress, and automatically retry failed jobs
-*    Easily build a admin UI to manage all of the above using Meteor's reactivity and other goodies
+*    Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodies
 
 ### Quick example
 
@@ -80,7 +80,7 @@ if (Meteor.isClient) {
       .retry({ retries: 5,
                wait: 15*60*1000 })  // 15 minutes between attempts
       .delay(60*60*1000)            // Wait an hour before first try
-      .save()                       // Commit it to the server
+      .save();                      // Commit it to the server
 
    // Now that it's saved, this job will appear as a document
    // in the myJobs Collection, and will reactively update as
@@ -91,12 +91,10 @@ if (Meteor.isClient) {
 
    // Or a job can be fetched from the server by _id
    myJobs.getJob(_id, function (err, job) {
-      // job is a Job object corresponding to _id
-      // assuming no error and that _id exists in myJobs
-
+      // If successful, job is a Job object corresponding to _id
       // With a job object, you can remotely control the
       // job's status (subject to server allow/deny rules)
-      // Here are a few...
+      // Here are some examples:
       job.pause();
       job.cancel();
       job.remove();
@@ -114,28 +112,32 @@ Powerfully, this can be run ***anywhere*** that has node.js and can connect to t
 ```js
 ///////////////////
 // node.js Worker
-
 var DDP = require('ddp');
 var DDPlogin = require('ddp-login');
 var Job = require('meteor-job')
 
 // Job here has essentially the same API as jobCollection on Meteor
-// In fact, Meteor jobCollection is built on top of the node-job npm package
+// In fact, Meteor jobCollection is built on top of the 'node-job' npm package!
 
+// Setup the DDP connection
 var ddp = new DDP({
    host: "meteor.mydomain.com",
    port: 3000,
    use_ejson: true
 });
 
+// Connect JOb with this DDP session
 Job.setDDP(ddp);
 
+// Open the DDP connection
 ddp.connect(function (err) {
    if (err) throw err;
-   // This will prompt email/password if an authToken
-   // isn't available in the process environment
+   // Call below will prompt for email/password if an
+   // authToken isn't available in the process environment
    DDPlogin(ddp, function (err, token) {
       if (err) throw err;
+      // We're in!
+      // Create a worker to get sendMail jobs from 'myJobQueue'
       workers = Job.processJobs('myJobQueue', 'sendEmail', function (job, cb) {
          // This will only be called if a 'sendEmail' job is obtained
          email = job.data.email // Only one email per job
@@ -149,7 +151,7 @@ ddp.connect(function (err) {
             cb(); // Be sure to invoke the callback when this job has been completed or failed.
          });
       });
-  });
+   });
 });
 ```
 

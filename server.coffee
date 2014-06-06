@@ -31,6 +31,9 @@ if Meteor.isServer
       @promote()
 
       @logStream = options.logStream ? null
+      unless not @logStream? or @logStream.write? and typeof @logStream.write is 'function' and
+                                @logStream.end? and typeof @logStream.end is 'function'
+        throw new Error "logStream must be a valid writable node.js Stream"
 
       @permissions = options.permissions ? { allow: true, deny: false }
 

@@ -161,6 +161,8 @@ serverMethods =
         )
         console.warn "Failing #{cursor.count()} jobs on queue stop."
         cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
+        if @logStream? # Shutting down closes the logStream!
+          @logStream.end()
       options.timeout
     )
     return true

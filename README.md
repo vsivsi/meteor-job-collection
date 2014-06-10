@@ -289,7 +289,7 @@ In addition to the above groups, it is possible to write allow/deny rules specif
 jc.allow({
   jobSave: function (userId, method, params) {
               if ((userId === emailCreator) &&
-                  (params[0].type === 'email')) { # params[0] is the new job doc
+                  (params[0].type === 'email')) { // params[0] is the new job doc
                   return true;
               }
               return false;
@@ -325,16 +325,29 @@ if (doc) {
 
 ## DDP Method reference
 
-```
-startJobs(options)
-options : Match.Optional({})
-returns Boolean
+Each `jobCollection` you create on a server causes 15 Meteor methods to be defined. The method names are prefaced with the name of the jobCollection (e.g. "myJobs_getWork") so that multiple jobCollections on a server will not interfere with one another. Below you will find the Method API reference.
 
-stopJobs(options)
-options: Match.Optional({
-  timeout: Match.Optional(Match.Where(validIntGTEOne))
-  })
-returns Boolean
+### startJobs(options)
+#### Start running the jobCollection
+
+*    options -- No options currently used
+     Match.Optional({})
+
+Returns: `Boolean` - Success or failure
+
+### stopJobs(options)
+#### Shutdown the jobCollection
+
+*    options -- Supports the following options:
+     Match.Optional({
+       timeout: Match.Optional(Match.Where(validIntGTEOne))
+     })
+
+     * timeout -- Time in ms until all outstanding jobs will be marked as failed.
+
+Returns: `Boolean` - Success or failure
+
+```
 
 getJob(ids, options)
     ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])

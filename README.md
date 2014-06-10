@@ -25,7 +25,7 @@ if (Meteor.isServer) {
 
    myJobs = jobCollection('myJobQueue');
    myJobs.allow({
-    # Grant full permission to any authenticated user
+    // Grant full permission to any authenticated user
     admin: function (userId, method, params) { return (userId ? true : false); }
    });
 
@@ -219,7 +219,7 @@ jc = jobCollection('defaultJobCollection');
 You can log everything that happens to a jobCollection on the server by providing any valid writable stream. You may only call this once, unless you first call `jc.shutdown()`, which will automatically close the existing `logStream`.
 
 ```js
-# Log everything to stdout
+// Log everything to stdout
 jc.setLogStream(process.stdout);
 ```
 
@@ -249,9 +249,9 @@ By default no remote operations are allowed, and in this configuration, jobColle
 The opposite extreme is to allow any remote client to perform any action. Obviously this is totally insecure, but is perhaps valuable for early development stages on a local firewalled network.
 
 ```js
-# Allow any remote client (Meteor client or node.js application) to perform any action
+// Allow any remote client (Meteor client or node.js application) to perform any action
 jc.allow({
-  # The "admin" below represents the grouping of all remote methods
+  // The "admin" below represents the grouping of all remote methods
   admin: function (userId, method, params) { return true; };
 });
 ```
@@ -259,17 +259,17 @@ jc.allow({
 If this seems a little reckless (and it should), then here is how you can grant admin rights specifically to an single authenticated Meteor userId:
 
 ```js
-# Allow any remote client (Meteor client or node.js application) to perform any action
+// Allow any remote client (Meteor client or node.js application) to perform any action
 jc.allow({
-  # Assume "adminUserId" contains the Meteor userId string of an admin super-user.
-  # The array below is assumed to be an array of userIds
+  // Assume "adminUserId" contains the Meteor userId string of an admin super-user.
+  // The array below is assumed to be an array of userIds
   admin: [ adminUserId ]
 });
 
-# The array notation in the above code is a shortcut for:
+// The array notation in the above code is a shortcut for:
 var adminUsers = [ adminUserId ];
 jc.allow({
-  # Assume "adminUserId" contains the Meteor userId string of an admin super-user.
+  // Assume "adminUserId" contains the Meteor userId string of an admin super-user.
   admin: function (userId, method, params) { return (userId in adminUsers); };
 });
 ```
@@ -285,7 +285,7 @@ All remote methods affecting the jobCollection fall into at least one of the fou
 In addition to the above groups, it is possible to write allow/deny rules specific to each `jobCollection` DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to given permission to create new "email" jobs to a single userId:
 
 ```js
-# Assumes emailCreator contains a Meteor userId
+// Assumes emailCreator contains a Meteor userId
 jc.allow({
   jobSave: function (userId, method, params) {
               if ((userId === emailCreator) &&
@@ -304,7 +304,7 @@ This call has the same semantic relationship with `allow()` as it does in Meteor
 
 ```js
 jc.deny({
-  # The "admin" below represents the grouping of all remote methods
+  // The "admin" below represents the grouping of all remote methods
   admin: function (userId, method, params) { return false; };
 });
 ```

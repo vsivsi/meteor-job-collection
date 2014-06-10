@@ -163,6 +163,7 @@ serverMethods =
         cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
         if @logStream? # Shutting down closes the logStream!
           @logStream.end()
+          @logStream = null
       options.timeout
     )
     return true

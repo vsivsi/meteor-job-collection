@@ -331,20 +331,20 @@ Each `jobCollection` you create on a server causes 15 Meteor methods to be defin
 #### Start running the jobCollection
 
 *    options -- No options currently used
-
+```
      Match.Optional({})
-
+```
 Returns: `Boolean` - Success or failure
 
 ### stopJobs(options)
 #### Shut down the jobCollection
 
 *    options -- Supports the following options:
-
+```
      Match.Optional({
        timeout: Match.Optional(Match.Where(validIntGTEOne))
      })
-
+```
      * timeout -- Time in ms until all outstanding jobs will be marked as failed.
 
 Returns: `Boolean` - Success or failure

@@ -1,4 +1,4 @@
-#jobCollection
+# jobCollection
 
 **NOTE:** This Package remains experimental until v0.1.0 is released, and while the API methods described here are maturing, they may still change.
 
@@ -23,17 +23,10 @@ The code snippets below show a Meteor server that creates a `jobCollection`, Met
 // Server
 if (Meteor.isServer) {
 
-   myJobs = jobCollection('myJobQueue', {
-      // Set remote access permissions
-      // much finer grained control is possible!
-      permissions: {
-         allow: function (userId, method) {
-            // Allow Client/Remote access for all methods...
-            if userId
-               return true  // ...to any authenticated user!
-            return false
-         }
-      }
+   myJobs = jobCollection('myJobQueue');
+   myJobs.allow({
+    # Grant full permission to any authenticated user
+    admin: function (userId, method, params) { return (userId ? true : false); }
    });
 
    Meteor.startup(function () {
@@ -211,12 +204,112 @@ Load `http://localhost:3000/` and the tests should run in your browser and on th
 ### jc = new jobCollection([name], [options])
 #### Creates a new jobCollection. - Server and Client
 
-**TBD**
+Creating a new `jobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`. There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
+
+For security and simplicity the traditional client allow/deny rules for Meteor collections are preset to deny all direct client `insert`, `update` and `remove` type operations on a `jobCollection`. This effectively channels all remote activity through the `jobCollection` DDP methods, which may be secured using allow/deny rules specific to `jobCollection`. See the documentation for `js.allow()` and `js.deny()` for more information.
+
+```js
+// the "new" is optional
+jc = jobCollection('defaultJobCollection');
+```
+
+### jc.setLogStream(writeStream)
+#### Sets where the jobCollection method invocation log will be written - Server only
+
+You can log everything that happens to a jobCollection on the server by providing any valid writable stream. You may only call this once, unless you first call `jc.shutdown()`, which will automatically close the existing `logStream`.
+
+```js
+# Log everything to stdout
+jc.setLogStream(process.stdout);
+```
+
+### jc.logConsole
+#### Member variable that turns on DDP method call logging to the console - Client only
+
+```js
+jc.logConsole = false  # Default. Do not log method calls to the client console
+```
 
 ### jc.promote([milliseconds])
-#### Sets time between checking for delayed jobs that are ready - Server only
+#### Sets time between checks for delayed jobs that are now ready to run - Server only
 
-Default: 15000, (15 seconds)
+`jc.promote()` may be called at any time to change the polling rate. jobCollection must poll for this operation because it is time that is changing, not the contents of the database, so there are no database updates to listen for.
+
+```js
+jc.promote(15*1000);  // Default: 15 seconds
+```
+
+### jc.allow(options)
+#### Allow remote execution of specific jobCollection methods - Server only
+
+Compared to vanilla Meteor collections, `jobCollection` has very a different set of remote methods with specific security implications. Where the `.allow()` method on a Meteor collection takes functions to grant permission for `insert`, `update` and `remove`, `jobCollection` has more functionality to secure and configure.
+
+By default no remote operations are allowed, and in this configuration, jobCollection exists only as a server-side service, with the creation, management and execution of all jobs dependent on the server.
+
+The opposite extreme is to allow any remote client to perform any action. Obviously this is totally insecure, but is perhaps valuable for early development stages on a local firewalled network.
+
+```js
+# Allow any remote client (Meteor client or node.js application) to perform any action
+jc.allow({
+  # The "admin" below represents the grouping of all remote methods
+  admin: function (userId, method, params) { return true; };
+});
+```
+
+If this seems a little reckless (and it should), then here is how you can grant admin rights specifically to an single authenticated Meteor userId:
+
+```js
+# Allow any remote client (Meteor client or node.js application) to perform any action
+jc.allow({
+  # Assume "adminUserId" contains the Meteor userId string of an admin super-user.
+  # The array below is assumed to be an array of userIds
+  admin: [ adminUserId ]
+});
+
+# The array notation in the above code is a shortcut for:
+var adminUsers = [ adminUserId ];
+jc.allow({
+  # Assume "adminUserId" contains the Meteor userId string of an admin super-user.
+  admin: function (userId, method, params) { return (userId in adminUsers); };
+});
+```
+
+In addition to the all-encompassing `admin` method group, there are three others:
+
+*    `manager` -- Managers can remotely manage the jobCollection (e.g. cancelling jobs).
+*    `creator` -- Creators can remotely make new jobs to run.
+*    `worker` -- Workers can get Jobs to work on and can update their status as work proceeds.
+
+All remote methods affecting the jobCollection fall into at least one of the four groups, and for each client-capable API method below, the group(s) it belongs to will be noted.
+
+In addition to the above groups, it is possible to write allow/deny rules specific to each `jobCollection` DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to given permission to create new "email" jobs to a single userId:
+
+```js
+# Assumes emailCreator contains a Meteor userId
+jc.allow({
+  jobSave: function (userId, method, params) {
+              if ((userId === emailCreator) &&
+                  (params[0].type === 'email')) { # params[0] is the new job doc
+                  return true;
+              }
+              return false;
+           };
+});
+```
+
+### jc.deny(options)
+#### Override allow rules - Server only
+
+This call has the same semantic relationship with `allow()` as it does in Meteor collections. If any deny rule is true, then permission for a remote method call will be denied, regardless of the status of any other allow/deny rules. This is powerful and far reaching. For example, the following code will turn off all remote access to a jobCollection (regardless of any other rules that may be in force):
+
+```js
+jc.deny({
+  # The "admin" below represents the grouping of all remote methods
+  admin: function (userId, method, params) { return false; };
+});
+```
+
+See the `allow` method above for more details.
 
 ### jc.makeJob(jobDoc)
 #### Make a Job object from a jobCollection document - Server or Client
@@ -230,9 +323,137 @@ if (doc) {
 
 
 
-## Advanced topics
+## DDP Method reference
 
-### Job document data models
+```
+startJobs(options)
+options : Match.Optional({})
+returns Boolean
+
+stopJobs(options)
+options: Match.Optional({
+  timeout: Match.Optional(Match.Where(validIntGTEOne))
+  })
+returns Boolean
+
+getJob(ids, options)
+    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check options, Match.Optional({
+      getLog: Match.Optional(Boolean)
+    })
+    options.getLog ?= false
+    if single
+      return d[0]
+    else
+      return d
+    return null
+
+getWork(type, options)
+  type: Match.OneOf(String, [ String ])
+  options: Match.Optional({
+      maxJobs: Match.Optional(Match.Where(validIntGTEOne))
+  })
+  options ?= {}
+  return [ validJobDoc() ]
+
+jobRemove(ids, options)
+    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check options, Match.Optional {}
+    returns Boolean
+
+jobResume(ids, options)
+    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    options: Match.Optional({})
+    returns Boolean
+
+jobCancel(ids, options)
+    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    options: Match.Optional({
+      antecedents: Match.Optional(Boolean)
+      dependents: Match.Optional(Boolean)
+    })
+    options ?= {}
+    options.antecedents ?= true
+    options.dependents ?= false
+    returns Boolean
+
+jobRestart(ids, options)
+    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    options: Match.Optional({
+      retries: Match.Optional(Match.Where(validIntGTEOne))
+      antecedents: Match.Optional(Boolean)
+      dependents: Match.Optional(Boolean)
+    })
+    options ?= {}
+    options.retries ?= 1
+    options.retries = Job.forever if options.retries > Job.forever
+    options.dependents ?= false
+    options.antecedents ?= true
+    returns Boolean
+
+jobSave(doc, options)
+    doc: validJobDoc()
+    options: Match.Optional({
+      cancelRepeats: Match.Optional(Boolean)
+    })
+    check doc.status, Match.Where (v) ->
+      Match.test(v, String) and v in [ 'waiting', 'paused' ]
+    options ?= {}
+    options.cancelRepeats ?= true
+    returns Meteor.Collection.ObjectID
+
+jobProgress(id, runId, completed, total, options)
+    id: Meteor.Collection.ObjectID
+    runId: Meteor.Collection.ObjectID
+    completed: Match.Where(validNumGTEZero)
+    total: Match.Where(validNumGTZero)
+    options: Match.Optional({})
+    options ?= {}
+    return Boolean or null
+
+jobLog(id, runId, message, options)
+    id: Meteor.Collection.ObjectID
+    runId: Meteor.Collection.ObjectID
+    message: String
+    options: Match.Optional({
+      level: Match.Optional(Match.Where(validLogLevel))
+    })
+    options ?= {}
+    returns Boolean
+
+jobRerun(id, options)
+    id: Meteor.Collection.ObjectID
+    options: Match.Optional({
+      repeats: Match.Optional(Match.Where(validIntGTEZero))
+      wait: Match.Optional(Match.Where(validIntGTEZero))
+    })
+    options ?= {}
+    options.repeats ?= 0
+    options.repeats = Job.forever if options.repeats > Job.forever
+    options.wait ?= 0
+    returns Boolean
+
+jobDone(id, runId, result, options)
+    id, Meteor.Collection.ObjectID
+    runId, Meteor.Collection.ObjectID
+    result, Object
+    options, Match.Optional({})
+    options ?= {}
+    returns Boolean
+
+jobFail(id, runId, err, options)
+    id: Meteor.Collection.ObjectID
+    runId: Meteor.Collection.ObjectID
+    err: String
+    options: Match.Optional({
+      fatal: Match.Optional(Boolean)
+    })
+    options ?= {}
+    options.fatal ?= false
+    returns Boolean
+```
+
+## Job document data models
 
 The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of `jobCollection` this is mostly for your information because jobs are automatically built and maintained by the package.
 

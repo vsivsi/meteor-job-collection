@@ -18,9 +18,21 @@ if Meteor.isClient
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
 
-      @logStream = options.logStream ? false
+      @logConsole = false
 
       Meteor.methods(@_generateMethods share.serverMethods)
+
+    jobLogLevels: Job.jobLogLevels
+    jobPriorities: Job.jobPriorities
+    jobStatuses: Job.jobPriorities
+    jobStatusCancellable: Job.jobStatusCancellable
+    jobStatusPausable: Job.jobStatusPausable
+    jobStatusRemovable: Job.jobStatusRemovable
+    jobStatusRestartable: Job.jobStatusRestartable
+
+    ddpMethods: Job.ddpMethods
+    ddpPermissionLevels: Job.ddpPermissionLevels
+    ddpMethodPermissions: Job.ddpMethodPermissions
 
     createJob: (params...) -> new Job @root, params...
 
@@ -48,18 +60,10 @@ if Meteor.isClient
 
     removeJobs: (params...) -> Job.removeJobs @root, params...
 
-    jobLogLevels: Job.jobLogLevels
-    jobPriorities: Job.jobPriorities
-    jobStatuses: Job.jobPriorities
-    jobStatusCancellable: Job.jobStatusCancellable
-    jobStatusPausable: Job.jobStatusPausable
-    jobStatusRemovable: Job.jobStatusRemovable
-    jobStatusRestartable: Job.jobStatusRestartable
-
     _method_wrapper: (method, func) ->
 
       toLog = (userId, message) =>
-        if @logStream
+        if @logConsole
           console.log "#{new Date()}, #{userId}, #{method}, #{message}\n"
 
       # Return the wrapper function that the Meteor method will actually invoke

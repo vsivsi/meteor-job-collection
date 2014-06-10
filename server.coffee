@@ -30,22 +30,15 @@ if Meteor.isServer
 
       @promote()
 
-      @logStream = options.logStream ? null
-      unless not @logStream? or @logStream.write? and typeof @logStream.write is 'function' and
-                                @logStream.end? and typeof @logStream.end is 'function'
-        throw new Error "logStream must be a valid writable node.js Stream"
+      @logStream = null
 
-      unless options.permissions
-        @permissions = { allow: false, deny: true }
-      else if options.permissions is true
-        @permissions = { allow: true, deny: false }
-      else
-        @permissions = options.permissions
+      @allows = {}
+      @denys = {}
 
-      unless typeof options.permissions is 'object' and
-             ( options.permissions.allow? or
-               options.permissions.deny? )
-        throw new Error 'options.permissions is invalid. Must be Boolean or an object with allow and/or deny attributes'
+      # Initialize allow/deny lists for permission levels and ddp methods
+      for level in @permissionLevels.concat @ddpMethods
+        allows[level] = []
+        denys[level] = []
 
       Meteor.methods(@_generateMethods share.serverMethods)
 
@@ -61,21 +54,22 @@ if Meteor.isServer
 
       permitted = (userId, params) =>
 
-        performTest = (test, def) =>
-          switch myTypeof test
-            when 'boolean' then test
-            when 'array' then userId in test
-            when 'function' then test userId, method
-            when 'object'
-              methodType = myTypeof test?[method]
-              switch methodType
-                when 'boolean' then test[method]
-                when 'array' then userId in test[method]
-                when 'function' then test?[method]? userId, params
-                else def
-            else def
+        performTest = (tests) =>
+          result = false
+          for test in tests when result is false
+            result = result or switch myTypeof(test)
+              when 'array' then userId in test
+              when 'function' then test(userId, method, params)
+              else false
+          return result
 
-        return performTest(@permissions.allow, true) and not performTest(@permissions.deny, false)
+        performAllTests = (allTests) =>
+          result = false
+          for t in @ddpMethodPermissions[method] when result is false
+            result = result or performTests(allTests[t])
+          return result
+
+        return performAllTests(@allows) and not performAllTests(@denys)
 
       # Return the wrapper function that the Meteor method will actually invoke
       return (params...) ->
@@ -99,11 +93,15 @@ if Meteor.isServer
 
     jobLogLevels: Job.jobLogLevels
     jobPriorities: Job.jobPriorities
-    jobStatuses: Job.jobPriorities
+    jobStatuses: Job.jobStatuses
     jobStatusCancellable: Job.jobStatusCancellable
     jobStatusPausable: Job.jobStatusPausable
     jobStatusRemovable: Job.jobStatusRemovable
     jobStatusRestartable: Job.jobStatusRestartable
+
+    ddpMethods: Job.ddpMethods
+    ddpPermissionLevels: Job.ddpPermissionLevels
+    ddpMethodPermissions: Job.ddpMethodPermissions
 
     createJob: (params...) -> new Job @root, params...
 
@@ -130,6 +128,26 @@ if Meteor.isServer
     restartJobs: (params...) -> Job.restartJobs @root, params...
 
     removeJobs: (params...) -> Job.removeJobs @root, params...
+
+    setLogStream: (writeStream = null) ->
+      if @logStream
+        throw new Error "logStream may only be set once per jobCollection startup/shutdown cycle"
+
+      @logStream = writeStream
+      unless not @logStream? or
+             @logStream.write? and
+             typeof @logStream.write is 'function' and
+             @logStream.end? and
+             typeof @logStream.end is 'function'
+        throw new Error "logStream must be a valid writable node.js Stream"
+
+    # Register application allow rules
+    allow: (allowOptions) ->
+      @allows[type].push(func) for type, func of allowOptions when type of @allows
+
+    # Register application deny rules
+    deny: (denyOptions) ->
+      @denys[type].push(func) for type, func of denyOptions when type of @denys
 
     promote: (milliseconds = 15*1000) ->
       if typeof milliseconds is 'number' and milliseconds > 1000

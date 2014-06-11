@@ -427,16 +427,16 @@ Returns: `Boolean` - Success or failure
 #### Returns a Job document corresponding to provided id
 
 *    ids -- an Id or array of Ids to get from server
-```
+     ```
      ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
-```
+     ```
 *    options -- Supports the following option:
-```
+     ```
      Match.Optional({
        getLog: Match.Optional(Boolean)
      })
-```
-*        getLog -- If true include the job log data in the returned job data. Default is false.
+     ```
+     *    getLog -- If true include the job log data in the returned job data. Default is false.
 
 Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if `ids` is a single value or an array.
 

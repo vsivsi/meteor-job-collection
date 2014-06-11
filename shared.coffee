@@ -60,7 +60,9 @@ validJobDoc = () ->
   repeatWait: Match.Where validNumGTEZero
 
 idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
-  # Cancel the entire tree of dependents
+  # Cancel the entire tree of antecedents and/or dependents
+  # Dependents: jobs that list one of the ids in their depends list
+  # Antecedents: jobs with an id listed in the depends list of one of the jobs in ids
   dependsQuery = []
   if dependents
     dependsQuery.push
@@ -386,8 +388,8 @@ serverMethods =
       antecedents: Match.Optional Boolean
       dependents: Match.Optional Boolean
     options ?= {}
-    options.antecedents ?= true
-    options.dependents ?= false
+    options.antecedents ?= false
+    options.dependents ?= true
     if ids instanceof Meteor.Collection.ObjectID
       ids = [ids]
     return false if ids.length is 0

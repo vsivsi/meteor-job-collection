@@ -446,7 +446,7 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if `ids` is a singl
     `type: Match.OneOf(String, [ String ])`
 
 * `options`
-    * `maxJobs` -- The maximum number of jobs to return, Default: 1
+    * `maxJobs` -- The maximum number of jobs to return, Default: `1`
 
     `Match.Optional({
          maxJobs: Match.Optional(Match.Where(validIntGTEOne))
@@ -468,35 +468,69 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if maxJobs > 1.
 
 Returns: `Boolean` - Success or failure
 
-jobResume(ids, options)
-    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
-    options: Match.Optional({})
-    returns Boolean
+### `jobPause(ids, options)`
+#### Pauses a job in the jobCollection, changes status to `paused` which prevents it from running
 
-jobCancel(ids, options)
-    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
-    options: Match.Optional({
-      antecedents: Match.Optional(Boolean)
-      dependents: Match.Optional(Boolean)
-    })
-    options ?= {}
-    options.antecedents ?= true
-    options.dependents ?= false
-    returns Boolean
+* `ids` -- an Id or array of Ids to remove from server
 
-jobRestart(ids, options)
-    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
-    options: Match.Optional({
-      retries: Match.Optional(Match.Where(validIntGTEOne))
-      antecedents: Match.Optional(Boolean)
-      dependents: Match.Optional(Boolean)
-    })
-    options ?= {}
-    options.retries ?= 1
-    options.retries = Job.forever if options.retries > Job.forever
-    options.dependents ?= false
-    options.antecedents ?= true
-    returns Boolean
+    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+
+* `options` -- No options currently used
+
+    `Match.Optional({})`
+
+Returns: `Boolean` - Success or failure
+
+### `jobResume(ids, options)`
+#### Resumes (unpauses) a job in the jobCollection, returns it to the `waiting` state
+
+* `ids` -- an Id or array of Ids to remove from server
+
+    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+
+* `options` -- No options currently used
+
+    `Match.Optional({})`
+
+Returns: `Boolean` - Success or failure
+
+### `jobCancel(ids, options)`
+#### Cancels a job in the jobCollection. Cancelled jobs will not run and will stop running if already running.
+
+* `ids` -- an Id or array of Ids to remove from server
+
+    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+
+* `options`
+    * `antecedents` -- If true, all jobs that this one depends upon will also be cancelled. Default: `false`
+    * `dependents` -- If true, all jobs that depend on this one will also be be cancelled. Default: `true`
+
+    `Match.Optional({
+        antecedents: Match.Optional(Boolean)
+        dependents: Match.Optional(Boolean)
+    })`
+
+Returns: `Boolean` - Success or failure
+
+### `jobRestart(ids, options)`
+#### Restarts a cancelled or failed job.
+
+* `ids` -- an Id or array of Ids to remove from server
+
+    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+
+* `options`
+    * `antecedents` -- If true, all jobs that this one depends upon will also be restarted. Default: `true`
+    * `dependents` -- If true, all jobs that depend on this one will also be be restarted. Default: `false`
+
+    `Match.Optional({
+        antecedents: Match.Optional(Boolean)
+        dependents: Match.Optional(Boolean)
+    })`
+
+Returns: `Boolean` - Success or failure
+
+
 
 jobSave(doc, options)
     doc: validJobDoc()

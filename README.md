@@ -418,7 +418,7 @@ Returns: `Boolean` - Success or failure
        timeout: Match.Optional(Match.Where(validIntGTEOne))
      })
 ```
-     * timeout -- Time in ms until all outstanding jobs will be marked as failed.
+*        timeout -- Time in ms until all outstanding jobs will be marked as failed.
 
 Returns: `Boolean` - Success or failure
 
@@ -436,7 +436,7 @@ Returns: `Boolean` - Success or failure
        getLog: Match.Optional(Boolean)
      })
 ```
-     * getLog -- If true include the job log data in the returned job data. Default is false.
+*        getLog -- If true include the job log data in the returned job data. Default is false.
 
 Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if `ids` is a single value or an array.
 

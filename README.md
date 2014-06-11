@@ -202,7 +202,7 @@ Other than the find methods mentioned above, interactions with a jobCollection o
 
 Meteor clients are automatically denied permission to directly `insert`, `update` or `remove` jobs from a jobCollection. To accomplish these types of tasks, a client must use the provided APIs, subject to permissions set by specific allow/deny rules on the jobCollection. Servers retain access to the standard `insert`, `update` or `remove` methods, but should avoid using them unless absolutely necessary, favoring the jobCollection APIs to perform various tasks.
 
-It is also possible (and highly useful!) to write your own clients outside of Meteor as vanilla node.js programs using the `meteor-job` [npm package](https://www.npmjs.org/package/meteor-job), which is actually used by jobCollection internally, and so it implements essentially identical functionality via a familiar interface.
+It is also possible (and highly useful!) to write your own clients outside of Meteor as vanilla node.js programs using the `meteor-job` [npm package](https://www.npmjs.org/package/meteor-job), which is actually used by jobCollection internally, and implements essentially identical functionality via the same interfaces.
 
 ### Security
 
@@ -212,7 +212,7 @@ For a client to have access to perform `find()` operations on a jobCollection, t
 
 Compared to vanilla Meteor collections, jobCollections have a  different set of remote methods with specific security implications. Where the allow/deny methods on a Meteor collection take functions to grant permission for `insert`, `update` and `remove`, `jobCollection` has more functionality to secure and configure.
 
-There are currently over a dozen Meteor methods defined by each jobCollection. In most cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles efficiently separate security concerns and permit you to add allow/deny rules for the functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
+There are currently over a dozen Meteor methods defined by each jobCollection. In many cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles separate security concerns and permit you to efficiently add allow/deny rules for groups of functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
 
 #### Logging
 

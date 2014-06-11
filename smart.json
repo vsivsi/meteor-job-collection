@@ -1,6 +1,6 @@
 {
   "name": "jobCollection",
-  "description": "Reactive, distributed and persistent job queuing for Meteor.js",
+  "description": "Persistent, distributed and reactive job queue for Meteor.js using MongoDB and DDP",
   "homepage": "https://github.com/vsivsi/meteor-job-collection",
   "author": "Vaughn Iverson (https://github.com/vsivsi)",
   "version": "0.0.1",

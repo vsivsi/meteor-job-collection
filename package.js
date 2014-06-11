@@ -6,7 +6,7 @@
 
 Package.describe({
   name: 'jobCollection',
-  summary: "WIP: Reactive and distributed job queue for Meteor.js using MongoDB"
+  summary: "Persistent, distributed and reactive job queue for Meteor.js using MongoDB and DDP"
 });
 
 Npm.depends({});

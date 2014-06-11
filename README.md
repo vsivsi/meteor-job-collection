@@ -400,39 +400,38 @@ These are the underlying Meteor methods that are actually invoked when a method 
 
 Each `jobCollection` you create on a server causes a number of Meteor methods to be defined. The method names are prefaced with the name of the jobCollection (e.g. "myJobs_getWork") so that multiple jobCollections on a server will not interfere with one another. Below you will find the Method API reference.
 
-### startJobs(options)
+### `startJobs(options)`
 #### Start running the jobCollection
 
-*    options -- No options currently used
-```
-     Match.Optional({})
-```
+* `options` -- No options currently used
+
+    `Match.Optional({})`
+
 Returns: `Boolean` - Success or failure
 
-### stopJobs(options)
+### `stopJobs(options)`
 #### Shut down the jobCollection
 
-*    options -- Supports the following options:
-```
-     Match.Optional({
-       timeout: Match.Optional(Match.Where(validIntGTEOne))
-     })
-```
-*        timeout -- Time in ms until all outstanding jobs will be marked as failed.
+* `options` -- Supports the following options:
+
+    `Match.Optional({
+      timeout: Match.Optional(Match.Where(validIntGTEOne))
+    })`
+
+    * `timeout` -- Time in ms until all outstanding jobs will be marked as failed.
 
 Returns: `Boolean` - Success or failure
 
-
-### getJob(ids, options)
+### `getJob(ids, options)`
 #### Returns a Job document corresponding to provided id
 
-* ids -- an Id or array of Ids to get from server
+* `ids` -- an Id or array of Ids to get from server
 
     `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
 
-* options -- Supports the following option:
+* `options` -- Supports the following option:
 
-    * getLog -- If true include the job log data in the returned job data. Default is false.
+    * `getLog` -- If true include the job log data in the returned job data. Default is false.
 
     `Match.Optional({
       getLog: Match.Optional(Boolean)

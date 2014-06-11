@@ -553,7 +553,41 @@ if (Meteor.isServer) {
 ```
 
 ### `jq = jc.processJobs(type, [options], worker)` - Server or Client
-#### Create a new jobQueue to work on jobs
+#### Create a new jobQueue to automatically work on jobs
+
+Asynchronously calls the worker function.
+
+`options:`
+* `concurrency` -- Maximum number of async calls to `worker` that can be outstanding at a time. Default: `1`
+* `cargo` -- Maximum number of job objects to provide to each worker, Default: `1` If `cargo > 1` the first paramter to `worker` will be an array of job objects rather than a single job object.
+* `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Default: `5000` (5 seconds)
+* `prefetch` -- How many extra jobs to request beyond the capacity of all workers (`concurrency * cargo`) to compensate for latency getting more work.
+
+`worker(result, callback)`
+* `result` -- either a single job object or an array of job objects depending on `options.cargo`.
+* `callback` -- must be eventually called exactly once when `job.done()` or `job.fail()` has been called on all jobs in result.
+
+```js
+queue = jc.processJobs(
+  'jobType',    // type of job to request, can also be an array of job types
+  {
+    concurrency: 4,
+    cargo: 1,
+    pollInterval: 5000,
+    prefetch: 1
+  },
+  function (job, callback) {
+    // Only called when there is a valid job
+    job.done();
+    callback();
+  }
+);
+
+// The job queue has methods...
+queue.pause();
+queue.resume();
+queue.shutdown();
+```
 
 See documentation below for `JobQueue` object API
 
@@ -919,59 +953,29 @@ Always an object. This may not be changed after a job is created.
 
 ## JobQueue API
 
-JobQueue is similar in spirit to the [async.js](https://github.com/caolan/async) [queue](https://github.com/caolan/async#queue) and [cargo]([queue](https://github.com/caolan/async#cargo)) except that it gets its work from the Meteor jobCollection via calls to `Job.getWork()`
+JobQueue is similar in spirit to the [async.js](https://github.com/caolan/async) [queue](https://github.com/caolan/async#queue) and [cargo]([queue](https://github.com/caolan/async#cargo)) except that it gets its work from the jobCollection via calls to `jc.getWork()`
 
-### `q = Job.processJobs()` - Server or Client
+New jobQueues are created by calling the following jobCollection method (documented above):
+`q = jc.processJobs()`
 
-Create a `JobQueue` to automatically get work from the job Collection, and asynchronously call the worker function.
+All `JobQueue` methods may be run on the server or client
 
-`options:`
-* `concurrency` -- Maximum number of async calls to `worker` that can be outstanding at a time. Default: `1`
-* `cargo` -- Maximum number of job objects to provide to each worker, Default: `1` If `cargo > 1` the first paramter to `worker` will be an array of job objects rather than a single job object.
-* `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Default: `5000` (5 seconds)
-* `prefetch` -- How many extra jobs to request beyond the capacity of all workers (`concurrency * cargo`) to compensate for latency getting more work.
-
-`worker(result, callback)`
-* `result` -- either a single job object or an array of job objects depending on `options.cargo`.
-* `callback` -- must be eventually called exactly once when `job.done()` or `job.fail()` has been called on all jobs in result.
-
-```js
-queue = Job.processJobs(
-  'jobQueue',   // name of job Collection
-  'jobType',    // type of job to request, can also be an array of job types
-  {
-    concurrency: 4,
-    cargo: 1,
-    pollInterval: 5000,
-    prefetch: 1
-  },
-  function (job, callback) {
-    // Only called when there is a valid job
-    job.done();
-    callback();
-  }
-);
-
-// The job queue has methods... See JobQueue documentation for details.
-queue.pause();
-queue.resume();
-queue.shutdown();
-```
 ### `q.pause()` - Server or Client
+#### Pause the JobQueue
 
-Pause the JobQueue. This means that no more work will be requested from the job collection, and no new workers will be called with jobs that already exist in this local queue. Jobs that are already running locally will run to completion. Note that a JobQueue may be created in the paused state by running `q.pause()` immediately on the returned new jobQueue.
+This means that no more work will be requested from the job collection, and no new workers will be called with jobs that already exist in this local queue. Jobs that are already running locally will run to completion. Note that a JobQueue may be created in the paused state by running `q.pause()` immediately on the returned new jobQueue.
 
 ```js
 q.pause()
 ```
 ### `q.resume()` - Server or Client
-
-Undoes a `q.pause()`, returning the queue to the normal running state.
+#### Undoes a `q.pause()`, returning the queue to the normal running state
 
 ```js
 q.resume()
 ```
 ### `q.shutdown([options], [callback])` - Server or Client
+#### Shuts down the queue, with several possible levels of urgency
 
 `options:`
 * `level` -- May be 'hard' or 'soft'. Any other value will lead to a "normal" shutdown.
@@ -990,20 +994,16 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
 });
 ```
 ### `q.length()` - Server or Client
-
-Number of tasks ready to run.
+#### Number of tasks ready to run
 
 ### `q.full()` - Server or Client
-
-`true` if all of the concurrent workers are currently running.
+#### `true` if all of the concurrent workers are currently running
 
 ### `q.running()` - Server or Client
-
-Number of concurrent workers currently running.
+#### Number of concurrent workers currently running
 
 ### `q.idle()` - Server or Client
-
-`true` if no work is currently running.
+#### `true` if no work is currently running.
 
 
 ## Job document data models

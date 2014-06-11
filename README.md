@@ -321,6 +321,193 @@ if (doc) {
 }
 ```
 
+### `jc.getJob(id, [options], [callback])`
+#### Create a job object by id from the server job Collection, returns `undefined` if no such job exists.
+
+`id`: -- The id of the job to get.
+
+`options`:
+* `getLog` -- If `true`, get the current log of the job. Default is `false` to save bandwidth since logs can be large.
+
+`callback(error, result)` -- Optional only on Meteor Server with Fibers. `result` is a job object or `undefined`
+
+```js
+if (Meteor.isServer) {
+  job = jc.getJob(  // Job will be undefined or contain a Job object
+    id,          // job id of type Meteor.Collection.ObjectID
+    {
+      getLog: false  // Default, don't include the log information
+    }
+  );
+  // Job may be undefined
+} else {
+  Job.getJob(
+    id,            // job id of type Meteor.Collection.ObjectID
+    {
+      getLog: true  // include the log information
+    },
+    function (err, job) {
+      if (job) {
+        // Here's your job
+      }
+    }
+  );
+}
+```
+
+### `jc.forever`
+
+Constant value used to indicate that something should repeat forever.
+
+```js
+job = jc.createJob('jobType', { work: "to", be: "done" })
+   .retry({ retries: jc.forever })    // Default for .retry()
+   .repeat({ repeats: jc.forever });  // Default for .repeat()
+```
+
+### `jc.jobPriorities`
+
+Valid non-numeric job priorities.
+
+```js
+jc.jobPriorities = {
+  low: 10
+  normal: 0
+  medium: -5
+  high: -10
+  critical: -15
+};
+```
+
+### `jc.jobStatuses`
+
+Possible states for the status of a job in the job collection.
+
+```js
+jc.jobStatuses = [
+    'waiting'
+    'paused'
+    'ready'
+    'running'
+    'failed'
+    'cancelled'
+    'completed'
+];
+```
+
+### `jc.jobLogLevels`
+
+Valid log levels. If these look familiar, it's because they correspond to some the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
+
+```js
+jc.jobLogLevels: [
+    'info'
+    'success'
+    'warning'
+    'danger'
+];
+```
+
+### `jc.jobStatusCancellable`
+
+Job status states that can be cancelled.
+
+```js
+jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
+```
+
+### `jc.jobStatusPausable`
+
+Job status states that can be paused.
+
+```js
+jc.jobStatusPausable = [ 'ready', 'waiting' ];
+```
+
+### `jc.jobStatusRemovable`
+
+Job status states that can be removed.
+
+```js
+jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
+```
+
+### `jc.jobStatusRestartable`
+
+Job status states that can be restarted.
+
+```js
+jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
+```
+
+### `jc.ddpMethods`
+
+Array of the names of all DDP methods used by `jobCollection`
+
+```js
+jc.ddpMethods = [
+    'startJobs', 'stopJobs', 'jobRemove', 'jobPause', 'jobResume'
+    'jobCancel', 'jobRestart', 'jobSave', 'jobRerun', 'getWork'
+    'getJob', 'jobLog', 'jobProgress', 'jobDone', 'jobFail'
+    ];
+```
+
+### `jc.ddpPermissionLevels`
+
+Array of the predefined DDP method permission levels
+
+```js
+jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
+```
+
+### `jc.ddpMethodPermissions`
+
+Object mapping permission levels to DDP method names.
+
+```js
+jc.ddpMethodPermissions = {
+    'startJobs': ['startJobs', 'admin'],
+    'stopJobs': ['stopJobs', 'admin'],
+    'jobRemove': ['jobRemove', 'admin', 'manager'],
+    'jobPause': ['jobPause', 'admin', 'manager'],
+    'jobResume': ['jobResume', 'admin', 'manager'],
+    'jobCancel': ['jobCancel', 'admin', 'manager'],
+    'jobRestart': ['jobRestart', 'admin', 'manager'],
+    'jobSave': ['jobSave', 'admin', 'creator'],
+    'jobRerun': ['jobRerun', 'admin', 'creator'],
+    'getWork': ['getWork', 'admin', 'worker'],
+    'getJob': ['getJob', 'admin', 'worker'],
+    'jobLog': [ 'jobLog', 'admin', 'worker'],
+    'jobProgress': ['jobProgress', 'admin', 'worker'],
+    'jobDone': ['jobDone', 'admin', 'worker'],
+    'jobFail': ['jobFail', 'admin', 'worker']
+};
+```
+
+### `jc.getJobs(ids, [options], [callback])`
+
+Like `jc.getJob` except it takes an array of ids and is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
+
+### `jc.pauseJobs(ids, [options], [callback])`
+
+Like `job.pause()` except it pauses a list of jobs by id.
+
+### `jc.resumeJobs(ids, [options], [callback])`
+
+Like `job.resume()` except it resumes a list of jobs by id.
+
+### `jc.cancelJobs(ids, [options], [callback])`
+
+Like `job.cancel()` except it cancels a list of jobs by id.
+
+### `jc.restartJobs(ids, [options], [callback])`
+
+Like `job.restart()` except it restarts a list of jobs by id.
+
+### `jc.removeJobs(ids, [options], [callback])`
+
+Like `job.remove()` except it removes a list of jobs by id.
+
 
 
 

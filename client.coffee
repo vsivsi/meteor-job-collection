@@ -12,8 +12,8 @@ if Meteor.isClient
   class JobCollection extends Meteor.Collection
 
     constructor: (@root = 'queue', options = {}) ->
-      unless @ instanceof jobCollection
-        return new jobCollection(@root, options)
+      unless @ instanceof JobCollection
+        return new JobCollection(@root, options)
 
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }

@@ -15,15 +15,15 @@ if Meteor.isServer
   class JobCollection extends Meteor.Collection
 
     constructor: (@root = 'queue', options = {}) ->
-      unless @ instanceof jobCollection
-        return new jobCollection(@root, options)
+      unless @ instanceof JobCollection
+        return new JobCollection(@root, options)
 
       # Call super's constructor
       super @root + '.jobs', { idGeneration: 'MONGO' }
       @stopped = true
 
       # No client mutators allowed
-      @deny
+      JobCollection.__super__.deny.bind(@)
         update: () => true
         insert: () => true
         remove: () => true
@@ -36,9 +36,9 @@ if Meteor.isServer
       @denys = {}
 
       # Initialize allow/deny lists for permission levels and ddp methods
-      for level in @permissionLevels.concat @ddpMethods
-        allows[level] = []
-        denys[level] = []
+      for level in @ddpPermissionLevels.concat @ddpMethods
+        @allows[level] = []
+        @denys[level] = []
 
       Meteor.methods(@_generateMethods share.serverMethods)
 

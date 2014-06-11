@@ -196,11 +196,31 @@ Load `http://localhost:3000/` and the tests should run in your browser and on th
 
 ## Use
 
+Job Collections are backed by [Meteor Collections](http://docs.meteor.com/#collections) and may be used in similar ways. `.find()` and `.findOne()` work as you would expect and are fully reactive on the client just as with a normal collection.
+
+Other than the find methods mentioned above, interactions with a jobCollection occur using the `JobCollection`, `Job` and `JobQueue` APIs documented below. The Job document model used in the jobCollection is fully specified, maintained and enforced by the APIs.
+
+Meteor clients are automatically denied permission to directly `insert`, `update` or `remove` jobs from a jobCollection. To accomplish these types of tasks, a client must use the provided APIs, subject to permissions set by specific allow/deny rules on the jobCollection. Servers retain access to the standard `insert`, `update` or `remove` methods, but should avoid using them unless absolutely necessary, favoring the jobCollection APIs to perform various tasks.
+
+It is also possible (and highly useful!) to write your own clients outside of Meteor as vanilla node.js programs using the `meteor-job` [npm package](https://www.npmjs.org/package/meteor-job), which is actually used by jobCollection internally, and so it implements essentially identical functionality via a familiar interface.
+
 ### Security
+
+The security of the jobCollection uses mechanisms that will be familiar to anyone who has used the [Meteor `publish` and `subscribe` mechanism](http://docs.meteor.com/#publishandsubscribe) and [Meteor Collection allow/deny rules](http://docs.meteor.com/#allow).
+
+For a client to have access to perform `find()` operations on a jobCollection, the server must publish the collection and the client must subscribe to it. This works identically to normal Meteor collections.
+
+Compared to vanilla Meteor collections, jobCollections have a  different set of remote methods with specific security implications. Where the allow/deny methods on a Meteor collection take functions to grant permission for `insert`, `update` and `remove`, `jobCollection` has more functionality to secure and configure.
+
+There are currently over a dozen Meteor methods defined by each jobCollection. In most cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles efficiently separate security concerns and permit you to add allow/deny rules for the functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
+
+#### Logging
+
+The server can easily log all activity (both successes and failures) on a jobCollection by passing any valid node.js writable Stream to `jc.setLogStream(writeStream)`.
 
 ## JobCollection API
 
-### `jc = new JobCollection([name], [options])` - Server and Client
+### `jc = new JobCollection([name], [options])` - Anywhere
 #### Creates a new JobCollection
 
 Creating a new `JobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`. There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
@@ -240,8 +260,6 @@ jc.promote(15*1000);  // Default: 15 seconds
 
 ### `jc.allow(options)` - Server only
 #### Allow remote execution of specific jobCollection methods
-
-Compared to vanilla Meteor collections, `jobCollection` has very a different set of remote methods with specific security implications. Where the `.allow()` method on a Meteor collection takes functions to grant permission for `insert`, `update` and `remove`, `jobCollection` has more functionality to secure and configure.
 
 By default no remote operations are allowed, and in this configuration, jobCollection exists only as a server-side service, with the creation, management and execution of all jobs dependent on the server.
 

@@ -414,11 +414,11 @@ Returns: `Boolean` - Success or failure
 
 * `options` -- Supports the following options:
 
+    * `timeout` -- Time in ms until all outstanding jobs will be marked as failed.
+
     `Match.Optional({
       timeout: Match.Optional(Match.Where(validIntGTEOne))
     })`
-
-    * `timeout` -- Time in ms until all outstanding jobs will be marked as failed.
 
 Returns: `Boolean` - Success or failure
 
@@ -439,20 +439,34 @@ Returns: `Boolean` - Success or failure
 
 Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if `ids` is a single value or an array.
 
-### getWork(type, options)
-#### Returns ready to run jobs to a requesting worker
+### `getWork(type, options)`
+#### Returns jobs ready-to-run to a requesting worker
 
-  type: Match.OneOf(String, [ String ])
-  options: Match.Optional({
-      maxJobs: Match.Optional(Match.Where(validIntGTEOne))
-  })
-  options ?= {}
-  return [ validJobDoc() ]
+* `type` -- a string job type or an array of such types
+    `type: Match.OneOf(String, [ String ])`
 
-jobRemove(ids, options)
-    ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
-    check options, Match.Optional {}
-    returns Boolean
+* `options`
+    * `maxJobs` -- The maximum number of jobs to return, Default: 1
+
+    `Match.Optional({
+         maxJobs: Match.Optional(Match.Where(validIntGTEOne))
+    })`
+
+Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if maxJobs > 1.
+
+
+### `jobRemove(ids, options)`
+#### Permanently remove jobs from the jobCollection
+
+* `ids` -- an Id or array of Ids to remove from server
+
+    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+
+* `options` -- No options currently used
+
+    `Match.Optional({})`
+
+Returns: `Boolean` - Success or failure
 
 jobResume(ids, options)
     ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])

@@ -5,20 +5,22 @@
 ***************************************************************************/
 
 Package.describe({
-  name: 'jobCollection',
-  summary: "Persistent, distributed and reactive job queue for Meteor.js using MongoDB and DDP"
+   name: 'jobCollection',
+   summary: "Persistent, distributed and reactive job queue for Meteor.js using MongoDB and DDP"
 });
 
-Npm.depends({});
+Npm.depends({
+	'meteor-job': '0.0.5'
+});
 
 Package.on_use(function(api) {
-  api.use('coffeescript', ['server','client']);
-  api.add_files('job/src/job_class.coffee', ['server','client']);
-  api.add_files('shared.coffee', ['server','client']);
-  api.add_files('server.coffee', 'server');
-  api.add_files('client.coffee', 'client');
-  api.export('Job');
-  api.export('JobCollection');
+   api.use('coffeescript', ['server','client']);
+   api.add_files('job/src/job_class.coffee', ['server','client']);
+   api.add_files('shared.coffee', ['server','client']);
+   api.add_files('server.coffee', 'server');
+   api.add_files('client.coffee', 'client');
+   api.export('Job');
+   api.export('JobCollection');
 });
 
 Package.on_test(function (api) {

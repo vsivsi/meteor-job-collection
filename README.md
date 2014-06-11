@@ -2,7 +2,7 @@
 
 **NOTE:** This Package remains experimental until v0.1.0 is released, and while the API methods described here are maturing, they may still change.
 
-##Intro
+## Intro
 
 `jobCollection` is a powerful and easy to use job manager designed and built for Meteor.js
 
@@ -101,7 +101,7 @@ if (Meteor.isClient) {
 **A:** Anywhere you want!
 
 Below is a pure node.js program that can obtain jobs from the server above and "get 'em done."
-Powerfully, this can be run ***anywhere*** that has node.js and can connect to the server.
+Powerfully, this can be run ***anywhere*** that has node.js and can connect to the server. The secret sauce here is the [meteor-job npm package](https://www.npmjs.org/search?q=meteor-job), which is fully interoperable with jobCollection.
 
 ```js
 ///////////////////
@@ -220,7 +220,7 @@ The server can easily log all activity (both successes and failures) on a jobCol
 
 ## JobCollection API
 
-### `jc = new JobCollection([name], [options])` - Anywhere
+### jc = new JobCollection([name], [options]) - Anywhere
 #### Creates a new JobCollection
 
 Creating a new `JobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`. There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
@@ -232,7 +232,7 @@ For security and simplicity the traditional client allow/deny rules for Meteor c
 jc = JobCollection('defaultJobCollection');
 ```
 
-### `jc.setLogStream(writeStream)` - Server only
+### jc.setLogStream(writeStream) - Server only
 #### Sets where the jobCollection method invocation log will be written
 
 You can log everything that happens to a jobCollection on the server by providing any valid writable stream. You may only call this once, unless you first call `jc.shutdown()`, which will automatically close the existing `logStream`.
@@ -242,14 +242,14 @@ You can log everything that happens to a jobCollection on the server by providin
 jc.setLogStream(process.stdout);
 ```
 
-### `jc.logConsole` - Client only
+### jc.logConsole - Client only
 #### Member variable that turns on DDP method call logging to the console
 
 ```js
 jc.logConsole = false  // Default. Do not log method calls to the client console
 ```
 
-### `jc.promote([milliseconds])` - Server only
+### jc.promote([milliseconds]) - Server only
 #### Sets time between checks for delayed jobs that are now ready to run
 
 `jc.promote()` may be called at any time to change the polling rate. jobCollection must poll for this operation because it is time that is changing, not the contents of the database, so there are no database updates to listen for.
@@ -258,7 +258,7 @@ jc.logConsole = false  // Default. Do not log method calls to the client console
 jc.promote(15*1000);  // Default: 15 seconds
 ```
 
-### `jc.allow(options)` - Server only
+### jc.allow(options) - Server only
 #### Allow remote execution of specific jobCollection methods
 
 By default no remote operations are allowed, and in this configuration, jobCollection exists only as a server-side service, with the creation, management and execution of all jobs dependent on the server.
@@ -314,7 +314,7 @@ jc.allow({
 });
 ```
 
-### `jc.deny(options)` - Server only
+### jc.deny(options) - Server only
 #### Override allow rules
 
 This call has the same semantic relationship with `allow()` as it does in Meteor collections. If any deny rule is true, then permission for a remote method call will be denied, regardless of the status of any other allow/deny rules. This is powerful and far reaching. For example, the following code will turn off all remote access to a jobCollection (regardless of any other rules that may be in force):
@@ -328,9 +328,9 @@ jc.deny({
 
 See the `allow` method above for more details.
 
-### `jc.startJobs([options], [callback])`
+### jc.startJobs([options], [callback])
 #### Starts the server job Collection.
-##### Requires permission: Server, `admin`, or `startJobs`
+#### Requires permission: Server, `admin`, or `startJobs`
 
 `options`: No options currently defined
 
@@ -340,9 +340,9 @@ See the `allow` method above for more details.
 jc.startJobs();  // Callback is optional
 ```
 
-### `jc.stopJobs([options], [callback])`
+### jc.stopJobs([options], [callback])
 #### Stops the server job Collection.
-##### Requires permission: Server, `admin`, or `stopJobs`
+#### Requires permission: Server, `admin`, or `stopJobs`
 
 `options`:
 * `timeout`: In ms, how long until the server forcibly fails all still running jobs. Default: `60*1000` (1 minute)
@@ -357,7 +357,7 @@ jc.stopJobs(
 );  // Callback is optional
 ```
 
-### `jc.forever` - Anywhere
+### jc.forever - Anywhere
 #### Constant value used to indicate that something should repeat forever
 
 ```js
@@ -366,7 +366,7 @@ job = jc.createJob('jobType', { work: "to", be: "done" })
    .repeat({ repeats: jc.forever });  // Default for .repeat()
 ```
 
-### `jc.jobPriorities` - Anywhere
+### jc.jobPriorities - Anywhere
 #### Valid non-numeric job priorities
 
 ```js
@@ -379,7 +379,7 @@ jc.jobPriorities = {
 };
 ```
 
-### `jc.jobStatuses` - Anywhere
+### jc.jobStatuses - Anywhere
 #### Possible states for the status of a job in the job collection
 
 ```js
@@ -394,7 +394,7 @@ jc.jobStatuses = [
 ];
 ```
 
-### `jc.jobLogLevels` - Anywhere
+### jc.jobLogLevels - Anywhere
 #### Valid log levels
 
 If these look familiar, it's because they correspond to some the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
@@ -408,35 +408,35 @@ jc.jobLogLevels: [
 ];
 ```
 
-### `jc.jobStatusCancellable` - Anywhere
+### jc.jobStatusCancellable - Anywhere
 #### Job status states that can be cancelled
 
 ```js
 jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
 ```
 
-### `jc.jobStatusPausable` - Anywhere
+### jc.jobStatusPausable - Anywhere
 #### Job status states that can be paused
 
 ```js
 jc.jobStatusPausable = [ 'ready', 'waiting' ];
 ```
 
-### `jc.jobStatusRemovable` - Anywhere
+### jc.jobStatusRemovable - Anywhere
 #### Job status states that can be removed
 
 ```js
 jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
 ```
 
-### `jc.jobStatusRestartable` - Anywhere
+### jc.jobStatusRestartable - Anywhere
 #### Job status states that can be restarted
 
 ```js
 jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 ```
 
-### `jc.ddpMethods` - Anywhere
+### jc.ddpMethods - Anywhere
 #### Array of the names of all DDP methods used by `jobCollection`
 
 ```js
@@ -447,14 +447,14 @@ jc.ddpMethods = [
     ];
 ```
 
-### `jc.ddpPermissionLevels` - Anywhere
+### jc.ddpPermissionLevels - Anywhere
 #### Array of the predefined DDP method permission levels
 
 ```js
 jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
 ```
 
-### `jc.ddpMethodPermissions` - Anywhere
+### jc.ddpMethodPermissions - Anywhere
 #### Object mapping permission levels to DDP method names
 
 ```js
@@ -477,7 +477,7 @@ jc.ddpMethodPermissions = {
 };
 ```
 
-### `job = jc.createJob(type, data)` - Anywhere
+### job = jc.createJob(type, data) - Anywhere
 #### Create a new `Job` object
 
 Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
@@ -491,7 +491,7 @@ job = jc.createJob(
 );
 ```
 
-### `jc.makeJob(jobDoc)` - Anywhere
+### jc.makeJob(jobDoc) - Anywhere
 #### Make a Job object from a jobCollection document
 
 See documentation below for `Job` object API
@@ -503,9 +503,9 @@ if (doc) {
 }
 ```
 
-### `jc.getJob(id, [options], [callback])` - Anywhere
+### jc.getJob(id, [options], [callback]) - Anywhere
 #### Create a job object by id from the server job Collection
-##### Requires permission: Server, `admin`, `worker` or `getJob`
+#### Requires permission: Server, `admin`, `worker` or `getJob`
 
 See documentation below for `Job` object API
 
@@ -542,9 +542,9 @@ if (Meteor.isServer) {
 }
 ```
 
-### `jc.getWork(type, [options], [callback])` - Anywhere
+### jc.getWork(type, [options], [callback]) - Anywhere
 #### Get one or more jobs from the jobCollection, setting status to `'running'`
-##### Requires permission: Server, `admin`, `worker` or `getWork`
+#### Requires permission: Server, `admin`, `worker` or `getWork`
 
 See documentation below for `Job` object API
 
@@ -582,34 +582,34 @@ if (Meteor.isServer) {
 }
 ```
 
-### `jc.getJobs(ids, [options], [callback])` - Anywhere
+### jc.getJobs(ids, [options], [callback]) - Anywhere
 #### Like `jc.getJob` except it takes an array of ids
-##### Requires permission: Server, `admin`, `worker` or `getJob`
+#### Requires permission: Server, `admin`, `worker` or `getJob`
 This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
 
-### `jc.pauseJobs(ids, [options], [callback])` - Anywhere
+### jc.pauseJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.pause()` except it pauses a list of jobs by id
-##### Requires permission: Server, `admin`, `manager` or `jobPause`
+#### Requires permission: Server, `admin`, `manager` or `jobPause`
 
-### `jc.resumeJobs(ids, [options], [callback])` - Anywhere
+### jc.resumeJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.resume()` except it resumes a list of jobs by id
-##### Requires permission: Server, `admin`, `manager` or `jobResume`
+#### Requires permission: Server, `admin`, `manager` or `jobResume`
 
-### `jc.cancelJobs(ids, [options], [callback])` - Anywhere
+### jc.cancelJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.cancel()` except it cancels a list of jobs by id
-##### Requires permission: Server, `admin`, `manager` or `jobCancel`
+#### Requires permission: Server, `admin`, `manager` or `jobCancel`
 
-### `jc.restartJobs(ids, [options], [callback])` - Anywhere
+### jc.restartJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.restart()` except it restarts a list of jobs by id
-##### Requires permission: Server, `admin`, `manager` or `jobRestart`
+#### Requires permission: Server, `admin`, `manager` or `jobRestart`
 
-### `jc.removeJobs(ids, [options], [callback])` - Anywhere
+### jc.removeJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.remove()` except it removes a list of jobs by id
-##### Requires permission: Server, `admin`, `manager` or `jobRemove`
+#### Requires permission: Server, `admin`, `manager` or `jobRemove`
 
-### `jq = jc.processJobs(type, [options], worker)` - Anywhere
+### jq = jc.processJobs(type, [options], worker) - Anywhere
 #### Create a new jobQueue to automatically work on jobs
-##### Requires permission: Server, `admin`, `worker` or `getWork`
+#### Requires permission: Server, `admin`, `worker` or `getWork`
 
 Asynchronously calls the worker function.
 
@@ -657,7 +657,7 @@ New jobs objects are created using the following JobCollection API calls:
 
 The methods below may be performed on job objects regardless of their source. All `Job` methods may be run on the client or server.
 
-### `job.depends([dependencies])` - Anywhere
+### job.depends([dependencies]) - Anywhere
 #### Adds jobs that this job depends upon (antecedents)
 
 This job will not run until these jobs have successfully completed. Defaults to an empty array (no dependencies). Returns `job`, so it is chainable.
@@ -668,7 +668,7 @@ job.depends([job1, job2]);  // job1 and job2 are Job objects, and must successfu
 job.depends();  // Clear any dependencies previously added on this job
 ```
 
-### `job.priority([priority])` - Anywhere
+### job.priority([priority]) - Anywhere
 #### Sets the priority of this job
 
 Can be integer numeric or one of `Job.jobPriorities`. Defaults to `'normal'` priority, which is priority `0`. Returns `job`, so it is chainable.
@@ -678,7 +678,7 @@ job.priority('high');  // Maps to -10
 job.priority(-10);     // Same as above
 ```
 
-### `job.retry([options])` - Anywhere
+### job.retry([options]) - Anywhere
 #### Set how failing jobs are rescheduled and retried by the job Collection
 
 Returns `job`, so it is chainable.
@@ -698,7 +698,7 @@ job.retry({
 });
 ```
 
-### `job.repeat([options])` - Anywhere
+### job.repeat([options]) - Anywhere
 #### Set how many times this job will be automatically re-run by the job Collection
 
 Each time it is re-run, a new job is created in the job collection. This is equivalent to running `job.rerun()`. Only `'completed'` jobs are repeated. Failing jobs that exhaust their retries will not repeat. By default, if an infinitely repeating job is added to the job Collection, any existing repeating jobs of the same type that are cancellable, will be cancelled.  See `option.cancelRepeats` for `job.save()` for more info. Returns `job`, so it is chainable.
@@ -718,7 +718,7 @@ job.repeat({
 });
 ```
 
-### `job.delay([milliseconds])` - Anywhere
+### job.delay([milliseconds]) - Anywhere
 #### Sets how long to wait until this job can be run
 
 Counts from when it is initially saved to the job Collection.
@@ -728,7 +728,7 @@ Returns `job`, so it is chainable.
 job.delay(0);   // Do not wait. This is the default.
 ```
 
-### `job.after([time])` - Anywhere
+### job.after([time]) - Anywhere
 #### Sets the time after which a job may be run
 
 `time` is a date object.  It is not guaranteed to run "at" this time because there may be no workers available when it is reached. Returns `job`, so it is chainable.
@@ -737,9 +737,9 @@ job.delay(0);   // Do not wait. This is the default.
 job.after(new Date());   // Run the job anytime after right now. This is the default.
 ```
 
-### `job.log(message, [options], [callback])` - Anywhere
+### job.log(message, [options], [callback]) - Anywhere
 #### Add an entry to this job's log
-##### Requires permission: Server, `admin`, `worker` or `jobLog`
+#### Requires permission: Server, `admin`, `worker` or `jobLog`
 
 May be called before a new job is saved. `message` must be a string.
 
@@ -767,9 +767,9 @@ var verbosityLevel = 'warning';
 job.log("Don't echo this", { level: 'info', echo: verbosityLevel } );
 ```
 
-### `job.progress(completed, total, [options], [cb])` - Anywhere
+### job.progress(completed, total, [options], [cb]) - Anywhere
 #### Update the progress of a running job
-##### Requires permission: Server, `admin`, `worker` or `jobProgress`
+#### Requires permission: Server, `admin`, `worker` or `jobProgress`
 
 May be called before a new job is saved. `completed` must be a number `>= 0` and `total` must be a number `> 0` with `total >= completed`.
 
@@ -793,9 +793,9 @@ job.progress(
 );
 ```
 
-### `job.save([options], [callback])` - Anywhere
+### job.save([options], [callback]) - Anywhere
 #### Submits this job to the job Collection
-##### Requires permission: Server, `admin`, `creator` or `jobSave`
+#### Requires permission: Server, `admin`, `creator` or `jobSave`
 
 Only valid if this is a new job, or if the job is currently paused in the job Collection. If the job is already saved and paused, then most properties of the job may change (but not all, e.g. the jobType may not be changed.)
 
@@ -811,9 +811,9 @@ job.save(
   }
 );
 ```
-### `job.refresh([options], [callback])` - Anywhere
+### job.refresh([options], [callback]) - Anywhere
 #### Refreshes the current job object state with the state on the remote jobCollection
-##### Requires permission: Server, `admin`, `worker` or `getJob`
+#### Requires permission: Server, `admin`, `worker` or `getJob`
 
 Note that if you subscribe to the job Collection, the job documents will stay in sync with the server automatically via Meteor reactivity.
 
@@ -830,9 +830,9 @@ job.refresh(function (err, result) {
 });
 ```
 
-### `job.done(result, [options], [callback])` - Anywhere
+### job.done(result, [options], [callback]) - Anywhere
 #### Change the state of a running job to `'completed'`.
-##### Requires permission: Server, `admin`, `worker` or `jobDone`
+#### Requires permission: Server, `admin`, `worker` or `jobDone`
 
 `result` is any EJSON object.  If this job is configured to repeat, a new job will automatically be cloned to rerun in the future.  Result will be saved as an object. If passed result is not an object, it will be wrapped in one.
 
@@ -853,9 +853,9 @@ job.done("Done!");
 // { "value": "Done!" }
 ```
 
-### `job.fail(message, [options], [callback])` - Anywhere
+### job.fail(message, [options], [callback]) - Anywhere
 #### Change the state of a running job to `'failed'`.
-##### Requires permission: Server, `admin`, `worker` or `jobFail`
+#### Requires permission: Server, `admin`, `worker` or `jobFail`
 
 It's next state depends on how the job's `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
 
@@ -878,9 +878,9 @@ job.fail(
 });
 ```
 
-### `job.pause([options], [callback])` - Anywhere
+### job.pause([options], [callback]) - Anywhere
 #### Change the state of a job to `'paused'`.
-##### Requires permission: Server, `admin`, `manager` or `jobPause`
+#### Requires permission: Server, `admin`, `manager` or `jobPause`
 
 Only `'ready'` and `'waiting'` jobs may be paused. This specifically does nothing to affect running jobs. To stop a running job, you must use `job.cancel()`.
 
@@ -896,9 +896,9 @@ job.pause(function (err, result) {
 });
 ```
 
-### `job.resume([options], [callback])` - Anywhere
+### job.resume([options], [callback]) - Anywhere
 #### Change the state of a job from `'paused'` to `'waiting'`
-##### Requires permission: Server, `admin`, `manager` or `jobResume`
+#### Requires permission: Server, `admin`, `manager` or `jobResume`
 
 `options:` -- None currently.
 
@@ -912,9 +912,9 @@ job.resume(function (err, result) {
 });
 ```
 
-### `job.cancel([options], [callback])` - Anywhere
+### job.cancel([options], [callback]) - Anywhere
 #### Change the state of a job to `'cancelled'`.
-##### Requires permission: Server, `admin`, `manager` or `jobCancel`
+#### Requires permission: Server, `admin`, `manager` or `jobCancel`
 
 Any job that isn't `'completed'`, `'failed'` or already `'cancelled'` may be cancelled. Cancelled jobs retain any remaining retries and/or repeats if they are later restarted.
 
@@ -938,7 +938,7 @@ job.cancel(
 );
 ```
 
-### `job.restart([options], [callback])` - Anywhere
+### job.restart([options], [callback]) - Anywhere
 #### Change the state of a `'failed'` or `'cancelled'` job to `'waiting'` to be retried.
 
 A restarted job will retain any repeat count state it had when it failed or was cancelled.
@@ -965,9 +965,9 @@ job.restart(
 );
 ```
 
-### `job.rerun([options], [callback])` - Anywhere
+### job.rerun([options], [callback]) - Anywhere
 #### Clone a completed job and run it again
-##### Requires permission: Server, `admin`, `creator` or `jobRerun`
+#### Requires permission: Server, `admin`, `creator` or `jobRerun`
 
 `options:`
 * `repeats` -- Number of times to repeat the job, as with `job.repeat()`.
@@ -989,9 +989,9 @@ job.rerun(
 );
 ```
 
-### `job.remove([options], [callback])` - Anywhere
+### job.remove([options], [callback]) - Anywhere
 #### Permanently remove this job from the job collection
-##### Requires permission: Server, `admin`, `manager` or `jobRemove`
+#### Requires permission: Server, `admin`, `manager` or `jobRemove`
 
 The job must be `'completed'`, `'failed'`, or `'cancelled'` to be removed.
 
@@ -1007,12 +1007,12 @@ job.remove(function (err, result) {
 });
 ```
 
-### `job.type` - Anywhere
+### job.type - Anywhere
 #### Contains the type of a job
 
 Useful for when `getWork` or `processJobs` are configured to accept multiple job types. This may not be changed after a job is created.
 
-### `job.data` - Anywhere
+### job.data - Anywhere
 #### Contains the job data needed by the worker to complete a job of a given type
 
 Always an object. This may not be changed after a job is created.
@@ -1027,7 +1027,7 @@ New jobQueues are created by calling the following jobCollection method (documen
 
 All `JobQueue` methods may be run on the server or client
 
-### `q.pause()` - Anywhere
+### q.pause() - Anywhere
 #### Pause the JobQueue
 
 This means that no more work will be requested from the job collection, and no new workers will be called with jobs that already exist in this local queue. Jobs that are already running locally will run to completion. Note that a JobQueue may be created in the paused state by running `q.pause()` immediately on the returned new jobQueue.
@@ -1035,13 +1035,13 @@ This means that no more work will be requested from the job collection, and no n
 ```js
 q.pause()
 ```
-### `q.resume()` - Anywhere
+### q.resume() - Anywhere
 #### Undoes a `q.pause()`, returning the queue to the normal running state
 
 ```js
 q.resume()
 ```
-### `q.shutdown([options], [callback])` - Anywhere
+### q.shutdown([options], [callback]) - Anywhere
 #### Shuts down the queue, with several possible levels of urgency
 
 `options:`
@@ -1060,16 +1060,16 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
   // shutdown complete
 });
 ```
-### `q.length()` - Anywhere
+### q.length() - Anywhere
 #### Number of tasks ready to run
 
-### `q.full()` - Anywhere
+### q.full() - Anywhere
 #### `true` if all of the concurrent workers are currently running
 
-### `q.running()` - Anywhere
+### q.running() - Anywhere
 #### Number of concurrent workers currently running
 
-### `q.idle()` - Anywhere
+### q.idle() - Anywhere
 #### `true` if no work is currently running.
 
 

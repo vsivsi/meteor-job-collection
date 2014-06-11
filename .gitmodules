@@ -1,3 +1,0 @@
-[submodule "job"]
-	path = job
-	url = https://github.com/vsivsi/meteor-job.git

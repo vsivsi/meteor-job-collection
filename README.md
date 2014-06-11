@@ -311,7 +311,7 @@ jc.deny({
 See the `allow` method above for more details.
 
 ### `jc.startJobs([options], [callback])`
-#### This feature is still immature. Starts the server job Collection.
+#### Starts the server job Collection.
 ##### Requires permission: Server, `admin`, or `startJobs`
 
 `options`: No options currently defined
@@ -319,11 +319,11 @@ See the `allow` method above for more details.
 `callback(error, result)` -- Result is true if successful.
 
 ```js
-Job.startJobs();  // Callback is optional
+jc.startJobs();  // Callback is optional
 ```
 
-### `Job.stopJobs([options], [callback])`
-#### This feature is still immature. Stops the server job Collection.
+### `jc.stopJobs([options], [callback])`
+#### Stops the server job Collection.
 ##### Requires permission: Server, `admin`, or `stopJobs`
 
 `options`:
@@ -332,7 +332,7 @@ Job.startJobs();  // Callback is optional
 `callback(error, result)` -- Result is true if successful.
 
 ```js
-Job.stopJobs(
+jc.stopJobs(
   {
     timeout: 60000
   }

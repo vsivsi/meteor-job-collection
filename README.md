@@ -201,7 +201,7 @@ Load `http://localhost:3000/` and the tests should run in your browser and on th
 
 ## API
 
-### jc = new jobCollection([name], [options])
+### `jc = new jobCollection([name], [options])`
 #### Creates a new jobCollection. - Server and Client
 
 Creating a new `jobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`. There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
@@ -213,7 +213,7 @@ For security and simplicity the traditional client allow/deny rules for Meteor c
 jc = jobCollection('defaultJobCollection');
 ```
 
-### jc.setLogStream(writeStream)
+### `jc.setLogStream(writeStream)`
 #### Sets where the jobCollection method invocation log will be written - Server only
 
 You can log everything that happens to a jobCollection on the server by providing any valid writable stream. You may only call this once, unless you first call `jc.shutdown()`, which will automatically close the existing `logStream`.
@@ -223,14 +223,14 @@ You can log everything that happens to a jobCollection on the server by providin
 jc.setLogStream(process.stdout);
 ```
 
-### jc.logConsole
+### `jc.logConsole`
 #### Member variable that turns on DDP method call logging to the console - Client only
 
 ```js
-jc.logConsole = false  # Default. Do not log method calls to the client console
+jc.logConsole = false  // Default. Do not log method calls to the client console
 ```
 
-### jc.promote([milliseconds])
+### `jc.promote([milliseconds])`
 #### Sets time between checks for delayed jobs that are now ready to run - Server only
 
 `jc.promote()` may be called at any time to change the polling rate. jobCollection must poll for this operation because it is time that is changing, not the contents of the database, so there are no database updates to listen for.
@@ -239,7 +239,7 @@ jc.logConsole = false  # Default. Do not log method calls to the client console
 jc.promote(15*1000);  // Default: 15 seconds
 ```
 
-### jc.allow(options)
+### `jc.allow(options)`
 #### Allow remote execution of specific jobCollection methods - Server only
 
 Compared to vanilla Meteor collections, `jobCollection` has very a different set of remote methods with specific security implications. Where the `.allow()` method on a Meteor collection takes functions to grant permission for `insert`, `update` and `remove`, `jobCollection` has more functionality to secure and configure.
@@ -297,7 +297,7 @@ jc.allow({
 });
 ```
 
-### jc.deny(options)
+### `jc.deny(options)`
 #### Override allow rules - Server only
 
 This call has the same semantic relationship with `allow()` as it does in Meteor collections. If any deny rule is true, then permission for a remote method call will be denied, regardless of the status of any other allow/deny rules. This is powerful and far reaching. For example, the following code will turn off all remote access to a jobCollection (regardless of any other rules that may be in force):
@@ -311,7 +311,7 @@ jc.deny({
 
 See the `allow` method above for more details.
 
-### jc.makeJob(jobDoc)
+### `jc.makeJob(jobDoc)`
 #### Make a Job object from a jobCollection document - Server or Client
 
 ```js
@@ -320,6 +320,9 @@ if (doc) {
    job = jc.makeJob('jobQueue', doc);
 }
 ```
+
+
+
 
 ## Job document data models
 

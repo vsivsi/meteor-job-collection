@@ -179,7 +179,6 @@ serverMethods =
       ids = [ids]
       single = true
     return null if ids.length is 0
-    console.log "Get: ", ids
     d = @find(
       {
         _id:
@@ -191,7 +190,6 @@ serverMethods =
       }
     ).fetch()
     if d
-      console.log "get method Got jobs:", d.length
       check d, [validJobDoc()]
       if single
         return d[0]

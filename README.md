@@ -429,7 +429,7 @@ Returns: `Boolean` - Success or failure
 
     `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
 
-* `options` -- Supports the following option:
+* `options` -- Supports the following options:
 
     * `getLog` -- If true include the job log data in the returned job data. Default is false.
 
@@ -445,7 +445,7 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if `ids` is a singl
 * `type` -- a string job type or an array of such types
     `type: Match.OneOf(String, [ String ])`
 
-* `options`
+* `options` -- Supports the following options:
     * `maxJobs` -- The maximum number of jobs to return, Default: `1`
 
     `Match.Optional({
@@ -501,7 +501,7 @@ Returns: `Boolean` - Success or failure
 
     `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
 
-* `options`
+* `options` -- Supports the following options:
     * `antecedents` -- If true, all jobs that this one depends upon will also be cancelled. Default: `false`
     * `dependents` -- If true, all jobs that depend on this one will also be be cancelled. Default: `true`
 
@@ -519,7 +519,7 @@ Returns: `Boolean` - Success or failure
 
     `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
 
-* `options`
+* `options` -- Supports the following options:
     * `antecedents` -- If true, all jobs that this one depends upon will also be restarted. Default: `true`
     * `dependents` -- If true, all jobs that depend on this one will also be be restarted. Default: `false`
 
@@ -530,66 +530,130 @@ Returns: `Boolean` - Success or failure
 
 Returns: `Boolean` - Success or failure
 
+### `jobSave(doc, options)`
+#### Adds a job to the jobCollection in the `waiting` or `paused` state
 
+* `doc` -- Job document of job to save to the server jobCollection
 
-jobSave(doc, options)
-    doc: validJobDoc()
-    options: Match.Optional({
+    `validJobDoc()`
+
+* `options` -- Supports the following options:
+    * `cancelRepeats` --  If true and this job is an infinitely repeating job, will cancel any existing jobs of the same job type. Default is true.
+
+    `Match.Optional({
       cancelRepeats: Match.Optional(Boolean)
-    })
-    check doc.status, Match.Where (v) ->
-      Match.test(v, String) and v in [ 'waiting', 'paused' ]
-    options ?= {}
-    options.cancelRepeats ?= true
-    returns Meteor.Collection.ObjectID
+    })`
 
-jobProgress(id, runId, completed, total, options)
-    id: Meteor.Collection.ObjectID
-    runId: Meteor.Collection.ObjectID
-    completed: Match.Where(validNumGTEZero)
-    total: Match.Where(validNumGTZero)
-    options: Match.Optional({})
-    options ?= {}
-    return Boolean or null
+Returns: `Meteor.Collection.ObjectID` of the added job.
 
-jobLog(id, runId, message, options)
-    id: Meteor.Collection.ObjectID
-    runId: Meteor.Collection.ObjectID
-    message: String
-    options: Match.Optional({
-      level: Match.Optional(Match.Where(validLogLevel))
-    })
-    options ?= {}
-    returns Boolean
+### `jobRerun(id, options)`
+#### Creates and saves a new job based on an existing job that has successfully completed.
 
-jobRerun(id, options)
-    id: Meteor.Collection.ObjectID
-    options: Match.Optional({
+* `id` -- The id of the job to rerun
+
+    `Meteor.Collection.ObjectID`
+
+* `options` -- Supports the following options:
+    * `wait` -- Amount of time to wait until the new job runs in ms. Default: 0
+    * `repeats` -- Number of times to repeat the new job. Default: 0
+
+    `Match.Optional({
       repeats: Match.Optional(Match.Where(validIntGTEZero))
       wait: Match.Optional(Match.Where(validIntGTEZero))
-    })
-    options ?= {}
-    options.repeats ?= 0
-    options.repeats = Job.forever if options.repeats > Job.forever
-    options.wait ?= 0
-    returns Boolean
+    })`
 
-jobDone(id, runId, result, options)
-    id, Meteor.Collection.ObjectID
-    runId, Meteor.Collection.ObjectID
-    result, Object
-    options, Match.Optional({})
-    options ?= {}
-    returns Boolean
+Returns: `Meteor.Collection.ObjectID` of the added job.
 
-jobFail(id, runId, err, options)
-    id: Meteor.Collection.ObjectID
-    runId: Meteor.Collection.ObjectID
-    err: String
-    options: Match.Optional({
+### `jobProgress(id, runId, completed, total, options)`
+#### Update the progress of a running job
+
+* `id` -- The id of the job to update
+
+    `Meteor.Collection.ObjectID`
+
+* `runId` -- The runId of this worker
+
+    `Meteor.Collection.ObjectID`
+
+* `completed` -- The estimated amount of effort completed
+
+    `Match.Where(validNumGTEZero)`
+
+* `total` -- The estimated total effort
+
+    `Match.Where(validNumGTZero)`
+
+* `options` -- No options currently used
+
+    `Match.Optional({})`
+
+Returns: `Boolean` - Success or failure or `null` if jobCollection is shutting down
+
+### `jobLog(id, runId, message, options)`
+#### Add an entry in the job log of a running job
+
+* `id` -- The id of the job to update
+
+    `Meteor.Collection.ObjectID`
+
+* `runId` -- The runId of this worker
+
+    `Meteor.Collection.ObjectID`
+
+* `message` -- The text of the message to add to the log
+
+    `String`
+
+* `options` -- Supports the following options:
+    * `level` -- The information level of this log entry. Must be a valid log level. Default: `'info'`
+
+    `Match.Optional({
+        level: Match.Optional(Match.Where(validLogLevel))
+    })`
+
+Returns: `Boolean` - Success or failure
+
+### `jobDone(id, runId, result, options)`
+#### Change a job's status to `completed`
+
+* `id` -- The id of the job to update
+
+    `Meteor.Collection.ObjectID`
+
+* `runId` -- The runId of this worker
+
+    `Meteor.Collection.ObjectID`
+
+* `result` -- A result object to store with the completed job.
+
+    `Object`
+
+* `options` -- No options currently used
+
+    `Match.Optional({})`
+
+Returns: `Boolean` - Success or failure
+
+### `jobFail(id, runId, err, options)`
+#### Change a job's status to `failed`
+
+* `id` -- The id of the job to update
+
+    `Meteor.Collection.ObjectID`
+
+* `runId` -- The runId of this worker
+
+    `Meteor.Collection.ObjectID`
+
+* `err` -- An error string to store with the failed job.
+
+    `String`
+
+* `options` -- Supports the following options:
+    * `fatal` -- If true, cancels any remaining repeat runs this job was scheduled to have. Default: false.
+
+    `options: Match.Optional({
       fatal: Match.Optional(Boolean)
-    })
-    options ?= {}
-    options.fatal ?= false
-    returns Boolean
-```
+    })`
+
+Returns: `Boolean` - Success or failure

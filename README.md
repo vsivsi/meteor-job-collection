@@ -639,18 +639,18 @@ New jobs objects are created using the following JobCollection API calls:
 
 The methods below may be performed on job objects regardless of their source. All `Job` methods may be run on the client or server.
 
-### `j.depends([dependencies])` - Server or Client
+### `job.depends([dependencies])` - Server or Client
 #### Adds jobs that this job depends upon (antecedents)
 
 This job will not run until these jobs have successfully completed. Defaults to an empty array (no dependencies). Returns `job`, so it is chainable.
-Added jobs must have already had `.save()` run on them, so they will have the `_id` attribute that is used to form the dependency. Calling `j.depends()` with a falsy value will clear any existing dependencies for this job.
+Added jobs must have already had `.save()` run on them, so they will have the `_id` attribute that is used to form the dependency. Calling `job.depends()` with a falsy value will clear any existing dependencies for this job.
 
 ```js
 job.depends([job1, job2]);  // job1 and job2 are Job objects, and must successfully complete before job will run
 job.depends();  // Clear any dependencies previously added on this job
 ```
 
-### `j.priority([priority])` - Server or Client
+### `job.priority([priority])` - Server or Client
 #### Sets the priority of this job
 
 Can be integer numeric or one of `Job.jobPriorities`. Defaults to `'normal'` priority, which is priority `0`. Returns `job`, so it is chainable.
@@ -660,7 +660,7 @@ job.priority('high');  // Maps to -10
 job.priority(-10);     // Same as above
 ```
 
-### `j.retry([options])` - Server or Client
+### `job.retry([options])` - Server or Client
 #### Set how failing jobs are rescheduled and retried by the job Collection
 
 Returns `job`, so it is chainable.
@@ -680,7 +680,7 @@ job.retry({
 });
 ```
 
-### `j.repeat([options])` - Server or Client
+### `job.repeat([options])` - Server or Client
 #### Set how many times this job will be automatically re-run by the job Collection
 
 Each time it is re-run, a new job is created in the job collection. This is equivalent to running `job.rerun()`. Only `'completed'` jobs are repeated. Failing jobs that exhaust their retries will not repeat. By default, if an infinitely repeating job is added to the job Collection, any existing repeating jobs of the same type that are cancellable, will be cancelled.  See `option.cancelRepeats` for `job.save()` for more info. Returns `job`, so it is chainable.
@@ -700,7 +700,7 @@ job.repeat({
 });
 ```
 
-### `j.delay([milliseconds])` - Server or Client
+### `job.delay([milliseconds])` - Server or Client
 #### Sets how long to wait until this job can be run
 
 Counts from when it is initially saved to the job Collection.
@@ -710,7 +710,7 @@ Returns `job`, so it is chainable.
 job.delay(0);   // Do not wait. This is the default.
 ```
 
-### `j.after([time])` - Server or Client
+### `job.after([time])` - Server or Client
 #### Sets the time after which a job may be run
 
 `time` is a date object.  It is not guaranteed to run "at" this time because there may be no workers available when it is reached. Returns `job`, so it is chainable.
@@ -719,7 +719,7 @@ job.delay(0);   // Do not wait. This is the default.
 job.after(new Date());   // Run the job anytime after right now. This is the default.
 ```
 
-### `j.log(message, [options], [callback])` - Server or Client
+### `job.log(message, [options], [callback])` - Server or Client
 #### Add an entry to this job's log
 ##### Requires permission: Server, `admin`, `worker` or `jobLog`
 
@@ -749,7 +749,7 @@ var verbosityLevel = 'warning';
 job.log("Don't echo this", { level: 'info', echo: verbosityLevel } );
 ```
 
-### `j.progress(completed, total, [options], [cb])` - Server or Client
+### `job.progress(completed, total, [options], [cb])` - Server or Client
 #### Update the progress of a running job
 ##### Requires permission: Server, `admin`, `worker` or `jobProgress`
 
@@ -775,7 +775,7 @@ job.progress(
 );
 ```
 
-### `j.save([options], [callback])` - Server or Client
+### `job.save([options], [callback])` - Server or Client
 #### Submits this job to the job Collection
 ##### Requires permission: Server, `admin`, `creator` or `jobSave`
 
@@ -793,7 +793,7 @@ job.save(
   }
 );
 ```
-### `j.refresh([options], [callback])` - Server or Client
+### `job.refresh([options], [callback])` - Server or Client
 #### Refreshes the current job object state with the state on the remote jobCollection
 ##### Requires permission: Server, `admin`, `worker` or `getJob`
 
@@ -812,7 +812,7 @@ job.refresh(function (err, result) {
 });
 ```
 
-### `j.done(result, [options], [callback])` - Server or Client
+### `job.done(result, [options], [callback])` - Server or Client
 #### Change the state of a running job to `'completed'`.
 ##### Requires permission: Server, `admin`, `worker` or `jobDone`
 
@@ -835,7 +835,7 @@ job.done("Done!");
 // { "value": "Done!" }
 ```
 
-### `j.fail(message, [options], [callback])` - Server or Client
+### `job.fail(message, [options], [callback])` - Server or Client
 #### Change the state of a running job to `'failed'`.
 ##### Requires permission: Server, `admin`, `worker` or `jobFail`
 
@@ -860,7 +860,7 @@ job.fail(
 });
 ```
 
-### `j.pause([options], [callback])` - Server or Client
+### `job.pause([options], [callback])` - Server or Client
 #### Change the state of a job to `'paused'`.
 ##### Requires permission: Server, `admin`, `manager` or `jobPause`
 
@@ -878,7 +878,7 @@ job.pause(function (err, result) {
 });
 ```
 
-### `j.resume([options], [callback])` - Server or Client
+### `job.resume([options], [callback])` - Server or Client
 #### Change the state of a job from `'paused'` to `'waiting'`
 ##### Requires permission: Server, `admin`, `manager` or `jobResume`
 
@@ -894,7 +894,7 @@ job.resume(function (err, result) {
 });
 ```
 
-### `j.cancel([options], [callback])` - Server or Client
+### `job.cancel([options], [callback])` - Server or Client
 #### Change the state of a job to `'cancelled'`.
 ##### Requires permission: Server, `admin`, `manager` or `jobCancel`
 
@@ -920,7 +920,7 @@ job.cancel(
 );
 ```
 
-### `j.restart([options], [callback])` - Server or Client
+### `job.restart([options], [callback])` - Server or Client
 #### Change the state of a `'failed'` or `'cancelled'` job to `'waiting'` to be retried.
 
 A restarted job will retain any repeat count state it had when it failed or was cancelled.
@@ -947,7 +947,7 @@ job.restart(
 );
 ```
 
-### `j.rerun([options], [callback])` - Server or Client
+### `job.rerun([options], [callback])` - Server or Client
 #### Clone a completed job and run it again
 ##### Requires permission: Server, `admin`, `creator` or `jobRerun`
 
@@ -971,7 +971,7 @@ job.rerun(
 );
 ```
 
-### `j.remove([options], [callback])` - Server or Client
+### `job.remove([options], [callback])` - Server or Client
 #### Permanently remove this job from the job collection
 ##### Requires permission: Server, `admin`, `manager` or `jobRemove`
 
@@ -989,12 +989,12 @@ job.remove(function (err, result) {
 });
 ```
 
-### `j.type` - Server or Client
+### `job.type` - Server or Client
 #### Contains the type of a job
 
 Useful for when `getWork` or `processJobs` are configured to accept multiple job types. This may not be changed after a job is created.
 
-### `j.data` - Server or Client
+### `job.data` - Server or Client
 #### Contains the job data needed by the worker to complete a job of a given type
 
 Always an object. This may not be changed after a job is created.

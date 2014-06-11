@@ -66,7 +66,7 @@ if Meteor.isServer
         performAllTests = (allTests) =>
           result = false
           for t in @ddpMethodPermissions[method] when result is false
-            result = result or performTests(allTests[t])
+            result = result or performTest(allTests[t])
           return result
 
         return performAllTests(@allows) and not performAllTests(@denys)

@@ -9,7 +9,7 @@ if Meteor.isClient
   ################################################################
   ## jobCollection client class
 
-  class jobCollection extends Meteor.Collection
+  class JobCollection extends Meteor.Collection
 
     constructor: (@root = 'queue', options = {}) ->
       unless @ instanceof jobCollection

@@ -23,7 +23,7 @@ The code snippets below show a Meteor server that creates a `jobCollection`, Met
 // Server
 if (Meteor.isServer) {
 
-   myJobs = jobCollection('myJobQueue');
+   myJobs = JobCollection('myJobQueue');
    myJobs.allow({
     // Grant full permission to any authenticated user
     admin: function (userId, method, params) { return (userId ? true : false); }
@@ -49,7 +49,7 @@ Alright, the server is set-up and running, now let's add some client code to cre
 // Client
 if (Meteor.isClient) {
 
-   myJobs = jobCollection('myJobQueue');
+   myJobs = JobCollection('myJobQueue');
    Meteor.subscribe('allJobs');
 
    // Because of the server settings, the code below will only work
@@ -157,7 +157,7 @@ Worker code very similar to the above (without all of the DDP setup) can run on 
 
 The design of jobCollection is heavily influenced by [Kue](https://github.com/LearnBoost/kue) and to a lesser extent by the [Maui Cluster Scheduler](https://en.wikipedia.org/wiki/Maui_Cluster_Scheduler). However, unlike Kue's use of Redis Pub/Sub and an HTTP API, `jobCollection` uses MongoDB, Meteor, and Meteor's DDP protocol to provide persistence, reactivity, and secure remote access.
 
-As the name implies, a `jobCollection` looks and acts like a Meteor Collection because under the hood it actually is one. However, other than `.find()` and `.findOne()`, all accesses to a `jobCollection` happen via the easy to use API on `Job` objects. Most `Job` API calls are transformed internally to Meteor [Method](http://docs.meteor.com/#methods_header) calls. This is cool because the underlying `Job` class is implemented as pure Javascript that can run in both the Meteor server and client environments, and most significantly as pure node.js code running independently from Meteor (as shown in the example code above).
+As the name implies, a `JobCollection` looks and acts like a Meteor Collection because under the hood it actually is one. However, other than `.find()` and `.findOne()`, all accesses to a `JobCollection` happen via the easy to use API on `Job` objects. Most `Job` API calls are transformed internally to Meteor [Method](http://docs.meteor.com/#methods_header) calls. This is cool because the underlying `Job` class is implemented as pure Javascript that can run in both the Meteor server and client environments, and most significantly as pure node.js code running independently from Meteor (as shown in the example code above).
 
 ## Installation
 
@@ -167,8 +167,7 @@ Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your p
 
     mrt add jobCollection
 
-The package exposes a global object `jobCollection` on both client and server.
-
+The package exposes a global object `JobCollection` on both client and server.
 
 **NOTE!** Sample app and tests mentioned below are not implemented yet!
 
@@ -199,18 +198,18 @@ Load `http://localhost:3000/` and the tests should run in your browser and on th
 
 ### Security
 
-## API
+## JobCollection API
 
-### `jc = new jobCollection([name], [options])`
-#### Creates a new jobCollection. - Server and Client
+### `jc = new JobCollection([name], [options])`
+#### Creates a new JobCollection. - Server and Client
 
-Creating a new `jobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`. There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
+Creating a new `JobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`. There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
 
-For security and simplicity the traditional client allow/deny rules for Meteor collections are preset to deny all direct client `insert`, `update` and `remove` type operations on a `jobCollection`. This effectively channels all remote activity through the `jobCollection` DDP methods, which may be secured using allow/deny rules specific to `jobCollection`. See the documentation for `js.allow()` and `js.deny()` for more information.
+For security and simplicity the traditional client allow/deny rules for Meteor collections are preset to deny all direct client `insert`, `update` and `remove` type operations on a `JobCollection`. This effectively channels all remote activity through the `JobCollection` DDP methods, which may be secured using allow/deny rules specific to `JobCollection`. See the documentation for `js.allow()` and `js.deny()` for more information.
 
 ```js
 // the "new" is optional
-jc = jobCollection('defaultJobCollection');
+jc = JobCollection('defaultJobCollection');
 ```
 
 ### `jc.setLogStream(writeStream)`
@@ -311,8 +310,149 @@ jc.deny({
 
 See the `allow` method above for more details.
 
+### `jc.forever`
+#### Constant value used to indicate that something should repeat forever - Server or Client
+
+```js
+job = jc.createJob('jobType', { work: "to", be: "done" })
+   .retry({ retries: jc.forever })    // Default for .retry()
+   .repeat({ repeats: jc.forever });  // Default for .repeat()
+```
+
+### `jc.jobPriorities`
+#### Valid non-numeric job priorities - Server or Client
+
+```js
+jc.jobPriorities = {
+  low: 10
+  normal: 0
+  medium: -5
+  high: -10
+  critical: -15
+};
+```
+
+### `jc.jobStatuses`
+#### Possible states for the status of a job in the job collection  - Server or Client
+
+```js
+jc.jobStatuses = [
+    'waiting'
+    'paused'
+    'ready'
+    'running'
+    'failed'
+    'cancelled'
+    'completed'
+];
+```
+
+### `jc.jobLogLevels`
+#### Valid log levels  - Server or Client
+
+If these look familiar, it's because they correspond to some the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
+
+```js
+jc.jobLogLevels: [
+    'info'
+    'success'
+    'warning'
+    'danger'
+];
+```
+
+### `jc.jobStatusCancellable`
+#### Job status states that can be cancelled - Server or Client
+
+```js
+jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
+```
+
+### `jc.jobStatusPausable`
+#### Job status states that can be paused - Server or Client
+
+```js
+jc.jobStatusPausable = [ 'ready', 'waiting' ];
+```
+
+### `jc.jobStatusRemovable`
+#### Job status states that can be removed - Server or Client
+
+```js
+jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
+```
+
+### `jc.jobStatusRestartable`
+#### Job status states that can be restarted - Server or Client
+
+```js
+jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
+```
+
+### `jc.ddpMethods`
+#### Array of the names of all DDP methods used by `jobCollection` - Server or Client
+
+```js
+jc.ddpMethods = [
+    'startJobs', 'stopJobs', 'jobRemove', 'jobPause', 'jobResume'
+    'jobCancel', 'jobRestart', 'jobSave', 'jobRerun', 'getWork'
+    'getJob', 'jobLog', 'jobProgress', 'jobDone', 'jobFail'
+    ];
+```
+
+### `jc.ddpPermissionLevels`
+#### Array of the predefined DDP method permission levels - Server or Client
+
+```js
+jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
+```
+
+### `jc.ddpMethodPermissions`
+#### Object mapping permission levels to DDP method names - Server or Client
+
+```js
+jc.ddpMethodPermissions = {
+    'startJobs': ['startJobs', 'admin'],
+    'stopJobs': ['stopJobs', 'admin'],
+    'jobRemove': ['jobRemove', 'admin', 'manager'],
+    'jobPause': ['jobPause', 'admin', 'manager'],
+    'jobResume': ['jobResume', 'admin', 'manager'],
+    'jobCancel': ['jobCancel', 'admin', 'manager'],
+    'jobRestart': ['jobRestart', 'admin', 'manager'],
+    'jobSave': ['jobSave', 'admin', 'creator'],
+    'jobRerun': ['jobRerun', 'admin', 'creator'],
+    'getWork': ['getWork', 'admin', 'worker'],
+    'getJob': ['getJob', 'admin', 'worker'],
+    'jobLog': [ 'jobLog', 'admin', 'worker'],
+    'jobProgress': ['jobProgress', 'admin', 'worker'],
+    'jobDone': ['jobDone', 'admin', 'worker'],
+    'jobFail': ['jobFail', 'admin', 'worker']
+};
+```
+
+### `jc.getJobs(ids, [options], [callback])`
+#### Like `jc.getJob` except it takes an array of ids - Server or Client
+This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
+
+### `jc.pauseJobs(ids, [options], [callback])`
+#### Like `job.pause()` except it pauses a list of jobs by id - Server or Client
+
+### `jc.resumeJobs(ids, [options], [callback])`
+####Like `job.resume()` except it resumes a list of jobs by id - Server or Client
+
+### `jc.cancelJobs(ids, [options], [callback])`
+#### Like `job.cancel()` except it cancels a list of jobs by id - Server or Client
+
+### `jc.restartJobs(ids, [options], [callback])`
+#### Like `job.restart()` except it restarts a list of jobs by id - Server or Client
+
+### `jc.removeJobs(ids, [options], [callback])`
+#### Like `job.remove()` except it removes a list of jobs by id - Server or Client
+
 ### `jc.makeJob(jobDoc)`
 #### Make a Job object from a jobCollection document - Server or Client
+
+See documentation below for `Job` object API
 
 ```js
 doc = jc.findOne({});
@@ -322,7 +462,11 @@ if (doc) {
 ```
 
 ### `jc.getJob(id, [options], [callback])`
-#### Create a job object by id from the server job Collection, returns `undefined` if no such job exists.
+#### Create a job object by id from the server job Collection - Server or Client
+
+See documentation below for `Job` object API
+
+Returns `undefined` if no such job exists.
 
 `id`: -- The id of the job to get.
 
@@ -355,160 +499,58 @@ if (Meteor.isServer) {
 }
 ```
 
-### `jc.forever`
+### `jc.getWork(type, [options], [callback])`
+#### Get one or more jobs from the jobCollection, setting status to `'running'` - Server or Client
 
-Constant value used to indicate that something should repeat forever.
+See documentation below for `Job` object API
 
-```js
-job = jc.createJob('jobType', { work: "to", be: "done" })
-   .retry({ retries: jc.forever })    // Default for .retry()
-   .repeat({ repeats: jc.forever });  // Default for .repeat()
-```
+`options`:
+* `maxJobs` -- Maximum number of jobs to get. Default `1`  If `maxJobs > 1` the result will be an array of job objects, otherwise it is a single job object, or `undefined` if no jobs were available
 
-### `jc.jobPriorities`
-
-Valid non-numeric job priorities.
+`callback(error, result)` -- Optional only on Meteor Server with Fibers. Result will be an array or single value depending on `options.maxJobs`.
 
 ```js
-jc.jobPriorities = {
-  low: 10
-  normal: 0
-  medium: -5
-  high: -10
-  critical: -15
-};
+if (Meteor.isServer) {
+  job = jc.getWork(  // Job will be undefined or contain a Job object
+    'jobType',   // type of job to request
+    {
+      maxJobs: 1 // Default, only get one job, returned as a single object
+    }
+  );
+} else {
+  jc.getWork(
+    [ 'jobType1', 'jobType2' ]  // can request multiple types in array
+    {
+      maxJobs: 5 // If maxJobs > 1, result is an array of jobs
+    },
+    function (err, jobs) {
+      // jobs contains between 0 and maxJobs jobs, depending on availability
+      // job type is available as
+      if (job[0].type === 'jobType1') {
+        // Work on jobType1...
+      } else if (job[0].type === 'jobType2') {
+        // Work on jobType2...
+      } else {
+        // Sadness
+      }
+    }
+  );
+}
 ```
 
-### `jc.jobStatuses`
+### `jq = jc.processJobs(type, [options], worker)`
+#### Create a new jobQueue to work on jobs - Server or Client
 
-Possible states for the status of a job in the job collection.
+See documentation below for `JobQueue` object API
 
-```js
-jc.jobStatuses = [
-    'waiting'
-    'paused'
-    'ready'
-    'running'
-    'failed'
-    'cancelled'
-    'completed'
-];
-```
-
-### `jc.jobLogLevels`
-
-Valid log levels. If these look familiar, it's because they correspond to some the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
-
-```js
-jc.jobLogLevels: [
-    'info'
-    'success'
-    'warning'
-    'danger'
-];
-```
-
-### `jc.jobStatusCancellable`
-
-Job status states that can be cancelled.
-
-```js
-jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
-```
-
-### `jc.jobStatusPausable`
-
-Job status states that can be paused.
-
-```js
-jc.jobStatusPausable = [ 'ready', 'waiting' ];
-```
-
-### `jc.jobStatusRemovable`
-
-Job status states that can be removed.
-
-```js
-jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
-```
-
-### `jc.jobStatusRestartable`
-
-Job status states that can be restarted.
-
-```js
-jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
-```
-
-### `jc.ddpMethods`
-
-Array of the names of all DDP methods used by `jobCollection`
-
-```js
-jc.ddpMethods = [
-    'startJobs', 'stopJobs', 'jobRemove', 'jobPause', 'jobResume'
-    'jobCancel', 'jobRestart', 'jobSave', 'jobRerun', 'getWork'
-    'getJob', 'jobLog', 'jobProgress', 'jobDone', 'jobFail'
-    ];
-```
-
-### `jc.ddpPermissionLevels`
-
-Array of the predefined DDP method permission levels
-
-```js
-jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
-```
-
-### `jc.ddpMethodPermissions`
-
-Object mapping permission levels to DDP method names.
-
-```js
-jc.ddpMethodPermissions = {
-    'startJobs': ['startJobs', 'admin'],
-    'stopJobs': ['stopJobs', 'admin'],
-    'jobRemove': ['jobRemove', 'admin', 'manager'],
-    'jobPause': ['jobPause', 'admin', 'manager'],
-    'jobResume': ['jobResume', 'admin', 'manager'],
-    'jobCancel': ['jobCancel', 'admin', 'manager'],
-    'jobRestart': ['jobRestart', 'admin', 'manager'],
-    'jobSave': ['jobSave', 'admin', 'creator'],
-    'jobRerun': ['jobRerun', 'admin', 'creator'],
-    'getWork': ['getWork', 'admin', 'worker'],
-    'getJob': ['getJob', 'admin', 'worker'],
-    'jobLog': [ 'jobLog', 'admin', 'worker'],
-    'jobProgress': ['jobProgress', 'admin', 'worker'],
-    'jobDone': ['jobDone', 'admin', 'worker'],
-    'jobFail': ['jobFail', 'admin', 'worker']
-};
-```
-
-### `jc.getJobs(ids, [options], [callback])`
-
-Like `jc.getJob` except it takes an array of ids and is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
-
-### `jc.pauseJobs(ids, [options], [callback])`
-
-Like `job.pause()` except it pauses a list of jobs by id.
-
-### `jc.resumeJobs(ids, [options], [callback])`
-
-Like `job.resume()` except it resumes a list of jobs by id.
-
-### `jc.cancelJobs(ids, [options], [callback])`
-
-Like `job.cancel()` except it cancels a list of jobs by id.
-
-### `jc.restartJobs(ids, [options], [callback])`
-
-Like `job.restart()` except it restarts a list of jobs by id.
-
-### `jc.removeJobs(ids, [options], [callback])`
-
-Like `job.remove()` except it removes a list of jobs by id.
+## Job API
 
 
+
+
+
+
+## JobQueue API
 
 
 ## Job document data models

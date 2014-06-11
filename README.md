@@ -310,6 +310,35 @@ jc.deny({
 
 See the `allow` method above for more details.
 
+### `jc.startJobs([options], [callback])`
+#### This feature is still immature. Starts the server job Collection.
+##### Requires permission: Server, `admin`, or `startJobs`
+
+`options`: No options currently defined
+
+`callback(error, result)` -- Result is true if successful.
+
+```js
+Job.startJobs();  // Callback is optional
+```
+
+### `Job.stopJobs([options], [callback])`
+#### This feature is still immature. Stops the server job Collection.
+##### Requires permission: Server, `admin`, or `stopJobs`
+
+`options`:
+* `timeout`: In ms, how long until the server forcibly fails all still running jobs. Default: `60*1000` (1 minute)
+
+`callback(error, result)` -- Result is true if successful.
+
+```js
+Job.stopJobs(
+  {
+    timeout: 60000
+  }
+);  // Callback is optional
+```
+
 ### `jc.forever` - Server or Client
 #### Constant value used to indicate that something should repeat forever
 
@@ -430,25 +459,6 @@ jc.ddpMethodPermissions = {
 };
 ```
 
-### `jc.getJobs(ids, [options], [callback])` - Server or Client
-#### Like `jc.getJob` except it takes an array of ids
-This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
-
-### `jc.pauseJobs(ids, [options], [callback])` - Server or Client
-#### Like `job.pause()` except it pauses a list of jobs by id
-
-### `jc.resumeJobs(ids, [options], [callback])` - Server or Client
-####Like `job.resume()` except it resumes a list of jobs by id
-
-### `jc.cancelJobs(ids, [options], [callback])` - Server or Client
-#### Like `job.cancel()` except it cancels a list of jobs by id
-
-### `jc.restartJobs(ids, [options], [callback])` - Server or Client
-#### Like `job.restart()` except it restarts a list of jobs by id
-
-### `jc.removeJobs(ids, [options], [callback])` - Server or Client
-#### Like `job.remove()` except it removes a list of jobs by id
-
 ### `job = jc.createJob(type, data)` - Server or Client
 #### Create a new `Job` object
 
@@ -477,6 +487,7 @@ if (doc) {
 
 ### `jc.getJob(id, [options], [callback])` - Server or Client
 #### Create a job object by id from the server job Collection
+##### Requires permission: Server, `admin`, `worker` or `getJob`
 
 See documentation below for `Job` object API
 
@@ -515,6 +526,7 @@ if (Meteor.isServer) {
 
 ### `jc.getWork(type, [options], [callback])` - Server or Client
 #### Get one or more jobs from the jobCollection, setting status to `'running'`
+##### Requires permission: Server, `admin`, `worker` or `getWork`
 
 See documentation below for `Job` object API
 
@@ -552,8 +564,34 @@ if (Meteor.isServer) {
 }
 ```
 
+### `jc.getJobs(ids, [options], [callback])` - Server or Client
+#### Like `jc.getJob` except it takes an array of ids
+##### Requires permission: Server, `admin`, `worker` or `getJob`
+This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
+
+### `jc.pauseJobs(ids, [options], [callback])` - Server or Client
+#### Like `job.pause()` except it pauses a list of jobs by id
+##### Requires permission: Server, `admin`, `manager` or `jobPause`
+
+### `jc.resumeJobs(ids, [options], [callback])` - Server or Client
+#### Like `job.resume()` except it resumes a list of jobs by id
+##### Requires permission: Server, `admin`, `manager` or `jobResume`
+
+### `jc.cancelJobs(ids, [options], [callback])` - Server or Client
+#### Like `job.cancel()` except it cancels a list of jobs by id
+##### Requires permission: Server, `admin`, `manager` or `jobCancel`
+
+### `jc.restartJobs(ids, [options], [callback])` - Server or Client
+#### Like `job.restart()` except it restarts a list of jobs by id
+##### Requires permission: Server, `admin`, `manager` or `jobRestart`
+
+### `jc.removeJobs(ids, [options], [callback])` - Server or Client
+#### Like `job.remove()` except it removes a list of jobs by id
+##### Requires permission: Server, `admin`, `manager` or `jobRemove`
+
 ### `jq = jc.processJobs(type, [options], worker)` - Server or Client
 #### Create a new jobQueue to automatically work on jobs
+##### Requires permission: Server, `admin`, `worker` or `getWork`
 
 Asynchronously calls the worker function.
 
@@ -683,6 +721,7 @@ job.after(new Date());   // Run the job anytime after right now. This is the def
 
 ### `j.log(message, [options], [callback])` - Server or Client
 #### Add an entry to this job's log
+##### Requires permission: Server, `admin`, `worker` or `jobLog`
 
 May be called before a new job is saved. `message` must be a string.
 
@@ -712,6 +751,7 @@ job.log("Don't echo this", { level: 'info', echo: verbosityLevel } );
 
 ### `j.progress(completed, total, [options], [cb])` - Server or Client
 #### Update the progress of a running job
+##### Requires permission: Server, `admin`, `worker` or `jobProgress`
 
 May be called before a new job is saved. `completed` must be a number `>= 0` and `total` must be a number `> 0` with `total >= completed`.
 
@@ -737,6 +777,7 @@ job.progress(
 
 ### `j.save([options], [callback])` - Server or Client
 #### Submits this job to the job Collection
+##### Requires permission: Server, `admin`, `creator` or `jobSave`
 
 Only valid if this is a new job, or if the job is currently paused in the job Collection. If the job is already saved and paused, then most properties of the job may change (but not all, e.g. the jobType may not be changed.)
 
@@ -754,6 +795,7 @@ job.save(
 ```
 ### `j.refresh([options], [callback])` - Server or Client
 #### Refreshes the current job object state with the state on the remote jobCollection
+##### Requires permission: Server, `admin`, `worker` or `getJob`
 
 Note that if you subscribe to the job Collection, the job documents will stay in sync with the server automatically via Meteor reactivity.
 
@@ -772,6 +814,7 @@ job.refresh(function (err, result) {
 
 ### `j.done(result, [options], [callback])` - Server or Client
 #### Change the state of a running job to `'completed'`.
+##### Requires permission: Server, `admin`, `worker` or `jobDone`
 
 `result` is any EJSON object.  If this job is configured to repeat, a new job will automatically be cloned to rerun in the future.  Result will be saved as an object. If passed result is not an object, it will be wrapped in one.
 
@@ -794,6 +837,7 @@ job.done("Done!");
 
 ### `j.fail(message, [options], [callback])` - Server or Client
 #### Change the state of a running job to `'failed'`.
+##### Requires permission: Server, `admin`, `worker` or `jobFail`
 
 It's next state depends on how the job's `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
 
@@ -818,6 +862,7 @@ job.fail(
 
 ### `j.pause([options], [callback])` - Server or Client
 #### Change the state of a job to `'paused'`.
+##### Requires permission: Server, `admin`, `manager` or `jobPause`
 
 Only `'ready'` and `'waiting'` jobs may be paused. This specifically does nothing to affect running jobs. To stop a running job, you must use `job.cancel()`.
 
@@ -835,6 +880,7 @@ job.pause(function (err, result) {
 
 ### `j.resume([options], [callback])` - Server or Client
 #### Change the state of a job from `'paused'` to `'waiting'`
+##### Requires permission: Server, `admin`, `manager` or `jobResume`
 
 `options:` -- None currently.
 
@@ -850,6 +896,7 @@ job.resume(function (err, result) {
 
 ### `j.cancel([options], [callback])` - Server or Client
 #### Change the state of a job to `'cancelled'`.
+##### Requires permission: Server, `admin`, `manager` or `jobCancel`
 
 Any job that isn't `'completed'`, `'failed'` or already `'cancelled'` may be cancelled. Cancelled jobs retain any remaining retries and/or repeats if they are later restarted.
 
@@ -902,6 +949,7 @@ job.restart(
 
 ### `j.rerun([options], [callback])` - Server or Client
 #### Clone a completed job and run it again
+##### Requires permission: Server, `admin`, `creator` or `jobRerun`
 
 `options:`
 * `repeats` -- Number of times to repeat the job, as with `job.repeat()`.
@@ -925,6 +973,7 @@ job.rerun(
 
 ### `j.remove([options], [callback])` - Server or Client
 #### Permanently remove this job from the job collection
+##### Requires permission: Server, `admin`, `manager` or `jobRemove`
 
 The job must be `'completed'`, `'failed'`, or `'cancelled'` to be removed.
 

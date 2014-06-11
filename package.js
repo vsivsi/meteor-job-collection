@@ -18,7 +18,7 @@ Package.on_use(function(api) {
   api.add_files('server.coffee', 'server');
   api.add_files('client.coffee', 'client');
   api.export('Job');
-  api.export('jobCollection');
+  api.export('JobCollection');
 });
 
 Package.on_test(function (api) {

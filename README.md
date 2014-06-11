@@ -339,7 +339,7 @@ jc.stopJobs(
 );  // Callback is optional
 ```
 
-### `jc.forever` - Server or Client
+### `jc.forever` - Anywhere
 #### Constant value used to indicate that something should repeat forever
 
 ```js
@@ -348,7 +348,7 @@ job = jc.createJob('jobType', { work: "to", be: "done" })
    .repeat({ repeats: jc.forever });  // Default for .repeat()
 ```
 
-### `jc.jobPriorities` - Server or Client
+### `jc.jobPriorities` - Anywhere
 #### Valid non-numeric job priorities
 
 ```js
@@ -361,7 +361,7 @@ jc.jobPriorities = {
 };
 ```
 
-### `jc.jobStatuses` - Server or Client
+### `jc.jobStatuses` - Anywhere
 #### Possible states for the status of a job in the job collection
 
 ```js
@@ -376,7 +376,7 @@ jc.jobStatuses = [
 ];
 ```
 
-### `jc.jobLogLevels` - Server or Client
+### `jc.jobLogLevels` - Anywhere
 #### Valid log levels
 
 If these look familiar, it's because they correspond to some the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
@@ -390,35 +390,35 @@ jc.jobLogLevels: [
 ];
 ```
 
-### `jc.jobStatusCancellable` - Server or Client
+### `jc.jobStatusCancellable` - Anywhere
 #### Job status states that can be cancelled
 
 ```js
 jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
 ```
 
-### `jc.jobStatusPausable` - Server or Client
+### `jc.jobStatusPausable` - Anywhere
 #### Job status states that can be paused
 
 ```js
 jc.jobStatusPausable = [ 'ready', 'waiting' ];
 ```
 
-### `jc.jobStatusRemovable` - Server or Client
+### `jc.jobStatusRemovable` - Anywhere
 #### Job status states that can be removed
 
 ```js
 jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
 ```
 
-### `jc.jobStatusRestartable` - Server or Client
+### `jc.jobStatusRestartable` - Anywhere
 #### Job status states that can be restarted
 
 ```js
 jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 ```
 
-### `jc.ddpMethods` - Server or Client
+### `jc.ddpMethods` - Anywhere
 #### Array of the names of all DDP methods used by `jobCollection`
 
 ```js
@@ -429,14 +429,14 @@ jc.ddpMethods = [
     ];
 ```
 
-### `jc.ddpPermissionLevels` - Server or Client
+### `jc.ddpPermissionLevels` - Anywhere
 #### Array of the predefined DDP method permission levels
 
 ```js
 jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
 ```
 
-### `jc.ddpMethodPermissions` - Server or Client
+### `jc.ddpMethodPermissions` - Anywhere
 #### Object mapping permission levels to DDP method names
 
 ```js
@@ -459,7 +459,7 @@ jc.ddpMethodPermissions = {
 };
 ```
 
-### `job = jc.createJob(type, data)` - Server or Client
+### `job = jc.createJob(type, data)` - Anywhere
 #### Create a new `Job` object
 
 Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
@@ -473,7 +473,7 @@ job = jc.createJob(
 );
 ```
 
-### `jc.makeJob(jobDoc)` - Server or Client
+### `jc.makeJob(jobDoc)` - Anywhere
 #### Make a Job object from a jobCollection document
 
 See documentation below for `Job` object API
@@ -485,7 +485,7 @@ if (doc) {
 }
 ```
 
-### `jc.getJob(id, [options], [callback])` - Server or Client
+### `jc.getJob(id, [options], [callback])` - Anywhere
 #### Create a job object by id from the server job Collection
 ##### Requires permission: Server, `admin`, `worker` or `getJob`
 
@@ -524,7 +524,7 @@ if (Meteor.isServer) {
 }
 ```
 
-### `jc.getWork(type, [options], [callback])` - Server or Client
+### `jc.getWork(type, [options], [callback])` - Anywhere
 #### Get one or more jobs from the jobCollection, setting status to `'running'`
 ##### Requires permission: Server, `admin`, `worker` or `getWork`
 
@@ -564,32 +564,32 @@ if (Meteor.isServer) {
 }
 ```
 
-### `jc.getJobs(ids, [options], [callback])` - Server or Client
+### `jc.getJobs(ids, [options], [callback])` - Anywhere
 #### Like `jc.getJob` except it takes an array of ids
 ##### Requires permission: Server, `admin`, `worker` or `getJob`
 This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
 
-### `jc.pauseJobs(ids, [options], [callback])` - Server or Client
+### `jc.pauseJobs(ids, [options], [callback])` - Anywhere
 #### Like `job.pause()` except it pauses a list of jobs by id
 ##### Requires permission: Server, `admin`, `manager` or `jobPause`
 
-### `jc.resumeJobs(ids, [options], [callback])` - Server or Client
+### `jc.resumeJobs(ids, [options], [callback])` - Anywhere
 #### Like `job.resume()` except it resumes a list of jobs by id
 ##### Requires permission: Server, `admin`, `manager` or `jobResume`
 
-### `jc.cancelJobs(ids, [options], [callback])` - Server or Client
+### `jc.cancelJobs(ids, [options], [callback])` - Anywhere
 #### Like `job.cancel()` except it cancels a list of jobs by id
 ##### Requires permission: Server, `admin`, `manager` or `jobCancel`
 
-### `jc.restartJobs(ids, [options], [callback])` - Server or Client
+### `jc.restartJobs(ids, [options], [callback])` - Anywhere
 #### Like `job.restart()` except it restarts a list of jobs by id
 ##### Requires permission: Server, `admin`, `manager` or `jobRestart`
 
-### `jc.removeJobs(ids, [options], [callback])` - Server or Client
+### `jc.removeJobs(ids, [options], [callback])` - Anywhere
 #### Like `job.remove()` except it removes a list of jobs by id
 ##### Requires permission: Server, `admin`, `manager` or `jobRemove`
 
-### `jq = jc.processJobs(type, [options], worker)` - Server or Client
+### `jq = jc.processJobs(type, [options], worker)` - Anywhere
 #### Create a new jobQueue to automatically work on jobs
 ##### Requires permission: Server, `admin`, `worker` or `getWork`
 
@@ -639,7 +639,7 @@ New jobs objects are created using the following JobCollection API calls:
 
 The methods below may be performed on job objects regardless of their source. All `Job` methods may be run on the client or server.
 
-### `job.depends([dependencies])` - Server or Client
+### `job.depends([dependencies])` - Anywhere
 #### Adds jobs that this job depends upon (antecedents)
 
 This job will not run until these jobs have successfully completed. Defaults to an empty array (no dependencies). Returns `job`, so it is chainable.
@@ -650,7 +650,7 @@ job.depends([job1, job2]);  // job1 and job2 are Job objects, and must successfu
 job.depends();  // Clear any dependencies previously added on this job
 ```
 
-### `job.priority([priority])` - Server or Client
+### `job.priority([priority])` - Anywhere
 #### Sets the priority of this job
 
 Can be integer numeric or one of `Job.jobPriorities`. Defaults to `'normal'` priority, which is priority `0`. Returns `job`, so it is chainable.
@@ -660,7 +660,7 @@ job.priority('high');  // Maps to -10
 job.priority(-10);     // Same as above
 ```
 
-### `job.retry([options])` - Server or Client
+### `job.retry([options])` - Anywhere
 #### Set how failing jobs are rescheduled and retried by the job Collection
 
 Returns `job`, so it is chainable.
@@ -680,7 +680,7 @@ job.retry({
 });
 ```
 
-### `job.repeat([options])` - Server or Client
+### `job.repeat([options])` - Anywhere
 #### Set how many times this job will be automatically re-run by the job Collection
 
 Each time it is re-run, a new job is created in the job collection. This is equivalent to running `job.rerun()`. Only `'completed'` jobs are repeated. Failing jobs that exhaust their retries will not repeat. By default, if an infinitely repeating job is added to the job Collection, any existing repeating jobs of the same type that are cancellable, will be cancelled.  See `option.cancelRepeats` for `job.save()` for more info. Returns `job`, so it is chainable.
@@ -700,7 +700,7 @@ job.repeat({
 });
 ```
 
-### `job.delay([milliseconds])` - Server or Client
+### `job.delay([milliseconds])` - Anywhere
 #### Sets how long to wait until this job can be run
 
 Counts from when it is initially saved to the job Collection.
@@ -710,7 +710,7 @@ Returns `job`, so it is chainable.
 job.delay(0);   // Do not wait. This is the default.
 ```
 
-### `job.after([time])` - Server or Client
+### `job.after([time])` - Anywhere
 #### Sets the time after which a job may be run
 
 `time` is a date object.  It is not guaranteed to run "at" this time because there may be no workers available when it is reached. Returns `job`, so it is chainable.
@@ -719,7 +719,7 @@ job.delay(0);   // Do not wait. This is the default.
 job.after(new Date());   // Run the job anytime after right now. This is the default.
 ```
 
-### `job.log(message, [options], [callback])` - Server or Client
+### `job.log(message, [options], [callback])` - Anywhere
 #### Add an entry to this job's log
 ##### Requires permission: Server, `admin`, `worker` or `jobLog`
 
@@ -749,7 +749,7 @@ var verbosityLevel = 'warning';
 job.log("Don't echo this", { level: 'info', echo: verbosityLevel } );
 ```
 
-### `job.progress(completed, total, [options], [cb])` - Server or Client
+### `job.progress(completed, total, [options], [cb])` - Anywhere
 #### Update the progress of a running job
 ##### Requires permission: Server, `admin`, `worker` or `jobProgress`
 
@@ -775,7 +775,7 @@ job.progress(
 );
 ```
 
-### `job.save([options], [callback])` - Server or Client
+### `job.save([options], [callback])` - Anywhere
 #### Submits this job to the job Collection
 ##### Requires permission: Server, `admin`, `creator` or `jobSave`
 
@@ -793,7 +793,7 @@ job.save(
   }
 );
 ```
-### `job.refresh([options], [callback])` - Server or Client
+### `job.refresh([options], [callback])` - Anywhere
 #### Refreshes the current job object state with the state on the remote jobCollection
 ##### Requires permission: Server, `admin`, `worker` or `getJob`
 
@@ -812,7 +812,7 @@ job.refresh(function (err, result) {
 });
 ```
 
-### `job.done(result, [options], [callback])` - Server or Client
+### `job.done(result, [options], [callback])` - Anywhere
 #### Change the state of a running job to `'completed'`.
 ##### Requires permission: Server, `admin`, `worker` or `jobDone`
 
@@ -835,7 +835,7 @@ job.done("Done!");
 // { "value": "Done!" }
 ```
 
-### `job.fail(message, [options], [callback])` - Server or Client
+### `job.fail(message, [options], [callback])` - Anywhere
 #### Change the state of a running job to `'failed'`.
 ##### Requires permission: Server, `admin`, `worker` or `jobFail`
 
@@ -860,7 +860,7 @@ job.fail(
 });
 ```
 
-### `job.pause([options], [callback])` - Server or Client
+### `job.pause([options], [callback])` - Anywhere
 #### Change the state of a job to `'paused'`.
 ##### Requires permission: Server, `admin`, `manager` or `jobPause`
 
@@ -878,7 +878,7 @@ job.pause(function (err, result) {
 });
 ```
 
-### `job.resume([options], [callback])` - Server or Client
+### `job.resume([options], [callback])` - Anywhere
 #### Change the state of a job from `'paused'` to `'waiting'`
 ##### Requires permission: Server, `admin`, `manager` or `jobResume`
 
@@ -894,7 +894,7 @@ job.resume(function (err, result) {
 });
 ```
 
-### `job.cancel([options], [callback])` - Server or Client
+### `job.cancel([options], [callback])` - Anywhere
 #### Change the state of a job to `'cancelled'`.
 ##### Requires permission: Server, `admin`, `manager` or `jobCancel`
 
@@ -920,7 +920,7 @@ job.cancel(
 );
 ```
 
-### `job.restart([options], [callback])` - Server or Client
+### `job.restart([options], [callback])` - Anywhere
 #### Change the state of a `'failed'` or `'cancelled'` job to `'waiting'` to be retried.
 
 A restarted job will retain any repeat count state it had when it failed or was cancelled.
@@ -947,7 +947,7 @@ job.restart(
 );
 ```
 
-### `job.rerun([options], [callback])` - Server or Client
+### `job.rerun([options], [callback])` - Anywhere
 #### Clone a completed job and run it again
 ##### Requires permission: Server, `admin`, `creator` or `jobRerun`
 
@@ -971,7 +971,7 @@ job.rerun(
 );
 ```
 
-### `job.remove([options], [callback])` - Server or Client
+### `job.remove([options], [callback])` - Anywhere
 #### Permanently remove this job from the job collection
 ##### Requires permission: Server, `admin`, `manager` or `jobRemove`
 
@@ -989,12 +989,12 @@ job.remove(function (err, result) {
 });
 ```
 
-### `job.type` - Server or Client
+### `job.type` - Anywhere
 #### Contains the type of a job
 
 Useful for when `getWork` or `processJobs` are configured to accept multiple job types. This may not be changed after a job is created.
 
-### `job.data` - Server or Client
+### `job.data` - Anywhere
 #### Contains the job data needed by the worker to complete a job of a given type
 
 Always an object. This may not be changed after a job is created.
@@ -1009,7 +1009,7 @@ New jobQueues are created by calling the following jobCollection method (documen
 
 All `JobQueue` methods may be run on the server or client
 
-### `q.pause()` - Server or Client
+### `q.pause()` - Anywhere
 #### Pause the JobQueue
 
 This means that no more work will be requested from the job collection, and no new workers will be called with jobs that already exist in this local queue. Jobs that are already running locally will run to completion. Note that a JobQueue may be created in the paused state by running `q.pause()` immediately on the returned new jobQueue.
@@ -1017,13 +1017,13 @@ This means that no more work will be requested from the job collection, and no n
 ```js
 q.pause()
 ```
-### `q.resume()` - Server or Client
+### `q.resume()` - Anywhere
 #### Undoes a `q.pause()`, returning the queue to the normal running state
 
 ```js
 q.resume()
 ```
-### `q.shutdown([options], [callback])` - Server or Client
+### `q.shutdown([options], [callback])` - Anywhere
 #### Shuts down the queue, with several possible levels of urgency
 
 `options:`
@@ -1042,16 +1042,16 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
   // shutdown complete
 });
 ```
-### `q.length()` - Server or Client
+### `q.length()` - Anywhere
 #### Number of tasks ready to run
 
-### `q.full()` - Server or Client
+### `q.full()` - Anywhere
 #### `true` if all of the concurrent workers are currently running
 
-### `q.running()` - Server or Client
+### `q.running()` - Anywhere
 #### Number of concurrent workers currently running
 
-### `q.idle()` - Server or Client
+### `q.idle()` - Anywhere
 #### `true` if no work is currently running.
 
 

@@ -23,7 +23,7 @@ The code snippets below show a Meteor server that creates a `jobCollection`, Met
 // Server
 if (Meteor.isServer) {
 
-   myJobs = JobCollection('myJobQueue');
+   var myJobs = JobCollection('myJobQueue');
    myJobs.allow({
     // Grant full permission to any authenticated user
     admin: function (userId, method, params) { return (userId ? true : false); }
@@ -49,7 +49,7 @@ Alright, the server is set-up and running, now let's add some client code to cre
 // Client
 if (Meteor.isClient) {
 
-   myJobs = JobCollection('myJobQueue');
+   var myJobs = JobCollection('myJobQueue');
    Meteor.subscribe('allJobs');
 
    // Because of the server settings, the code below will only work
@@ -57,7 +57,7 @@ if (Meteor.isClient) {
    // On the server all of it would run unconditionally
 
    // Create a job:
-   job = myJobs.createJob('sendEmail', // type of job
+   var job = myJobs.createJob('sendEmail', // type of job
       // Job data, defined by you for type of job
       // whatever info is needed to complete it.
       // May contain links to files, etc...
@@ -134,9 +134,9 @@ ddp.connect(function (err) {
       // Create a worker to get sendMail jobs from 'myJobQueue'
       // This will keep running indefinitely, obtaining new work from the
       // server whenever it is available.
-      workers = Job.processJobs('myJobQueue', 'sendEmail', function (job, cb) {
+      var workers = Job.processJobs('myJobQueue', 'sendEmail', function (job, cb) {
          // This will only be called if a 'sendEmail' job is obtained
-         email = job.data.email // Only one email per job
+         var email = job.data.email // Only one email per job
          sendEmail(email.address, email.subject, email.message, function(err) {
             if (err) {
                job.log("Sending failed with error" + err, {level: 'warning'});

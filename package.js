@@ -9,9 +9,7 @@ Package.describe({
    summary: "Persistent, distributed and reactive job queue for Meteor.js using MongoDB and DDP"
 });
 
-Npm.depends({
-	'meteor-job': '0.0.5'
-});
+Npm.depends({});
 
 Package.on_use(function(api) {
    api.use('coffeescript', ['server','client']);

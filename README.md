@@ -9,8 +9,8 @@
 It solves the following problems (and more):
 
 *    Schedule jobs to run (and repeat) in the future, persisting across server restarts
-*    Move work out of the Meteor's single threaded event-loop
-*    Permit work on computationally expensive jobs to run anywhere
+*    Move work out of Meteor's single threaded event-loop
+*    Permit work on computationally expensive jobs to run anywhere, on any number of machines
 *    Track jobs and their progress, and automatically retry failed jobs
 *    Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 

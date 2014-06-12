@@ -1,5 +1,9 @@
 ## Revision history
 
+### 0.0.3
+
+*    Fixed issue #1, thanks to @chhib for reporting this.
+
 ### 0.0.2
 
 *    Documentation improvements

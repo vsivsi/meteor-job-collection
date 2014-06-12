@@ -26,7 +26,9 @@ if (Meteor.isServer) {
    var myJobs = JobCollection('myJobQueue');
    myJobs.allow({
     // Grant full permission to any authenticated user
-    admin: function (userId, method, params) { return (userId ? true : false); }
+    admin: function (userId, method, params) {
+               return (userId ? true : false);
+           }
    });
 
    Meteor.startup(function () {
@@ -52,8 +54,8 @@ if (Meteor.isClient) {
    var myJobs = JobCollection('myJobQueue');
    Meteor.subscribe('allJobs');
 
-   // Because of the server settings, the code below will only work
-   // if the client is authenticated.
+   // Because of the server settings, the code below will
+   // only work if the client is authenticated.
    // On the server all of it would run unconditionally
 
    // Create a job:
@@ -110,8 +112,10 @@ var DDP = require('ddp');
 var DDPlogin = require('ddp-login');
 var Job = require('meteor-job')
 
-// Job here has essentially the same API as jobCollection on Meteor
-// In fact, Meteor jobCollection is built on top of the 'meteor-job' npm package!
+// Job here has essentially the same API as
+// JobCollection on Meteor. In fact, Meteor
+// jobCollection is built on top of the
+// 'meteor-job' npm package!
 
 // Setup the DDP connection
 var ddp = new DDP({
@@ -132,21 +136,29 @@ ddp.connect(function (err) {
       if (err) throw err;
       // We're in!
       // Create a worker to get sendMail jobs from 'myJobQueue'
-      // This will keep running indefinitely, obtaining new work from the
-      // server whenever it is available.
-      var workers = Job.processJobs('myJobQueue', 'sendEmail', function (job, cb) {
-         // This will only be called if a 'sendEmail' job is obtained
-         var email = job.data.email // Only one email per job
-         sendEmail(email.address, email.subject, email.message, function(err) {
-            if (err) {
-               job.log("Sending failed with error" + err, {level: 'warning'});
-               job.fail("" + err);
-            } else {
-               job.done();
+      // This will keep running indefinitely, obtaining new work
+      // from the server whenever it is available.
+      var workers = Job.processJobs('myJobQueue', 'sendEmail',
+            function (job, cb) {
+               // This will only be called if a
+               // 'sendEmail' job is obtained
+               var email = job.data.email // Only one email per job
+               sendEmail(email.address, email.subject, email.message,
+                  function(err) {
+                      if (err) {
+                         job.log("Sending failed with error" + err,
+                                 {level: 'warning'});
+                         job.fail("" + err);
+                      } else {
+                         job.done();
+                      }
+                      // Be sure to invoke the callback
+                      // when work on this job has finished
+                      cb();
+                  }
+               );
             }
-            cb(); // Be sure to invoke the callback when work on this job has finished
-         });
-      });
+      );
    });
 });
 ```
@@ -206,11 +218,11 @@ It is also possible (and highly useful!) to write your own clients outside of Me
 
 ### Security
 
-The security of the jobCollection uses mechanisms that will be familiar to anyone who has used the [Meteor `publish` and `subscribe` mechanism](http://docs.meteor.com/#publishandsubscribe) and [Meteor Collection allow/deny rules](http://docs.meteor.com/#allow).
+Securing a jobCollection is done using mechanisms that will be familiar to anyone who has used the [Meteor `publish` and `subscribe` mechanism](http://docs.meteor.com/#publishandsubscribe) and [Meteor Collection allow/deny rules](http://docs.meteor.com/#allow).
 
 For a client to have access to perform `find()` operations on a jobCollection, the server must publish the collection and the client must subscribe to it. This works identically to normal Meteor collections.
 
-Compared to vanilla Meteor collections, jobCollections have a  different set of remote methods with specific security implications. Where the allow/deny methods on a Meteor collection take functions to grant permission for `insert`, `update` and `remove`, `jobCollection` has more functionality to secure and configure.
+Compared to vanilla Meteor collections, jobCollections have a  different set of remote methods with specific security implications. Where the allow/deny methods on a Meteor collection take functions to grant permission for `insert`, `update` and `remove`, jobCollection has more functionality to secure and configure.
 
 There are currently over a dozen Meteor methods defined by each jobCollection. In many cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles separate security concerns and permit you to efficiently add allow/deny rules for groups of functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
 
@@ -223,9 +235,9 @@ The server can easily log all activity (both successes and failures) on a jobCol
 ### jc = new JobCollection([name], [options]) - Anywhere
 #### Creates a new JobCollection
 
-Creating a new `JobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`. There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
+Creating a new `JobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`). There currently are no valid `options`, but the parameter is included for possible future use. On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
 
-For security and simplicity the traditional client allow/deny rules for Meteor collections are preset to deny all direct client `insert`, `update` and `remove` type operations on a `JobCollection`. This effectively channels all remote activity through the `JobCollection` DDP methods, which may be secured using allow/deny rules specific to `JobCollection`. See the documentation for `js.allow()` and `js.deny()` for more information.
+For security and simplicity the traditional client allow/deny rules for Meteor collections are preset to deny all direct client `insert`, `update` and `remove` type operations on a `JobCollection`. This effectively channels all remote activity through the `JobCollection` DDP methods, which may be secured using allow/deny rules specific to `JobCollection`. See the documentation for `jc.allow()` and `jc.deny()` for more information.
 
 ```js
 // the "new" is optional
@@ -261,24 +273,29 @@ jc.promote(15*1000);  // Default: 15 seconds
 ### jc.allow(options) - Server only
 #### Allow remote execution of specific jobCollection methods
 
-By default no remote operations are allowed, and in this configuration, jobCollection exists only as a server-side service, with the creation, management and execution of all jobs dependent on the server.
+By default no remote operations are allowed, and in this configuration jobCollection exists only as a server-side service; with the creation, management and execution of all jobs dependent on server-side Meteor code.
 
 The opposite extreme is to allow any remote client to perform any action. Obviously this is totally insecure, but is perhaps valuable for early development stages on a local firewalled network.
 
 ```js
-// Allow any remote client (Meteor client or node.js application) to perform any action
+// Allow any remote client (Meteor client or
+// node.js application) to perform any action
 jc.allow({
-  // The "admin" below represents the grouping of all remote methods
-  admin: function (userId, method, params) { return true; };
+  // The "admin" below represents
+  // the grouping of all remote methods
+  admin: function (userId, method, params) {
+             return true;
+         }
 });
 ```
 
 If this seems a little reckless (and it should), then here is how you can grant admin rights specifically to an single authenticated Meteor userId:
 
 ```js
-// Allow any remote client (Meteor client or node.js application) to perform any action
+// Allow only the authenticated "admin user" to perform any action
 jc.allow({
-  // Assume "adminUserId" contains the Meteor userId string of an admin super-user.
+  // Assume "adminUserId" contains the Meteor
+  // userId string of an admin super-user.
   // The array below is assumed to be an array of userIds
   admin: [ adminUserId ]
 });
@@ -286,8 +303,11 @@ jc.allow({
 // The array notation in the above code is a shortcut for:
 var adminUsers = [ adminUserId ];
 jc.allow({
-  // Assume "adminUserId" contains the Meteor userId string of an admin super-user.
-  admin: function (userId, method, params) { return (userId in adminUsers); };
+  // Assume "adminUserId" contains the Meteor
+  // userId string of an admin super-user.
+  admin: function (userId, method, params) {
+            return (userId in adminUsers);
+         }
 });
 ```
 
@@ -305,8 +325,9 @@ In addition to the above groups, it is possible to write allow/deny rules specif
 // Assumes emailCreator contains a Meteor userId
 jc.allow({
   jobSave: function (userId, method, params) {
+              // params[0] is the new job doc
               if ((userId === emailCreator) &&
-                  (params[0].type === 'email')) { // params[0] is the new job doc
+                  (params[0].type === 'email')) {
                   return true;
               }
               return false;
@@ -321,8 +342,11 @@ This call has the same semantic relationship with `allow()` as it does in Meteor
 
 ```js
 jc.deny({
-  // The "admin" below represents the grouping of all remote methods
-  admin: function (userId, method, params) { return false; };
+  // The "admin" below represents the
+  // grouping of all remote methods
+  admin: function (userId, method, params) {
+             return false;
+         };
 });
 ```
 
@@ -482,7 +506,7 @@ jc.ddpMethodPermissions = {
 
 Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
 
-See documentation below for `Job` object API
+Note that this call only creates a new job object locally, it does not added it to the job collection. See documentation below for `Job` object API, and specifically `job.save()` to see how to do that.
 
 ```js
 job = jc.createJob(
@@ -568,8 +592,8 @@ if (Meteor.isServer) {
       maxJobs: 5 // If maxJobs > 1, result is an array of jobs
     },
     function (err, jobs) {
-      // jobs contains between 0 and maxJobs jobs, depending on availability
-      // job type is available as
+      // jobs contains between 0 and maxJobs jobs, depending
+      // on availability, job type is available as
       if (job[0].type === 'jobType1') {
         // Work on jobType1...
       } else if (job[0].type === 'jobType2') {
@@ -625,7 +649,9 @@ Asynchronously calls the worker function.
 
 ```js
 queue = jc.processJobs(
-  'jobType',    // type of job to request, can also be an array of job types
+    // Type of job to request
+    // Can also be an array of job types
+  'jobType',
   {
     concurrency: 4,
     cargo: 1,
@@ -664,8 +690,11 @@ This job will not run until these jobs have successfully completed. Defaults to 
 Added jobs must have already had `.save()` run on them, so they will have the `_id` attribute that is used to form the dependency. Calling `job.depends()` with a falsy value will clear any existing dependencies for this job.
 
 ```js
-job.depends([job1, job2]);  // job1 and job2 are Job objects, and must successfully complete before job will run
-job.depends();  // Clear any dependencies previously added on this job
+// job1 and job2 are Job objects,
+// and must successfully complete before job will run
+job.depends([job1, job2]);
+// Clear any dependencies previously added on this job
+job.depends();
 ```
 
 ### job.priority([priority]) - Anywhere
@@ -734,7 +763,9 @@ job.delay(0);   // Do not wait. This is the default.
 `time` is a date object.  It is not guaranteed to run "at" this time because there may be no workers available when it is reached. Returns `job`, so it is chainable.
 
 ```js
-job.after(new Date());   // Run the job anytime after right now. This is the default.
+// Run the job anytime after right now
+// This is the default.
+job.after(new Date());
 ```
 
 ### job.log(message, [options], [callback]) - Anywhere
@@ -764,7 +795,9 @@ job.log(
 );
 
 var verbosityLevel = 'warning';
-job.log("Don't echo this", { level: 'info', echo: verbosityLevel } );
+job.log("Don't echo this",
+        { level: 'info',
+          echo: verbosityLevel } );
 ```
 
 ### job.progress(completed, total, [options], [cb]) - Anywhere
@@ -807,7 +840,10 @@ Only valid if this is a new job, or if the job is currently paused in the job Co
 ```js
 job.save(
   {
-    cancelRepeats: false  // Do not cancel any jobs of the same type, even if this job repeats forever.  Default: true.
+    // Do not cancel any jobs of the same type,
+    // even if this job repeats forever.
+    // Default: true.
+    cancelRepeats: false
   }
 );
 ```
@@ -928,7 +964,8 @@ Any job that isn't `'completed'`, `'failed'` or already `'cancelled'` may be can
 job.cancel(
   {
     antecedents: false,
-    dependents: true    // Also cancel all jobs that will never run without this one.
+    dependents: true    // Also cancel all jobs that will
+                        // never run without this one.
   },
   function (err, result) {
     if (result) {
@@ -953,7 +990,8 @@ A restarted job will retain any repeat count state it had when it failed or was 
 ```js
 job.restart(
   {
-    antecedents: true,  // Also restart all jobs that must complete before this job can run.
+    antecedents: true,  // Also restart all jobs that must
+                        // complete before this job can run.
     dependents: false,
     retries: 0          // Only try one more time. This is the default.
   },
@@ -978,8 +1016,10 @@ job.restart(
 ```js
 job.rerun(
   {
-    repeats: 0,         // Only repeat this once. This is the default.
-    wait: 60000         // Wait a minute between repeats. Default is previous setting.
+    repeats: 0,   // Only repeat this once
+                  // This is the default
+    wait: 60000   // Wait a minute between repeats
+                  // Default is previous setting
   },
   function (err, result) {
     if (result) {
@@ -1046,7 +1086,7 @@ q.resume()
 
 `options:`
 * `level` -- May be 'hard' or 'soft'. Any other value will lead to a "normal" shutdown.
-* `quiet` -- true or false. False by default, which leads to a "Shutting down..." message on stderr.
+* `quiet` -- true or false. False by default, which leads to a "Shutting down..." message on `process.stderr`.
 
 `callback()` -- Invoked once the requested shutdown conditions have been achieved.
 

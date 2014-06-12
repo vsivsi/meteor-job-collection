@@ -1,5 +1,9 @@
 ## Revision history
 
+### 0.0.5
+
+*    Really fixed issue #1, thanks again to @chhib for reporting this.
+
 ### 0.0.4
 
 *    Test release debugging git submodule issues around issue #1

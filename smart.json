@@ -3,7 +3,7 @@
   "description": "Persistent, distributed and reactive job queue for Meteor.js using MongoDB and DDP",
   "homepage": "https://github.com/vsivsi/meteor-job-collection",
   "author": "Vaughn Iverson (https://github.com/vsivsi)",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "git": "https://github.com/vsivsi/meteor-job-collection.git",
   "packages" : {}
 }

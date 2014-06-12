@@ -68,7 +68,7 @@ if (Meteor.isClient) {
       }
    );
 
-   // Set some proerties of the job and then submit it
+   // Set some properties of the job and then submit it
    job.priority('normal')
       .retry({ retries: 5,
                wait: 15*60*1000 })  // 15 minutes between attempts
@@ -111,7 +111,7 @@ var DDPlogin = require('ddp-login');
 var Job = require('meteor-job')
 
 // Job here has essentially the same API as jobCollection on Meteor
-// In fact, Meteor jobCollection is built on top of the 'node-job' npm package!
+// In fact, Meteor jobCollection is built on top of the 'meteor-job' npm package!
 
 // Setup the DDP connection
 var ddp = new DDP({

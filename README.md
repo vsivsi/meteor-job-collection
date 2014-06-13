@@ -142,7 +142,7 @@ ddp.connect(function (err) {
             function (job, cb) {
                // This will only be called if a
                // 'sendEmail' job is obtained
-               var email = job.data.email // Only one email per job
+               var email = job.data; // Only one email per job
                sendEmail(email.address, email.subject, email.message,
                   function(err) {
                       if (err) {
@@ -345,7 +345,7 @@ jc.deny({
   // The "admin" below represents the
   // grouping of all remote methods
   admin: function (userId, method, params) {
-             return false;
+             return true;
          };
 });
 ```

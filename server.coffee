@@ -69,7 +69,7 @@ if Meteor.isServer
             result = result or performTest(allTests[t])
           return result
 
-        return performAllTests(@allows) and not performAllTests(@denys)
+        return not performAllTests(@denys) and performAllTests(@allows)
 
       # Return the wrapper function that the Meteor method will actually invoke
       return (params...) ->

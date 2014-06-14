@@ -4,7 +4,7 @@
 
 ## Intro
 
-`jobCollection` is a powerful and easy to use job manager designed and built for Meteor.js
+jobCollection is a powerful and easy to use job manager designed and built for Meteor.js
 
 It solves the following problems (and more):
 
@@ -16,7 +16,7 @@ It solves the following problems (and more):
 
 ### Quick example
 
-The code snippets below show a Meteor server that creates a `jobCollection`, Meteor client code that subscribes to it and creates a new job, and a pure node.js program that can run *anywhere* and work on such jobs.
+The code snippets below show a Meteor server that creates a `JobCollection`, Meteor client code that subscribes to it and creates a new job, and a pure node.js program that can run *anywhere* and work on such jobs.
 
 ```js
 ///////////////////
@@ -167,9 +167,9 @@ Worker code very similar to the above (without all of the DDP setup) can run on 
 
 ### Design
 
-The design of jobCollection is heavily influenced by [Kue](https://github.com/LearnBoost/kue) and to a lesser extent by the [Maui Cluster Scheduler](https://en.wikipedia.org/wiki/Maui_Cluster_Scheduler). However, unlike Kue's use of Redis Pub/Sub and an HTTP API, `jobCollection` uses MongoDB, Meteor, and Meteor's DDP protocol to provide persistence, reactivity, and secure remote access.
+The design of jobCollection is heavily influenced by [Kue](https://github.com/LearnBoost/kue) and to a lesser extent by the [Maui Cluster Scheduler](https://en.wikipedia.org/wiki/Maui_Cluster_Scheduler). However, unlike Kue's use of Redis Pub/Sub and an HTTP API, jobCollection uses MongoDB, Meteor, and Meteor's DDP protocol to provide persistence, reactivity, and secure remote access.
 
-As the name implies, a `JobCollection` looks and acts like a Meteor Collection because under the hood it actually is one. However, other than `.find()` and `.findOne()`, all accesses to a `JobCollection` happen via the easy to use API on `Job` objects. Most `Job` API calls are transformed internally to Meteor [Method](http://docs.meteor.com/#methods_header) calls. This is cool because the underlying `Job` class is implemented as pure Javascript that can run in both the Meteor server and client environments, and most significantly as pure node.js code running independently from Meteor (as shown in the example code above).
+As the name implies, a `JobCollection` looks and acts like a Meteor Collection because under the hood it actually is one. However, other than `.find()` and `.findOne()`, most accesses to a `JobCollection` happen via the easy to use API on `Job` objects. Most `Job` API calls are transformed internally to Meteor [Method](http://docs.meteor.com/#methods_header) calls. This is cool because the underlying `Job` class is implemented as pure Javascript that can run in both the Meteor server and client environments, and most significantly as pure node.js code running independently from Meteor (as shown in the example code above).
 
 ## Installation
 
@@ -210,7 +210,7 @@ Load `http://localhost:3000/` and the tests should run in your browser and on th
 
 ## Use
 
-Job Collections are backed by [Meteor Collections](http://docs.meteor.com/#collections) and may be used in similar ways. `.find()` and `.findOne()` work as you would expect and are fully reactive on the client just as with a normal collection.
+jobCollections are backed by [Meteor Collections](http://docs.meteor.com/#collections) and may be used in similar ways. `.find()` and `.findOne()` work as you would expect and are fully reactive on the client just as with a normal collection.
 
 Other than the find methods mentioned above, interactions with a jobCollection occur using the `JobCollection`, `Job` and `JobQueue` APIs documented below. The Job document model used in the jobCollection is fully specified, maintained and enforced by the APIs.
 
@@ -321,7 +321,7 @@ In addition to the all-encompassing `admin` method group, there are three others
 
 All remote methods affecting the jobCollection fall into at least one of the four groups, and for each client-capable API method below, the group(s) it belongs to will be noted.
 
-In addition to the above groups, it is possible to write allow/deny rules specific to each `jobCollection` DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to given permission to create new "email" jobs to a single userId:
+In addition to the above groups, it is possible to write allow/deny rules specific to each jobCollection DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to given permission to create new "email" jobs to a single userId:
 
 ```js
 // Assumes emailCreator contains a Meteor userId
@@ -463,7 +463,7 @@ jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 ```
 
 ### jc.ddpMethods - Anywhere
-#### Array of the names of all DDP methods used by `jobCollection`
+#### Array of the root names of all DDP methods used by jobCollection
 
 ```js
 jc.ddpMethods = [
@@ -1117,7 +1117,7 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
 
 ## Job document data models
 
-The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of `jobCollection` this is mostly for your information because jobs are automatically built and maintained by the package.
+The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of jobCollection this is mostly for your information because jobs are automatically built and maintained by the package.
 
 ```js
 validStatus = (
@@ -1192,7 +1192,7 @@ validJobDoc = {
 
 These are the underlying Meteor methods that are actually invoked when a method like `.save()` or `.getWork()` is called. In most cases you will not need to program to this interface because the `JobCollection` and `Job` APIs do this work for you. One exception to this general rule is if you need finer control over allow/deny rules than is provided by the predefined `admin`, `manager`, `creator`, and `worker` access categories.
 
-Each `jobCollection` you create on a server causes a number of Meteor methods to be defined. The method names are prefaced with the name of the jobCollection (e.g. "myJobs_getWork") so that multiple jobCollections on a server will not interfere with one another. Below you will find the Method API reference.
+Each jobCollection you create on a server causes a number of Meteor methods to be defined. The method names are prefaced with the name of the jobCollection (e.g. "myJobs_getWork") so that multiple jobCollections on a server will not interfere with one another. Below you will find the Method API reference.
 
 ### `startJobs(options)`
 #### Start running the jobCollection

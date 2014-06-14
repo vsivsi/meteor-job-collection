@@ -488,31 +488,6 @@ if (Meteor.isServer) {
 }
 ```
 
-### jc.getJobs(ids, [options], [callback]) - Anywhere
-#### Like `jc.getJob` except it takes an array of ids
-#### Requires permission: Server, `admin`, `worker` or `getJob`
-This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
-
-### jc.pauseJobs(ids, [options], [callback]) - Anywhere
-#### Like `job.pause()` except it pauses a list of jobs by id
-#### Requires permission: Server, `admin`, `manager` or `jobPause`
-
-### jc.resumeJobs(ids, [options], [callback]) - Anywhere
-#### Like `job.resume()` except it resumes a list of jobs by id
-#### Requires permission: Server, `admin`, `manager` or `jobResume`
-
-### jc.cancelJobs(ids, [options], [callback]) - Anywhere
-#### Like `job.cancel()` except it cancels a list of jobs by id
-#### Requires permission: Server, `admin`, `manager` or `jobCancel`
-
-### jc.restartJobs(ids, [options], [callback]) - Anywhere
-#### Like `job.restart()` except it restarts a list of jobs by id
-#### Requires permission: Server, `admin`, `manager` or `jobRestart`
-
-### jc.removeJobs(ids, [options], [callback]) - Anywhere
-#### Like `job.remove()` except it removes a list of jobs by id
-#### Requires permission: Server, `admin`, `manager` or `jobRemove`
-
 ### jq = jc.processJobs(type, [options], worker) - Anywhere
 #### Create a new jobQueue to automatically work on jobs
 #### Requires permission: Server, `admin`, `worker` or `getWork`
@@ -554,6 +529,31 @@ queue.shutdown();
 ```
 
 See documentation below for `JobQueue` object API
+
+### jc.getJobs(ids, [options], [callback]) - Anywhere
+#### Like `jc.getJob` except it takes an array of ids
+#### Requires permission: Server, `admin`, `worker` or `getJob`
+This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the server in batches.
+
+### jc.pauseJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.pause()` except it pauses a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobPause`
+
+### jc.resumeJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.resume()` except it resumes a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobResume`
+
+### jc.cancelJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.cancel()` except it cancels a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobCancel`
+
+### jc.restartJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.restart()` except it restarts a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobRestart`
+
+### jc.removeJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.remove()` except it removes a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobRemove`
 
 ### jc.forever - Anywhere
 #### Constant value used to indicate that something should repeat forever

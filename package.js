@@ -6,7 +6,7 @@
 
 Package.describe({
    name: 'jobCollection',
-   summary: "Persistent, distributed and reactive job queue for Meteor.js using MongoDB and DDP"
+   summary: "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere"
 });
 
 Npm.depends({});

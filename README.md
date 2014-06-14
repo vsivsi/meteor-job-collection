@@ -181,7 +181,7 @@ Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your p
 
 The package exposes a global object `JobCollection` on both client and server.
 
-**NOTE!** Sample app and tests mentioned below are not implemented yet!
+##### NOTE! Sample app mentioned below is not implemented yet!
 
 If you'd like to try out the sample app, you can clone the repo from github:
 
@@ -199,6 +199,8 @@ mrt
 ```
 
 You should now be able to point your browser to `http://localhost:3000/` and play with the sample app.
+
+##### NOTE! Only rudimentary unit tests are implemented right now.
 
 To run tests (using Meteor tiny-test) run from within the `jobCollection` subdirectory:
 

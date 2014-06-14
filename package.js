@@ -22,5 +22,6 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-
+  api.use(['jobCollection', 'tinytest', 'test-helpers']);
+  api.add_files('job_collection_tests.js', ['server', 'client']);
 });

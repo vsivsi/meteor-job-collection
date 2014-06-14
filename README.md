@@ -10,7 +10,7 @@ It solves the following problems (and more):
 
 *    Schedule jobs to run (and repeat) in the future, persisting across server restarts
 *    Move work out of Meteor's single threaded event-loop
-*    Permit work on computationally expensive jobs to run anywhere, on any number of machines
+*    Enable work on computationally expensive jobs to run anywhere, on any number of machines
 *    Track jobs and their progress, and automatically retry failed jobs
 *    Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
@@ -383,126 +383,6 @@ jc.stopJobs(
 );  // Callback is optional
 ```
 
-### jc.forever - Anywhere
-#### Constant value used to indicate that something should repeat forever
-
-```js
-job = jc.createJob('jobType', { work: "to", be: "done" })
-   .retry({ retries: jc.forever })    // Default for .retry()
-   .repeat({ repeats: jc.forever });  // Default for .repeat()
-```
-
-### jc.jobPriorities - Anywhere
-#### Valid non-numeric job priorities
-
-```js
-jc.jobPriorities = {
-  low: 10
-  normal: 0
-  medium: -5
-  high: -10
-  critical: -15
-};
-```
-
-### jc.jobStatuses - Anywhere
-#### Possible states for the status of a job in the job collection
-
-```js
-jc.jobStatuses = [
-    'waiting'
-    'paused'
-    'ready'
-    'running'
-    'failed'
-    'cancelled'
-    'completed'
-];
-```
-
-### jc.jobLogLevels - Anywhere
-#### Valid log levels
-
-If these look familiar, it's because they correspond to some the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
-
-```js
-jc.jobLogLevels: [
-    'info'
-    'success'
-    'warning'
-    'danger'
-];
-```
-
-### jc.jobStatusCancellable - Anywhere
-#### Job status states that can be cancelled
-
-```js
-jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
-```
-
-### jc.jobStatusPausable - Anywhere
-#### Job status states that can be paused
-
-```js
-jc.jobStatusPausable = [ 'ready', 'waiting' ];
-```
-
-### jc.jobStatusRemovable - Anywhere
-#### Job status states that can be removed
-
-```js
-jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
-```
-
-### jc.jobStatusRestartable - Anywhere
-#### Job status states that can be restarted
-
-```js
-jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
-```
-
-### jc.ddpMethods - Anywhere
-#### Array of the root names of all DDP methods used by jobCollection
-
-```js
-jc.ddpMethods = [
-    'startJobs', 'stopJobs', 'jobRemove', 'jobPause', 'jobResume'
-    'jobCancel', 'jobRestart', 'jobSave', 'jobRerun', 'getWork'
-    'getJob', 'jobLog', 'jobProgress', 'jobDone', 'jobFail'
-    ];
-```
-
-### jc.ddpPermissionLevels - Anywhere
-#### Array of the predefined DDP method permission levels
-
-```js
-jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
-```
-
-### jc.ddpMethodPermissions - Anywhere
-#### Object mapping permission levels to DDP method names
-
-```js
-jc.ddpMethodPermissions = {
-    'startJobs': ['startJobs', 'admin'],
-    'stopJobs': ['stopJobs', 'admin'],
-    'jobRemove': ['jobRemove', 'admin', 'manager'],
-    'jobPause': ['jobPause', 'admin', 'manager'],
-    'jobResume': ['jobResume', 'admin', 'manager'],
-    'jobCancel': ['jobCancel', 'admin', 'manager'],
-    'jobRestart': ['jobRestart', 'admin', 'manager'],
-    'jobSave': ['jobSave', 'admin', 'creator'],
-    'jobRerun': ['jobRerun', 'admin', 'creator'],
-    'getWork': ['getWork', 'admin', 'worker'],
-    'getJob': ['getJob', 'admin', 'worker'],
-    'jobLog': [ 'jobLog', 'admin', 'worker'],
-    'jobProgress': ['jobProgress', 'admin', 'worker'],
-    'jobDone': ['jobDone', 'admin', 'worker'],
-    'jobFail': ['jobFail', 'admin', 'worker']
-};
-```
-
 ### job = jc.createJob(type, data) - Anywhere
 #### Create a new `Job` object
 
@@ -674,6 +554,121 @@ queue.shutdown();
 ```
 
 See documentation below for `JobQueue` object API
+
+### jc.forever - Anywhere
+#### Constant value used to indicate that something should repeat forever
+
+```js
+job = jc.createJob('jobType', { work: "to", be: "done" })
+   .retry({ retries: jc.forever })    // Default for .retry()
+   .repeat({ repeats: jc.forever });  // Default for .repeat()
+```
+
+### jc.jobPriorities - Anywhere
+#### Valid non-numeric job priorities
+
+```js
+jc.jobPriorities = {
+  "low": 10,
+  "normal": 0,
+  "medium": -5,
+  "high": -10,
+  "critical": -15
+};
+```
+
+### jc.jobStatuses - Anywhere
+#### Possible states for the status of a job in the job collection
+
+```js
+jc.jobStatuses = [
+    'waiting',
+    'paused',
+    'ready',
+    'running',
+    'failed',
+    'cancelled',
+    'completed'
+];
+```
+
+### jc.jobLogLevels - Anywhere
+#### Valid log levels
+
+If these look familiar, it's because they correspond to some of the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
+
+```js
+jc.jobLogLevels: [ 'info', 'success', 'warning', 'danger' ];
+```
+
+### jc.jobStatusCancellable - Anywhere
+#### Job status states that can be cancelled
+
+```js
+jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
+```
+
+### jc.jobStatusPausable - Anywhere
+#### Job status states that can be paused
+
+```js
+jc.jobStatusPausable = [ 'ready', 'waiting' ];
+```
+
+### jc.jobStatusRemovable - Anywhere
+#### Job status states that can be removed
+
+```js
+jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
+```
+
+### jc.jobStatusRestartable - Anywhere
+#### Job status states that can be restarted
+
+```js
+jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
+```
+
+### jc.ddpMethods - Anywhere
+#### Array of the root names of all DDP methods used by jobCollection
+
+```js
+jc.ddpMethods = [
+    'startJobs', 'stopJobs', 'jobRemove', 'jobPause', 'jobResume'
+    'jobCancel', 'jobRestart', 'jobSave', 'jobRerun', 'getWork'
+    'getJob', 'jobLog', 'jobProgress', 'jobDone', 'jobFail'
+    ];
+```
+
+### jc.ddpPermissionLevels - Anywhere
+#### Array of the predefined DDP method permission levels
+
+```js
+jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
+```
+
+### jc.ddpMethodPermissions - Anywhere
+#### Object mapping permission levels to DDP method names
+
+```js
+jc.ddpMethodPermissions = {
+    'startJobs': ['startJobs', 'admin'],
+    'stopJobs': ['stopJobs', 'admin'],
+    'jobRemove': ['jobRemove', 'admin', 'manager'],
+    'jobPause': ['jobPause', 'admin', 'manager'],
+    'jobResume': ['jobResume', 'admin', 'manager'],
+    'jobCancel': ['jobCancel', 'admin', 'manager'],
+    'jobRestart': ['jobRestart', 'admin', 'manager'],
+    'jobSave': ['jobSave', 'admin', 'creator'],
+    'jobRerun': ['jobRerun', 'admin', 'creator'],
+    'getWork': ['getWork', 'admin', 'worker'],
+    'getJob': ['getJob', 'admin', 'worker'],
+    'jobLog': [ 'jobLog', 'admin', 'worker'],
+    'jobProgress': ['jobProgress', 'admin', 'worker'],
+    'jobDone': ['jobDone', 'admin', 'worker'],
+    'jobFail': ['jobFail', 'admin', 'worker']
+};
+```
 
 ## Job API
 

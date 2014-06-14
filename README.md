@@ -452,7 +452,9 @@ if (Meteor.isServer) {
 #### Get one or more jobs from the jobCollection, setting status to `'running'`
 #### Requires permission: Server, `admin`, `worker` or `getWork`
 
-See documentation below for `Job` object API
+`getWork` differs from `getJob` in that the status of the returned job(s) is now "running" in the jobCollection, and it is the responsibility of the caller to eventually call `job.done()` or `job.fail()` on each job. While running, a job will never be assigned to another worker. If unreliable workers are an issue, it is straighforward to write a recurring server job that identifies stale running jobs (whose workers have presumably died) and "autofail" them so that they may be retried by another worker.
+
+getWork implements a pull model, where each call will return zero or more jobs depending on availability of work and the value of `maxJobs`. See `jc.processJobs()` below for a "push"-like model for automatically obtaining jobs to work on.
 
 `options`:
 * `maxJobs` -- Maximum number of jobs to get. Default `1`  If `maxJobs > 1` the result will be an array of job objects, otherwise it is a single job object, or `undefined` if no jobs were available

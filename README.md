@@ -642,11 +642,10 @@ jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 These are all of valid jobCollection DDP method names. These are also the names of the coinciding method-specific allow/deny rules. For more information about the DDP method API see the documentaion on that topic near the end of this README.
 
 ```js
-jc.ddpMethods = [
-    'startJobs', 'stopJobs', 'jobRemove', 'jobPause', 'jobResume'
-    'jobCancel', 'jobRestart', 'jobSave', 'jobRerun', 'getWork'
-    'getJob', 'jobLog', 'jobProgress', 'jobDone', 'jobFail'
-    ];
+jc.ddpMethods = [ 'startJobs', 'stopJobs', 'jobRemove', 'jobPause',
+                  'jobResume', 'jobCancel', 'jobRestart', 'jobSave',
+                  'jobRerun', 'getWork', 'getJob', 'jobLog',
+                  'jobProgress', 'jobDone', 'jobFail' ];
 ```
 
 ### jc.ddpPermissionLevels - Anywhere
@@ -1130,31 +1129,20 @@ The definitions below use a slight shorthand of the Meteor [Match pattern](http:
 ```js
 validStatus = (
    Match.test(v, String) &&
-   (v in [
-      'waiting',
-      'paused',
-      'ready',
-      'running',
-      'failed',
-      'cancelled',
-      'completed'
-   ])
+   (v in ['waiting', 'paused', 'ready', 'running',
+          'failed', 'cancelled', 'completed'])
 );
 
 validLogLevel = (
    Match.test(v, String) &&
-   (v in [
-      'info',
-      'success',
-      'warning',
-      'danger'
-   ])
+   (v in ['info', 'success', 'warning', 'danger'])
 );
 
 validLog = [{
       time:    Date,
       runId:   Match.OneOf(
-                  Meteor.Collection.ObjectID, null
+                  Meteor.Collection.ObjectID,
+                  null
                ),
       level:   Match.Where(validLogLevel),
       message: String
@@ -1187,12 +1175,12 @@ validJobDoc = {
   updated:    Date,
   log:        Match.Optional(validLog()),
   progress:   validProgress(),
-  retries:    Match.Where(validNumGTEZero),
-  retried:    Match.Where(validNumGTEZero),
-  retryWait:  Match.Where(validNumGTEZero),
-  repeats:    Match.Where(validNumGTEZero),
-  repeated:   Match.Where(validNumGTEZero),
-  repeatWait: Match.Where(validNumGTEZero)
+  retries:    Match.Where(validIntGTEZero),
+  retried:    Match.Where(validIntGTEZero),
+  retryWait:  Match.Where(validIntGTEZero),
+  repeats:    Match.Where(validIntGTEZero),
+  repeated:   Match.Where(validIntGTEZero),
+  repeatWait: Match.Where(validIntGTEZero)
 };
 ```
 

@@ -52,12 +52,12 @@ validJobDoc = () ->
   updated: Date
   log: Match.Optional validLog()
   progress: validProgress()
-  retries: Match.Where validNumGTEZero
-  retried: Match.Where validNumGTEZero
-  retryWait: Match.Where validNumGTEZero
-  repeats: Match.Where validNumGTEZero
-  repeated: Match.Where validNumGTEZero
-  repeatWait: Match.Where validNumGTEZero
+  retries: Match.Where validIntGTEZero
+  retried: Match.Where validIntGTEZero
+  retryWait: Match.Where validIntGTEZero
+  repeats: Match.Where validIntGTEZero
+  repeated: Match.Where validIntGTEZero
+  repeatWait: Match.Where validIntGTEZero
 
 idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
   # Cancel the entire tree of antecedents and/or dependents

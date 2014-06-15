@@ -744,66 +744,63 @@ serverMethods =
     options ?= {}
     options.fatal ?= false
 
-    if id and runId
-      time = new Date()
-      doc = @findOne(
+    time = new Date()
+    doc = @findOne(
+      {
+        _id: id
+        runId: runId
+        status: "running"
+      }
+      {
+        fields:
+          log: 0
+          progress: 0
+          updated: 0
+          after: 0
+          runId: 0
+          status: 0
+      }
+    )
+    unless doc?
+      console.warn "Running job not found", id, runId
+      return false
+    newStatus = if (doc.retries > 0 and not options.fatal) then "waiting" else "failed"
+    num = @update(
+      {
+        _id: id
+        runId: runId
+        status: "running" }
+      {
+        $set:
+          status: newStatus
+          runId: null
+          after: new Date(time.valueOf() + doc.retryWait)
+          progress:
+            completed: 0
+            total: 1
+            percent: 0
+          updated: time
+        $push:
+          log:
+            time: time
+            runId: runId
+            level: if newStatus is 'failed' then 'danger' else 'warning'
+            message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err}"
+      }
+    )
+    if newStatus is "failed" and num is 1
+      # Cancel any dependent jobs too
+      @find(
         {
-          _id: id
-          runId: runId
-          status: "running"
+          depends:
+            $all: [ id ]
         }
-        {
-          fields:
-            log: 0
-            progress: 0
-            updated: 0
-            after: 0
-            runId: 0
-            status: 0
-        }
-      )
-      unless doc?
-        console.warn "Running job not found", id, runId
-        return false
-      newStatus = if (doc.retries > 0 and not options.fatal) then "waiting" else "failed"
-      num = @update(
-        {
-          _id: id
-          runId: runId
-          status: "running" }
-        {
-          $set:
-            status: newStatus
-            runId: null
-            after: new Date(time.valueOf() + doc.retryWait)
-            progress:
-              completed: 0
-              total: 1
-              percent: 0
-            updated: time
-          $push:
-            log:
-              time: time
-              runId: runId
-              level: if newStatus is 'failed' then 'danger' else 'warning'
-              message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err}"
-        }
-      )
-      if newStatus is "failed" and num is 1
-        # Cancel any dependent jobs too
-        @find(
-          {
-            depends:
-              $all: [ id ]
-          }
-        ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
-      if num is 1
-        console.log "jobFail succeeded"
-        return true
-      else
-        console.warn "jobFail failed"
+      ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
+    if num is 1
+      console.log "jobFail succeeded"
+      return true
     else
-      console.warn "jobFail: something's wrong with done: #{id}", runId, err
+      console.warn "jobFail failed"
     return false
 
 # Share these methods so they'll be available on server and client

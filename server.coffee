@@ -150,12 +150,12 @@ if Meteor.isServer
       @denys[type].push(func) for type, func of denyOptions when type of @denys
 
     promote: (milliseconds = 15*1000) ->
-      if typeof milliseconds is 'number' and milliseconds > 1000
+      if typeof milliseconds is 'number'
         if @interval
           Meteor.clearInterval @interval
         @interval = Meteor.setInterval @_poll.bind(@), milliseconds
       else
-        console.warn "jobCollection.promote: invalid timeout or limit: #{@root}, #{milliseconds}, #{limit}"
+        console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"
 
     _poll: () ->
       if @stopped

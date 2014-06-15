@@ -321,7 +321,7 @@ In addition to the all-encompassing `admin` method group, there are three others
 
 All remote methods affecting the jobCollection fall into at least one of the four groups, and for each client-capable API method below, the group(s) it belongs to will be noted.
 
-In addition to the above groups, it is possible to write allow/deny rules specific to each jobCollection DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to given permission to create new "email" jobs to a single userId:
+In addition to the above groups, it is possible to write allow/deny rules specific to each jobCollection DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to grant permission to create new "email" jobs to a single userId:
 
 ```js
 // Assumes emailCreator contains a Meteor userId
@@ -452,9 +452,9 @@ if (Meteor.isServer) {
 #### Get one or more jobs from the jobCollection, setting status to `'running'`
 #### Requires permission: Server, `admin`, `worker` or `getWork`
 
-`getWork` differs from `getJob` in that the status of the returned job(s) is now "running" in the jobCollection, and it is the responsibility of the caller to eventually call `job.done()` or `job.fail()` on each job. While running, a job will never be assigned to another worker. If unreliable workers are an issue, it is straighforward to write a recurring server job that identifies stale running jobs (whose workers have presumably died) and "autofail" them so that they may be retried by another worker.
+`getWork` differs from `getJob` in that the status of the returned job(s) is now "running" in the jobCollection, and it is the responsibility of the caller to eventually call `job.done()` or `job.fail()` on each job. While running, a job will never be assigned to another worker. If unreliable workers are an issue, it is straightforward to write a recurring server job that identifies stale running jobs (whose workers have presumably died) and "autofail" them so that they may be retried by another worker.
 
-getWork implements a pull model, where each call will return zero or more jobs depending on availability of work and the value of `maxJobs`. See `jc.processJobs()` below for a "push"-like model for automatically obtaining jobs to work on.
+`getWork` implements a "pull" model, where each call will return zero or more jobs depending on availability of work and the value of `maxJobs`. See `jc.processJobs()` below for a "push"-like model for automatically obtaining jobs to work on.
 
 `options`:
 * `maxJobs` -- Maximum number of jobs to get. Default `1`  If `maxJobs > 1` the result will be an array of job objects, otherwise it is a single job object, or `undefined` if no jobs were available
@@ -494,7 +494,7 @@ if (Meteor.isServer) {
 #### Create a new jobQueue to automatically work on jobs
 #### Requires permission: Server, `admin`, `worker` or `getWork`
 
-Asynchronously calls the worker function.
+Asynchronously calls the worker function whenever jobs become available. See documentation below for `JobQueue` object API for methods on the returned `jq` object.
 
 `options:`
 * `concurrency` -- Maximum number of async calls to `worker` that can be outstanding at a time. Default: `1`
@@ -530,8 +530,6 @@ queue.resume();
 queue.shutdown();
 ```
 
-See documentation below for `JobQueue` object API
-
 ### jc.getJobs(ids, [options], [callback]) - Anywhere
 #### Like `jc.getJob` except it takes an array of ids
 #### Requires permission: Server, `admin`, `worker` or `getJob`
@@ -540,22 +538,27 @@ This is much more efficient than calling `jc.getJob()` in a loop because it gets
 ### jc.pauseJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.pause()` except it pauses a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobPause`
+This is much more efficient than calling `job.pause()` in a loop because it pauses jobs in batches on the server.
 
 ### jc.resumeJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.resume()` except it resumes a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobResume`
+This is much more efficient than calling `job.resume()` in a loop because it resumes jobs in batches on the server.
 
 ### jc.cancelJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.cancel()` except it cancels a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobCancel`
+This is much more efficient than calling `job.cancel()` in a loop because it cancels jobs in batches on the server.
 
 ### jc.restartJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.restart()` except it restarts a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobRestart`
+This is much more efficient than calling `job.restart()` in a loop because it restarts jobs in batches on the server.
 
 ### jc.removeJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.remove()` except it removes a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobRemove`
+This is much more efficient than calling `job.resmove()` in a loop because it removes jobs in batches on the server.
 
 ### jc.forever - Anywhere
 #### Constant value used to indicate that something should repeat forever
@@ -569,29 +572,23 @@ job = jc.createJob('jobType', { work: "to", be: "done" })
 ### jc.jobPriorities - Anywhere
 #### Valid non-numeric job priorities
 
+This is the mapping between the valid string priorities accepted by `job.priority()` and the numeric priority values it also uses.
+
 ```js
-jc.jobPriorities = {
-  "low": 10,
-  "normal": 0,
-  "medium": -5,
-  "high": -10,
-  "critical": -15
-};
+jc.jobPriorities = { "low": 10, "normal": 0, "medium": -5,
+                     "high": -10, "critical": -15 };
 ```
 
 ### jc.jobStatuses - Anywhere
 #### Possible states for the status of a job in the job collection
 
+These are the seven possible states that a job can be in. [Here is a diagram showing the relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/normal-states.dot.cairo.png) between the main five states (disregarding "paused" and "cancelled").
+
+A somewhat more complicated state looking diagram showing the relationship between all seven states can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/states.dot.cairo.png). If this looks crazy don't dispair, the relationships added by `.pause()` and `.cancel()` are pretty straightforward when viewed on their own. See `jc.jobStatusCancellable` and `jc.jobStatusPausable` below for more info.
+
 ```js
-jc.jobStatuses = [
-    'waiting',
-    'paused',
-    'ready',
-    'running',
-    'failed',
-    'cancelled',
-    'completed'
-];
+jc.jobStatuses = [ 'waiting', 'paused', 'ready', 'running',
+                   'failed', 'cancelled', 'completed' ];
 ```
 
 ### jc.jobLogLevels - Anywhere
@@ -606,12 +603,16 @@ jc.jobLogLevels: [ 'info', 'success', 'warning', 'danger' ];
 ### jc.jobStatusCancellable - Anywhere
 #### Job status states that can be cancelled
 
+To be cancellable, a job must currently be in one of these states. A state diagram of the relationships of the "cancelled" state can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/cancel-states.dot.cairo.png).
+
 ```js
 jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
 ```
 
 ### jc.jobStatusPausable - Anywhere
 #### Job status states that can be paused
+
+These are the only states that may be paused. A state diagram of the relationships of the "paused" state can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/pause-states.dot.cairo.png).
 
 ```js
 jc.jobStatusPausable = [ 'ready', 'waiting' ];
@@ -620,6 +621,8 @@ jc.jobStatusPausable = [ 'ready', 'waiting' ];
 ### jc.jobStatusRemovable - Anywhere
 #### Job status states that can be removed
 
+Only jobs in one of these states may be removed. To remove any other job, simply cancel it first.
+
 ```js
 jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
 ```
@@ -627,12 +630,16 @@ jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
 ### jc.jobStatusRestartable - Anywhere
 #### Job status states that can be restarted
 
+Only jobs in one of these terminal states may be restarted. Successfully completed jobs may be re-run using a different command (job.rerun()).
+
 ```js
 jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 ```
 
 ### jc.ddpMethods - Anywhere
 #### Array of the root names of all DDP methods used by jobCollection
+
+These are all of valid jobCollection DDP method names. These are also the names of the coinciding method-specific allow/deny rules. For more information about the DDP method API see the documentaion on that topic near the end of this README.
 
 ```js
 jc.ddpMethods = [
@@ -645,12 +652,16 @@ jc.ddpMethods = [
 ### jc.ddpPermissionLevels - Anywhere
 #### Array of the predefined DDP method permission levels
 
+These are the currently defined allow/deny method permission groups.
+
 ```js
 jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
 ```
 
 ### jc.ddpMethodPermissions - Anywhere
 #### Object mapping permission levels to DDP method names
+
+This is the mapping between jobCollection DDP methods and permission groups.
 
 ```js
 jc.ddpMethodPermissions = {

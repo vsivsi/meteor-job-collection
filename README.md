@@ -200,7 +200,7 @@ mrt
 
 You should now be able to point your browser to `http://localhost:3000/` and play with the sample app.
 
-##### NOTE! Only rudimentary unit tests are implemented right now.
+##### NOTE! Only rudimentary acceptance tests are implemented right now.
 
 To run tests (using Meteor tiny-test) run from within the `jobCollection` subdirectory:
 

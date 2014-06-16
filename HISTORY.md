@@ -1,8 +1,16 @@
 ## Revision history
 
+### 0.0.7
+
+*    Bumped meteor-job version to 0.0.9, fixing several bugs in Meteor.server and Meteor.client workers handling.
+*    Corrected validation of jobDocuments for non-negative integer attributes (integer enforcement was missing).
+*    jc.promote() formerly had a minimum valid polling rate of 1000ms, now any value > 0ms is valid
+*    Added a few more acceptance tests including client and server scheduling and running of a job.
+*    Documentation improvements
+
 ### 0.0.6
 
-*    Added initial unit testing harness
+*    Added initial testing harness
 *    Fixed issue with collection root name in DDP method naming.
 *    Changed evaluation of allow/deny rules so deny rules run first, just like in Meteor.
 *    Documentation improvements.

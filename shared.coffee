@@ -7,17 +7,17 @@
 #####################################
 ## Shared between server and client
 
-validIntGTEZero = (v) ->
-  Match.test(v, Match.Integer) and v >= 0
-
-validIntGTEOne = (v) ->
-  Match.test(v, Match.Integer) and v >= 1
-
 validNumGTEZero = (v) ->
   Match.test(v, Number) and v >= 0.0
 
-validNumGTZero = (v) ->
+validNumGTEOne = (v) ->
   Match.test(v, Number) and v > 0.0
+
+validIntGTEZero = (v) ->
+  validNumGTEZero(v) and v <= Job.forever
+
+validIntGTEOne = (v) ->
+  validNumGTEOne(v) and v <= Job.forever
 
 validStatus = (v) ->
   Match.test(v, String) and v in Job.jobStatuses
@@ -226,7 +226,7 @@ serverMethods =
       }
       {
         sort:
-          priority: -1
+          priority: 1
           after: 1
         limit: options.maxJobs ? 1
         fields:

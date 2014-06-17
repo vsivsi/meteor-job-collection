@@ -71,11 +71,51 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
     test.fail(err) if err
     test.instanceOf res, Meteor.Collection.ObjectID , "job.save() failed in callback result"
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
-      console.log "In worker"
       test.equal job._doc._id, res
-      console.log "Before callback"
+      job.done()
       cb()
-      console.log "After callback"
       q.shutdown () ->
-        console.warn "Shutdown complete..."
         onComplete()
+
+Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
+  counter = 0
+  job = []
+  job[0] = testColl.createJob('testJob', {count: 3}).priority('low')
+  job[1] = testColl.createJob('testJob', {count: 1}).priority('high')
+  job[2] = testColl.createJob('testJob', {count: 2})
+
+  job[0].save (err, res) ->
+    test.fail(err) if err
+    test.instanceOf res, Meteor.Collection.ObjectID , "job0.save() failed in callback result"
+    job[1].save (err, res) ->
+      test.fail(err) if err
+      test.instanceOf res, Meteor.Collection.ObjectID , "job1.save() failed in callback result"
+      job[2].save (err, res) ->
+        test.fail(err) if err
+        test.instanceOf res, Meteor.Collection.ObjectID , "job2.save() failed in callback result"
+        q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+          counter++
+          test.equal job.data.count, counter
+          job.done()
+          cb()
+          if counter is 3
+            q.shutdown () ->
+              onComplete()
+
+Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onComplete) ->
+  counter = 0
+  job = testColl.createJob('testJob', {some: 'data'}).retry({retries: Job.forever, wait: 0})
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.instanceOf res, Meteor.Collection.ObjectID , "job.save() failed in callback result"
+    q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+      counter++
+      test.equal job._doc._id, res
+      if counter < 2
+        job.fail('Fail test')
+        cb()
+      else
+        job.fail('Fail test', { fatal: true })
+        cb()
+        q.shutdown () ->
+          onComplete()

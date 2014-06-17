@@ -1,5 +1,11 @@
 ## Revision history
 
+### 0.0.8
+
+*    Fixed bug introduced by "integer enforcement" change in v0.0.7. Integers may now be up to 53-bits (the Javascript maxInt). Fixes [#3](https://github.com/vsivsi/meteor-job-collection/issues/3)
+*    Fixed sort inversion of priority levels in `getWork()`. Fixes [#4](https://github.com/vsivsi/meteor-job-collection/issues/4)
+*    Thanks to @chhib for reporting the above two issues.
+
 ### 0.0.7
 
 *    Bumped meteor-job version to 0.0.9, fixing several bugs in Meteor.server and Meteor.client workers handling.

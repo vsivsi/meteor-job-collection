@@ -591,13 +591,20 @@ jc.jobStatuses = [ 'waiting', 'paused', 'ready', 'running',
                    'failed', 'cancelled', 'completed' ];
 ```
 
+### `jc.jobRetryBackoffMethods`
+#### Valid retry backoff methods
+
+```js
+jc.jobRetryBackoffMethods = [ 'constant', 'exponential' ];
+```
+
 ### jc.jobLogLevels - Anywhere
 #### Valid log levels
 
 If these look familiar, it's because they correspond to some of the Bootstrap [context](http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts) classes.
 
 ```js
-jc.jobLogLevels: [ 'info', 'success', 'warning', 'danger' ];
+jc.jobLogLevels = [ 'info', 'success', 'warning', 'danger' ];
 ```
 
 ### jc.jobStatusCancellable - Anywhere
@@ -723,7 +730,10 @@ Returns `job`, so it is chainable.
 
 `options:`
 * `retries` -- Number of times to retry a failing job. Default: `Job.forever`
-* `wait`  -- How long to wait between attempts, in ms. Default: `300000` (5 minutes)
+* `wait` -- Initial value for how long to wait between attempts, in ms. Default: `300000` (5 minutes)
+* `backoff` -- Method to use in determining how to calculate wait value for each retry:
+    * `'constant'`:  Always delay retrying by `wait` ms.  Default value.
+    * `'exponential'`:  Delay by twice as long for each subsequent retry, e.g. `wait`, `2*wait`, `4*wait` ...
 
 `[options]` may also be a non-negative integer, which is interpreted as `{ retries: [options] }`
 
@@ -732,7 +742,8 @@ Note that the above stated defaults are those when `.retry()` is explicitly call
 ```js
 job.retry({
   retries: 5,   // Retry 5 times,
-  wait: 20000   // waiting 20 seconds between attempts
+  wait: 20000,  // waiting 20 seconds between attempts
+  backoff: 'constant'  // wait constant amount of time between each retry
 });
 ```
 
@@ -1138,6 +1149,11 @@ validLogLevel = (
    (v in ['info', 'success', 'warning', 'danger'])
 );
 
+validRetryBackoff = (
+   Match.test(v, String) &&
+   (v in ['constant', 'exponential'])
+);
+
 validLog = [{
       time:    Date,
       runId:   Match.OneOf(
@@ -1178,6 +1194,7 @@ validJobDoc = {
   retries:    Match.Where(validIntGTEZero),
   retried:    Match.Where(validIntGTEZero),
   retryWait:  Match.Where(validIntGTEZero),
+  retryBackoff: Match.Where(validRetryBackoff),
   repeats:    Match.Where(validIntGTEZero),
   repeated:   Match.Where(validIntGTEZero),
   repeatWait: Match.Where(validIntGTEZero)

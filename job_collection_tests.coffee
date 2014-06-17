@@ -111,11 +111,29 @@ Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onCo
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
       counter++
       test.equal job._doc._id, res
-      if counter < 2
+      if counter < 3
         job.fail('Fail test')
         cb()
       else
         job.fail('Fail test', { fatal: true })
+        cb()
+        q.shutdown () ->
+          onComplete()
+
+Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
+  counter = 0
+  job = testColl.createJob('testJob', {some: 'data'}).retry({retries: 2, wait: 200, backoff: 'exponential'})
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.instanceOf res, Meteor.Collection.ObjectID , "job.save() failed in callback result"
+    q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+      counter++
+      test.equal job._doc._id, res
+      if counter < 3
+        job.fail('Fail test')
+        cb()
+      else
+        job.fail('Fail test')
         cb()
         q.shutdown () ->
           onComplete()

@@ -25,6 +25,9 @@ validStatus = (v) ->
 validLogLevel = (v) ->
   Match.test(v, String) and v in Job.jobLogLevels
 
+validRetryBackoff = (v) ->
+  Match.test(v, String) and v in Job.jobRetryBackoffMethods
+
 validLog = () ->
   [{
       time: Date
@@ -55,6 +58,7 @@ validJobDoc = () ->
   retries: Match.Where validIntGTEZero
   retried: Match.Where validIntGTEZero
   retryWait: Match.Where validIntGTEZero
+  retryBackoff: Match.Where validRetryBackoff
   repeats: Match.Where validIntGTEZero
   repeated: Match.Where validIntGTEZero
   repeatWait: Match.Where validIntGTEZero
@@ -519,6 +523,7 @@ serverMethods =
             data: doc.data
             retries: doc.retries
             retryWait: doc.retryWait
+            retryBackoff: doc.retryBackoff
             repeats: doc.repeats
             repeatWait: doc.repeatWait
             depends: doc.depends
@@ -765,6 +770,13 @@ serverMethods =
       console.warn "Running job not found", id, runId
       return false
     newStatus = if (doc.retries > 0 and not options.fatal) then "waiting" else "failed"
+
+    after = switch doc.retryBackoff
+      when 'exponential'
+        new Date(time.valueOf() + doc.retryWait*Math.pow(2, doc.retried-1))
+      else
+        new Date(time.valueOf() + doc.retryWait)  # 'constant'
+
     num = @update(
       {
         _id: id
@@ -774,7 +786,7 @@ serverMethods =
         $set:
           status: newStatus
           runId: null
-          after: new Date(time.valueOf() + doc.retryWait)
+          after: after
           progress:
             completed: 0
             total: 1

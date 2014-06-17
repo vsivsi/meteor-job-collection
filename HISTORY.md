@@ -1,5 +1,9 @@
 ## Revision history
 
+### 0.0.9
+
+*    Added `backoff` option to `job.retry()`. Implements resolves enhancement request [#2](https://github.com/vsivsi/meteor-job-collection/issues/2)
+
 ### 0.0.8
 
 *    Fixed bug introduced by "integer enforcement" change in v0.0.7. Integers may now be up to 53-bits (the Javascript maxInt). Fixes [#3](https://github.com/vsivsi/meteor-job-collection/issues/3)

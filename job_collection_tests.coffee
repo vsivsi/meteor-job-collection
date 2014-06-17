@@ -79,20 +79,20 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
 
 Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
   counter = 0
-  job = []
-  job[0] = testColl.createJob('testJob', {count: 3}).priority('low')
-  job[1] = testColl.createJob('testJob', {count: 1}).priority('high')
-  job[2] = testColl.createJob('testJob', {count: 2})
+  jobs = []
+  jobs[0] = testColl.createJob('testJob', {count: 3}).priority('low')
+  jobs[1] = testColl.createJob('testJob', {count: 1}).priority('high')
+  jobs[2] = testColl.createJob('testJob', {count: 2})
 
-  job[0].save (err, res) ->
+  jobs[0].save (err, res) ->
     test.fail(err) if err
-    test.instanceOf res, Meteor.Collection.ObjectID , "job0.save() failed in callback result"
-    job[1].save (err, res) ->
+    test.instanceOf res, Meteor.Collection.ObjectID , "jobs[0].save() failed in callback result"
+    jobs[1].save (err, res) ->
       test.fail(err) if err
-      test.instanceOf res, Meteor.Collection.ObjectID , "job1.save() failed in callback result"
-      job[2].save (err, res) ->
+      test.instanceOf res, Meteor.Collection.ObjectID , "jobs[1].save() failed in callback result"
+      jobs[2].save (err, res) ->
         test.fail(err) if err
-        test.instanceOf res, Meteor.Collection.ObjectID , "job2.save() failed in callback result"
+        test.instanceOf res, Meteor.Collection.ObjectID , "jobs[2].save() failed in callback result"
         q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
           counter++
           test.equal job.data.count, counter

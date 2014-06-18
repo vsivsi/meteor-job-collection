@@ -14,10 +14,10 @@ validNumGTEOne = (v) ->
   Match.test(v, Number) and v > 0.0
 
 validIntGTEZero = (v) ->
-  validNumGTEZero(v) and v <= Job.forever
+  validNumGTEZero(v) and Math.floor(v) is v
 
 validIntGTEOne = (v) ->
-  validNumGTEOne(v) and v <= Job.forever
+  validNumGTEOne(v) and Math.floor(v) is v
 
 validStatus = (v) ->
   Match.test(v, String) and v in Job.jobStatuses

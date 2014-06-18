@@ -426,6 +426,8 @@ Returns `undefined` if no such job exists.
 
 ```js
 if (Meteor.isServer) {
+  // Note, the server could also use the callback pattern in the
+  // else clause below, but because of Fibers, it doesn't have to.
   job = jc.getJob(  // Job will be undefined or contain a Job object
     id,          // job id of type Meteor.Collection.ObjectID
     {
@@ -434,7 +436,7 @@ if (Meteor.isServer) {
   );
   // Job may be undefined
 } else {
-  Job.getJob(
+  jc.getJob(
     id,            // job id of type Meteor.Collection.ObjectID
     {
       getLog: true  // include the log information
@@ -463,6 +465,8 @@ if (Meteor.isServer) {
 
 ```js
 if (Meteor.isServer) {
+  // Note, the server could also use the callback pattern in the
+  // else clause below, but because of Fibers, it doesn't have to.
   job = jc.getWork(  // Job will be undefined or contain a Job object
     'jobType',   // type of job to request
     {

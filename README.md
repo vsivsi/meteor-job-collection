@@ -595,7 +595,7 @@ jc.jobStatuses = [ 'waiting', 'paused', 'ready', 'running',
                    'failed', 'cancelled', 'completed' ];
 ```
 
-### `jc.jobRetryBackoffMethods`
+### jc.jobRetryBackoffMethods
 #### Valid retry backoff methods
 
 ```js
@@ -695,13 +695,13 @@ jc.ddpMethodPermissions = {
 
 ## Job API
 
-New jobs objects are created using the following JobCollection API calls:
+New `Job` objects are created using the following JobCollection API calls:
 * `jc.createJob()` -- Creates a new `Job` object
 * `jc.makeJob()` -- Makes a `Job` object from a job document (as retrieved from MongoDB)
-* `jc.getJob()` -- Get a `Job` object from the jobCollection by `id`
+* `jc.getJob()` -- Get a `Job` object from the jobCollection by Id
 * `jc.getJobs()` -- Get multiple `Job` objects from a jobCollection using an array of Ids
 
-The methods below may be performed on job objects regardless of their source. All `Job` methods may be run on the client or server.
+The methods below may be performed on `Job` objects regardless of their source. All `Job` methods may be run on the client or server.
 
 ### job.depends([dependencies]) - Anywhere
 #### Adds jobs that this job depends upon (antecedents)

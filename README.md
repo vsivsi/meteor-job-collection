@@ -2,6 +2,93 @@
 
 **NOTE:** This Package remains experimental until v0.1.0 is released, and while the API methods described here are maturing, they may still change.
 
+- [jobCollection](#user-content-jobcollection)
+	- [Intro](#user-content-intro)
+		- [Quick example](#user-content-quick-example)
+		- [Design](#user-content-design)
+	- [Installation](#user-content-installation)
+	- [Use](#user-content-use)
+		- [Security](#user-content-security)
+    - [Logging](#user-content-logging)
+	- [JobCollection API](#user-content-jobcollection-api)
+		- [jc = new JobCollection([name], [options]) - Anywhere](#user-content-jc--new-jobcollectionname-options---anywhere)
+		- [jc.setLogStream(writeStream) - Server only](#user-content-jcsetlogstreamwritestream---server-only)
+		- [jc.logConsole - Client only](#user-content-jclogconsole---client-only)
+		- [jc.promote([milliseconds]) - Server only](#user-content-jcpromotemilliseconds---server-only)
+		- [jc.allow(options) - Server only](#user-content-jcallowoptions---server-only)
+		- [jc.deny(options) - Server only](#user-content-jcdenyoptions---server-only)
+		- [jc.startJobs([options], [callback])](#user-content-jcstartjobsoptions-callback)
+		- [jc.stopJobs([options], [callback])](#user-content-jcstopjobsoptions-callback)
+		- [job = jc.createJob(type, data) - Anywhere](#user-content-job--jccreatejobtype-data---anywhere)
+		- [jc.makeJob(jobDoc) - Anywhere](#user-content-jcmakejobjobdoc---anywhere)
+		- [jc.getJob(id, [options], [callback]) - Anywhere](#user-content-jcgetjobid-options-callback---anywhere)
+		- [jc.getWork(type, [options], [callback]) - Anywhere](#user-content-jcgetworktype-options-callback---anywhere)
+		- [jq = jc.processJobs(type, [options], worker) - Anywhere](#user-content-jq--jcprocessjobstype-options-worker---anywhere)
+		- [jc.getJobs(ids, [options], [callback]) - Anywhere](#user-content-jcgetjobsids-options-callback---anywhere)
+		- [jc.pauseJobs(ids, [options], [callback]) - Anywhere](#user-content-jcpausejobsids-options-callback---anywhere)
+		- [jc.resumeJobs(ids, [options], [callback]) - Anywhere](#user-content-jcresumejobsids-options-callback---anywhere)
+		- [jc.cancelJobs(ids, [options], [callback]) - Anywhere](#user-content-jccanceljobsids-options-callback---anywhere)
+		- [jc.restartJobs(ids, [options], [callback]) - Anywhere](#user-content-jcrestartjobsids-options-callback---anywhere)
+		- [jc.removeJobs(ids, [options], [callback]) - Anywhere](#user-content-jcremovejobsids-options-callback---anywhere)
+		- [jc.forever - Anywhere](#user-content-jcforever---anywhere)
+		- [jc.jobPriorities - Anywhere](#user-content-jcjobpriorities---anywhere)
+		- [jc.jobStatuses - Anywhere](#user-content-jcjobstatuses---anywhere)
+		- [jc.jobRetryBackoffMethods](#user-content-jcjobretrybackoffmethods)
+		- [jc.jobLogLevels - Anywhere](#user-content-jcjobloglevels---anywhere)
+		- [jc.jobStatusCancellable - Anywhere](#user-content-jcjobstatuscancellable---anywhere)
+		- [jc.jobStatusPausable - Anywhere](#user-content-jcjobstatuspausable---anywhere)
+		- [jc.jobStatusRemovable - Anywhere](#user-content-jcjobstatusremovable---anywhere)
+		- [jc.jobStatusRestartable - Anywhere](#user-content-jcjobstatusrestartable---anywhere)
+		- [jc.ddpMethods - Anywhere](#user-content-jcddpmethods---anywhere)
+		- [jc.ddpPermissionLevels - Anywhere](#user-content-jcddppermissionlevels---anywhere)
+		- [jc.ddpMethodPermissions - Anywhere](#user-content-jcddpmethodpermissions---anywhere)
+	- [Job API](#user-content-job-api)
+		- [job.depends([dependencies]) - Anywhere](#user-content-jobdependsdependencies---anywhere)
+		- [job.priority([priority]) - Anywhere](#user-content-jobprioritypriority---anywhere)
+		- [job.retry([options]) - Anywhere](#user-content-jobretryoptions---anywhere)
+		- [job.repeat([options]) - Anywhere](#user-content-jobrepeatoptions---anywhere)
+		- [job.delay([milliseconds]) - Anywhere](#user-content-jobdelaymilliseconds---anywhere)
+		- [job.after([time]) - Anywhere](#user-content-jobaftertime---anywhere)
+		- [job.log(message, [options], [callback]) - Anywhere](#user-content-joblogmessage-options-callback---anywhere)
+		- [job.progress(completed, total, [options], [cb]) - Anywhere](#user-content-jobprogresscompleted-total-options-cb---anywhere)
+		- [job.save([options], [callback]) - Anywhere](#user-content-jobsaveoptions-callback---anywhere)
+		- [job.refresh([options], [callback]) - Anywhere](#user-content-jobrefreshoptions-callback---anywhere)
+		- [job.done(result, [options], [callback]) - Anywhere](#user-content-jobdoneresult-options-callback---anywhere)
+		- [job.fail(message, [options], [callback]) - Anywhere](#user-content-jobfailmessage-options-callback---anywhere)
+		- [job.pause([options], [callback]) - Anywhere](#user-content-jobpauseoptions-callback---anywhere)
+		- [job.resume([options], [callback]) - Anywhere](#user-content-jobresumeoptions-callback---anywhere)
+		- [job.cancel([options], [callback]) - Anywhere](#user-content-jobcanceloptions-callback---anywhere)
+		- [job.restart([options], [callback]) - Anywhere](#user-content-jobrestartoptions-callback---anywhere)
+		- [job.rerun([options], [callback]) - Anywhere](#user-content-jobrerunoptions-callback---anywhere)
+		- [job.remove([options], [callback]) - Anywhere](#user-content-jobremoveoptions-callback---anywhere)
+		- [job.type - Anywhere](#user-content-jobtype---anywhere)
+		- [job.data - Anywhere](#user-content-jobdata---anywhere)
+	- [JobQueue API](#user-content-jobqueue-api)
+		- [q.pause() - Anywhere](#user-content-qpause---anywhere)
+		- [q.resume() - Anywhere](#user-content-qresume---anywhere)
+		- [q.shutdown([options], [callback]) - Anywhere](#user-content-qshutdownoptions-callback---anywhere)
+		- [q.length() - Anywhere](#user-content-qlength---anywhere)
+		- [q.full() - Anywhere](#user-content-qfull---anywhere)
+		- [q.running() - Anywhere](#user-content-qrunning---anywhere)
+		- [q.idle() - Anywhere](#user-content-qidle---anywhere)
+	- [Job document data models](#user-content-job-document-data-models)
+	- [DDP Method reference](#user-content-ddp-method-reference)
+		- [startJobs(options)](#user-content-startjobsoptions)
+		- [stopJobs(options)](#user-content-stopjobsoptions)
+		- [getJob(ids, options)](#user-content-getjobids-options)
+		- [getWork(type, options)](#user-content-getworktype-options)
+		- [jobRemove(ids, options)](#user-content-jobremoveids-options)
+		- [jobPause(ids, options)](#user-content-jobpauseids-options)
+		- [jobResume(ids, options)](#user-content-jobresumeids-options)
+		- [jobCancel(ids, options)](#user-content-jobcancelids-options)
+		- [jobRestart(ids, options)](#user-content-jobrestartids-options)
+		- [jobSave(doc, options)](#user-content-jobsavedoc-options)
+		- [jobRerun(id, options)](#user-content-jobrerunid-options)
+		- [jobProgress(id, runId, completed, total, options)](#user-content-jobprogressid-runid-completed-total-options)
+		- [jobLog(id, runId, message, options)](#user-content-joblogid-runid-message-options)
+		- [jobDone(id, runId, result, options)](#user-content-jobdoneid-runid-result-options)
+		- [jobFail(id, runId, err, options)](#user-content-jobfailid-runid-err-options)
+
 ## Intro
 
 jobCollection is a powerful and easy to use job manager designed and built for Meteor.js
@@ -225,7 +312,7 @@ Compared to vanilla Meteor collections, jobCollections have a  different set of 
 
 There are currently over a dozen Meteor methods defined by each jobCollection. In many cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles separate security concerns and permit you to efficiently add allow/deny rules for groups of functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
 
-#### Logging
+### Logging
 
 The server can easily log all activity (both successes and failures) on a jobCollection by passing any valid node.js writable Stream to `jc.setLogStream(writeStream)`.
 
@@ -495,11 +582,11 @@ if (Meteor.isServer) {
 #### Create a new jobQueue to automatically work on jobs
 #### Requires permission: Server, `admin`, `worker` or `getWork`
 
-Asynchronously calls the worker function whenever jobs become available. See documentation below for `JobQueue` object API for methods on the returned `jq` object.
+Asynchronously calls the worker function whenever jobs become available. See documentation below for the `JobQueue` object API for methods on the returned `jq` object.
 
 `options:`
 * `concurrency` -- Maximum number of async calls to `worker` that can be outstanding at a time. Default: `1`
-* `cargo` -- Maximum number of job objects to provide to each worker, Default: `1` If `cargo > 1` the first paramter to `worker` will be an array of job objects rather than a single job object.
+* `cargo` -- Maximum number of job objects to provide to each worker, Default: `1` If `cargo > 1` the first parameter to `worker` will be an array of job objects rather than a single job object.
 * `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Default: `5000` (5 seconds)
 * `prefetch` -- How many extra jobs to request beyond the capacity of all workers (`concurrency * cargo`) to compensate for latency getting more work.
 
@@ -583,9 +670,11 @@ jc.jobPriorities = { "low": 10, "normal": 0, "medium": -5,
 ### jc.jobStatuses - Anywhere
 #### Possible states for the status of a job in the job collection
 
-These are the seven possible states that a job can be in. [Here is a diagram showing the relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/normal-states.dot.cairo.png) between the main five states (disregarding "paused" and "cancelled").
+These are the seven possible states that a job can be in, illustrated below along with the relationships between the main five states (disregarding "paused" and "cancelled"):
 
-A somewhat more complicated state looking diagram showing the relationship between all seven states can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/states.dot.cairo.png). If this looks crazy don't dispair, the relationships added by `.pause()` and `.cancel()` are pretty straightforward when viewed on their own. See `jc.jobStatusCancellable` and `jc.jobStatusPausable` below for more info.
+![job states diagram](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/normal-states.dot.cairo.png)
+
+A somewhat more complicated-looking diagram showing the relationship between all seven states can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/states.dot.cairo.png). If this looks crazy don't dispair, the relationships added by `.pause()` and `.cancel()` are pretty straightforward when viewed on their own. See `jc.jobStatusCancellable` and `jc.jobStatusPausable` below for more info.
 
 ```js
 jc.jobStatuses = [ 'waiting', 'paused', 'ready', 'running',
@@ -914,7 +1003,7 @@ job.done("Done!");
 #### Change the state of a running job to `'failed'`.
 #### Requires permission: Server, `admin`, `worker` or `jobFail`
 
-It's next state depends on how the job's `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
+The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
 
 `options:`
 * `fatal` -- If true, no additional retries will be attempted and this job will go to a `'failed'` state. Default: `false`
@@ -1030,7 +1119,7 @@ job.restart(
 
 `options:`
 * `repeats` -- Number of times to repeat the job, as with `job.repeat()`.
-* `wait` -- Time to wait between reruns. Default is the existing `job.repeat({ wait: ms }) setting for the job.
+* `wait` -- Time to wait between reruns. Default is the existing `job.repeat({ wait: ms })` setting for the job.
 
 `callback(error, result)` -- Result is true if rerun was successful. When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 

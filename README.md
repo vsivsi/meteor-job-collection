@@ -23,24 +23,24 @@ The code snippets below show a Meteor server that creates a `JobCollection`, Met
 // Server
 if (Meteor.isServer) {
 
-   var myJobs = JobCollection('myJobQueue');
-   myJobs.allow({
+  var myJobs = JobCollection('myJobQueue');
+  myJobs.allow({
     // Grant full permission to any authenticated user
     admin: function (userId, method, params) {
-               return (userId ? true : false);
-           }
-   });
+      return (userId ? true : false);
+    }
+  });
 
-   Meteor.startup(function () {
-      // Normal Meteor publish call, the server always
-      // controls what each client can see
-      Meteor.publish('allJobs', function () {
-         myJobs.find({});
-      });
+  Meteor.startup(function () {
+    // Normal Meteor publish call, the server always
+    // controls what each client can see
+    Meteor.publish('allJobs', function () {
+      myJobs.find({});
+    });
 
-      // Start the myJobs queue running
-      myJobs.startJobs();
-   }
+    // Start the myJobs queue running
+    myJobs.startJobs();
+  });
 }
 ```
 
@@ -51,50 +51,49 @@ Alright, the server is set-up and running, now let's add some client code to cre
 // Client
 if (Meteor.isClient) {
 
-   var myJobs = JobCollection('myJobQueue');
-   Meteor.subscribe('allJobs');
+  var myJobs = JobCollection('myJobQueue');
+  Meteor.subscribe('allJobs');
 
-   // Because of the server settings, the code below will
-   // only work if the client is authenticated.
-   // On the server all of it would run unconditionally
+  // Because of the server settings, the code below will
+  // only work if the client is authenticated.
+  // On the server, all of it would run unconditionally.
 
-   // Create a job:
-   var job = myJobs.createJob('sendEmail', // type of job
-      // Job data, defined by you for type of job
-      // whatever info is needed to complete it.
-      // May contain links to files, etc...
-      {
-         address: 'bozo@clowns.com',
-         subject: 'Critical rainbow hair shortage'
-         message: 'LOL; JK, KThxBye.'
-      }
-   );
+  // Create a job:
+  var job = myJobs.createJob('sendEmail', // type of job
+    // Job data that you define, including anything the job
+    // needs to complete. May contain links to files, etc...
+    {
+      address: 'bozo@clowns.com',
+      subject: 'Critical rainbow hair shortage',
+      message: 'LOL; JK, KThxBye.'
+    }
+  );
 
-   // Set some properties of the job and then submit it
-   job.priority('normal')
-      .retry({ retries: 5,
-               wait: 15*60*1000 })  // 15 minutes between attempts
-      .delay(60*60*1000)            // Wait an hour before first try
-      .save();                      // Commit it to the server
+  // Set some properties of the job and then submit it
+  job.priority('normal')
+    .retry({ retries: 5,
+      wait: 15*60*1000 })  // 15 minutes between attempts
+    .delay(60*60*1000)     // Wait an hour before first try
+    .save();               // Commit it to the server
 
-   // Now that it's saved, this job will appear as a document
-   // in the myJobs Collection, and will reactively update as
-   // its status changes, etc.
+  // Now that it's saved, this job will appear as a document
+  // in the myJobs Collection, and will reactively update as
+  // its status changes, etc.
 
-   // Any job document from myJobs can be turned into a Job object
-   job = myJobs.makeJob(myJobs.findOne({}));
+  // Any job document from myJobs can be turned into a Job object
+  job = myJobs.makeJob(myJobs.findOne({}));
 
-   // Or a job can be fetched from the server by _id
-   myJobs.getJob(_id, function (err, job) {
-      // If successful, job is a Job object corresponding to _id
-      // With a job object, you can remotely control the
-      // job's status (subject to server allow/deny rules)
-      // Here are some examples:
-      job.pause();
-      job.cancel();
-      job.remove();
-      // etc...
-   });
+  // Or a job can be fetched from the server by _id
+  myJobs.getJob(_id, function (err, job) {
+    // If successful, job is a Job object corresponding to _id
+    // With a job object, you can remotely control the
+    // job's status (subject to server allow/deny rules)
+    // Here are some examples:
+    job.pause();
+    job.cancel();
+    job.remove();
+    // etc...
+  });
 }
 ```
 
@@ -102,7 +101,7 @@ if (Meteor.isClient) {
 
 **A:** Anywhere you want!
 
-Below is a pure node.js program that can obtain jobs from the server above and "get 'em done."
+Below is a pure node.js program that can obtain jobs from the server above and "get 'em done".
 Powerfully, this can be run ***anywhere*** that has node.js and can connect to the server. The secret sauce here is the [meteor-job npm package](https://www.npmjs.org/search?q=meteor-job), which is fully interoperable with jobCollection.
 
 ```js
@@ -110,18 +109,16 @@ Powerfully, this can be run ***anywhere*** that has node.js and can connect to t
 // node.js Worker
 var DDP = require('ddp');
 var DDPlogin = require('ddp-login');
-var Job = require('meteor-job')
+var Job = require('meteor-job');
 
-// Job here has essentially the same API as
-// JobCollection on Meteor. In fact, Meteor
-// jobCollection is built on top of the
-// 'meteor-job' npm package!
+// `Job` here has essentially the same API as JobCollection on Meteor.
+// In fact, jobCollection is built on top of the 'meteor-job' npm package!
 
 // Setup the DDP connection
 var ddp = new DDP({
-   host: "meteor.mydomain.com",
-   port: 3000,
-   use_ejson: true
+  host: "meteor.mydomain.com",
+  port: 3000,
+  use_ejson: true
 });
 
 // Connect Job with this DDP session
@@ -129,37 +126,37 @@ Job.setDDP(ddp);
 
 // Open the DDP connection
 ddp.connect(function (err) {
-   if (err) throw err;
-   // Call below will prompt for email/password if an
-   // authToken isn't available in the process environment
-   DDPlogin(ddp, function (err, token) {
-      if (err) throw err;
-      // We're in!
-      // Create a worker to get sendMail jobs from 'myJobQueue'
-      // This will keep running indefinitely, obtaining new work
-      // from the server whenever it is available.
-      var workers = Job.processJobs('myJobQueue', 'sendEmail',
-            function (job, cb) {
-               // This will only be called if a
-               // 'sendEmail' job is obtained
-               var email = job.data; // Only one email per job
-               sendEmail(email.address, email.subject, email.message,
-                  function(err) {
-                      if (err) {
-                         job.log("Sending failed with error" + err,
-                                 {level: 'warning'});
-                         job.fail("" + err);
-                      } else {
-                         job.done();
-                      }
-                      // Be sure to invoke the callback
-                      // when work on this job has finished
-                      cb();
-                  }
-               );
+  if (err) throw err;
+  // Call below will prompt for email/password if an
+  // authToken isn't available in the process environment
+  DDPlogin(ddp, function (err, token) {
+    if (err) throw err;
+    // We're in!
+    // Create a worker to get sendMail jobs from 'myJobQueue'
+    // This will keep running indefinitely, obtaining new work
+    // from the server whenever it is available.
+    var workers = Job.processJobs('myJobQueue', 'sendEmail',
+      function (job, cb) {
+        // This will only be called if a
+        // 'sendEmail' job is obtained
+        var email = job.data; // Only one email per job
+        sendEmail(email.address, email.subject, email.message,
+          function(err) {
+            if (err) {
+              job.log("Sending failed with error" + err,
+                {level: 'warning'});
+              job.fail("" + err);
+            } else {
+              job.done();
             }
-      );
-   });
+            // Be sure to invoke the callback
+            // when work on this job has finished
+            cb();
+          }
+        );
+      }
+    );
+  });
 });
 ```
 
@@ -286,8 +283,8 @@ jc.allow({
   // The "admin" below represents
   // the grouping of all remote methods
   admin: function (userId, method, params) {
-             return true;
-         }
+    return true;
+  }
 });
 ```
 
@@ -308,8 +305,8 @@ jc.allow({
   // Assume "adminUserId" contains the Meteor
   // userId string of an admin super-user.
   admin: function (userId, method, params) {
-            return (userId in adminUsers);
-         }
+    return (userId in adminUsers);
+  }
 });
 ```
 
@@ -327,13 +324,13 @@ In addition to the above groups, it is possible to write allow/deny rules specif
 // Assumes emailCreator contains a Meteor userId
 jc.allow({
   jobSave: function (userId, method, params) {
-              // params[0] is the new job doc
-              if ((userId === emailCreator) &&
-                  (params[0].type === 'email')) {
-                  return true;
-              }
-              return false;
-           };
+    // params[0] is the new job doc
+    if ((userId === emailCreator) &&
+        (params[0].type === 'email')) {
+      return true;
+    }
+    return false;
+  }
 });
 ```
 
@@ -347,8 +344,8 @@ jc.deny({
   // The "admin" below represents the
   // grouping of all remote methods
   admin: function (userId, method, params) {
-             return true;
-         };
+    return true;
+  }
 });
 ```
 
@@ -405,7 +402,7 @@ See documentation below for `Job` object API
 ```js
 doc = jc.findOne({});
 if (doc) {
-   job = jc.makeJob('jobQueue', doc);
+  job = jc.makeJob('jobQueue', doc);
 }
 ```
 
@@ -512,8 +509,8 @@ Asynchronously calls the worker function whenever jobs become available. See doc
 
 ```js
 queue = jc.processJobs(
-    // Type of job to request
-    // Can also be an array of job types
+  // Type of job to request
+  // Can also be an array of job types
   'jobType',
   {
     concurrency: 4,
@@ -569,8 +566,8 @@ This is much more efficient than calling `job.resmove()` in a loop because it re
 
 ```js
 job = jc.createJob('jobType', { work: "to", be: "done" })
-   .retry({ retries: jc.forever })    // Default for .retry()
-   .repeat({ repeats: jc.forever });  // Default for .repeat()
+  .retry({ retries: jc.forever })    // Default for .retry()
+  .repeat({ repeats: jc.forever });  // Default for .repeat()
 ```
 
 ### jc.jobPriorities - Anywhere
@@ -1143,29 +1140,29 @@ The definitions below use a slight shorthand of the Meteor [Match pattern](http:
 
 ```js
 validStatus = (
-   Match.test(v, String) &&
-   (v in ['waiting', 'paused', 'ready', 'running',
-          'failed', 'cancelled', 'completed'])
+  Match.test(v, String) &&
+  (v in ['waiting', 'paused', 'ready', 'running',
+    'failed', 'cancelled', 'completed'])
 );
 
 validLogLevel = (
-   Match.test(v, String) &&
-   (v in ['info', 'success', 'warning', 'danger'])
+  Match.test(v, String) &&
+  (v in ['info', 'success', 'warning', 'danger'])
 );
 
 validRetryBackoff = (
-   Match.test(v, String) &&
-   (v in ['constant', 'exponential'])
-);
+  Match.test(v, String) &&
+  (v in ['constant', 'exponential'])
+ );
 
 validLog = [{
-      time:    Date,
-      runId:   Match.OneOf(
-                  Meteor.Collection.ObjectID,
-                  null
-               ),
-      level:   Match.Where(validLogLevel),
-      message: String
+  time:    Date,
+  runId:   Match.OneOf(
+    Meteor.Collection.ObjectID,
+    null
+  ),
+  level:   Match.Where(validLogLevel),
+  message: String
 }];
 
 validProgress = {
@@ -1175,33 +1172,34 @@ validProgress = {
 };
 
 validJobDoc = {
-   _id:       Match.Optional(
-                 Match.OneOf(
-                    Meteor.Collection.ObjectID,
-                    null
-              )),
-  runId:      Match.OneOf(
-                 Meteor.Collection.ObjectID,
-                 null
-              ),
-  type:       String,
-  status:     Match.Where(validStatus),
-  data:       Object
-  result:     Match.Optional(Object),
-  priority:   Match.Integer,
-  depends:    [ Meteor.Collection.ObjectID ],
-  resolved:   [ Meteor.Collection.ObjectID ],
-  after:      Date,
-  updated:    Date,
-  log:        Match.Optional(validLog()),
-  progress:   validProgress(),
-  retries:    Match.Where(validIntGTEZero),
-  retried:    Match.Where(validIntGTEZero),
-  retryWait:  Match.Where(validIntGTEZero),
+  _id:         Match.Optional(
+    Match.OneOf(
+      Meteor.Collection.ObjectID,
+      null
+    )
+  ),
+  runId:        Match.OneOf(
+    Meteor.Collection.ObjectID,
+    null
+  ),
+  type:         String,
+  status:       Match.Where(validStatus),
+  data:         Object,
+  result:       Match.Optional(Object),
+  priority:     Match.Integer,
+  depends:      [ Meteor.Collection.ObjectID ],
+  resolved:     [ Meteor.Collection.ObjectID ],
+  after:        Date,
+  updated:      Date,
+  log:          Match.Optional(validLog()),
+  progress:     validProgress(),
+  retries:      Match.Where(validIntGTEZero),
+  retried:      Match.Where(validIntGTEZero),
+  retryWait:    Match.Where(validIntGTEZero),
   retryBackoff: Match.Where(validRetryBackoff),
-  repeats:    Match.Where(validIntGTEZero),
-  repeated:   Match.Where(validIntGTEZero),
-  repeatWait: Match.Where(validIntGTEZero)
+  repeats:      Match.Where(validIntGTEZero),
+  repeated:     Match.Where(validIntGTEZero),
+  repeatWait:   Match.Where(validIntGTEZero)
 };
 ```
 
@@ -1369,8 +1367,8 @@ Returns: `Meteor.Collection.ObjectID` of the added job.
     * `repeats` -- Number of times to repeat the new job. Default: 0
 
     `Match.Optional({
-      repeats: Match.Optional(Match.Where(validIntGTEZero))
-      wait: Match.Optional(Match.Where(validIntGTEZero))
+       repeats: Match.Optional(Match.Where(validIntGTEZero)),
+       wait: Match.Optional(Match.Where(validIntGTEZero))
     })`
 
 Returns: `Meteor.Collection.ObjectID` of the added job.
@@ -1419,7 +1417,7 @@ Returns: `Boolean` - Success or failure or `null` if jobCollection is shutting d
     * `level` -- The information level of this log entry. Must be a valid log level. Default: `'info'`
 
     `Match.Optional({
-        level: Match.Optional(Match.Where(validLogLevel))
+       level: Match.Optional(Match.Where(validLogLevel))
     })`
 
 Returns: `Boolean` - Success or failure

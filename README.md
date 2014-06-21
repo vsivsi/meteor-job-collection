@@ -627,7 +627,9 @@ jc.jobLogLevels = [ 'info', 'success', 'warning', 'danger' ];
 ### jc.jobStatusCancellable - Anywhere
 #### Job status states that can be cancelled
 
-To be cancellable, a job must currently be in one of these states. A state diagram of the relationships of the "cancelled" state can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/cancel-states.dot.cairo.png).
+To be cancellable, a job must currently be in one of these states. Below is a state diagram of the relationships of the "cancelled" state:
+
+![canceled state relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/cancel-states.dot.cairo.png)
 
 ```js
 jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
@@ -636,7 +638,9 @@ jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
 ### jc.jobStatusPausable - Anywhere
 #### Job status states that can be paused
 
-These are the only states that may be paused. A state diagram of the relationships of the "paused" state can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/pause-states.dot.cairo.png).
+These are the only states that may be paused. Below is a state diagram of the relationships of the "paused" state:
+
+![paused state relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/pause-states.dot.cairo.png).
 
 ```js
 jc.jobStatusPausable = [ 'ready', 'waiting' ];

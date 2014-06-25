@@ -4,15 +4,29 @@
 
 ## Intro
 
-jobCollection is a powerful and easy to use job manager designed and built for Meteor.js
+jobCollection is a powerful and easy to use job manager designed and built for [Meteor.js](http://meteor.com).
 
 It solves the following problems (and more):
 
-*    Schedule jobs to run (and repeat) in the future, persisting across server restarts
-*    Move work out of Meteor's single threaded event-loop
-*    Enable work on computationally expensive jobs to run anywhere, on any number of machines
-*    Track jobs and their progress, and automatically retry failed jobs
-*    Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
+* Schedule jobs to run (and repeat) in the future, persisting across server restarts
+* Move work out of Meteor's single threaded event-loop
+* Enable work on computationally expensive jobs to run anywhere, on any number of machines
+* Track jobs and their progress, and automatically retry failed jobs
+* Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
+
+## Table of Contents
+
+- [Quick example](#user-content-quick-example)
+- [Design](#user-content-design)
+- [Installation](#user-content-installation)
+- [Use](#user-content-use)
+  - [Security](#user-content-security)
+- [Logging](#user-content-logging)
+- [JobCollection API](#user-content-jobcollection-api)
+- [Job API](#user-content-job-api)
+- [JobQueue API](#user-content-jobqueue-api)
+- [Job document data models](#user-content-job-document-data-models)
+- [DDP Method reference](#user-content-ddp-method-reference)
 
 ### Quick example
 
@@ -225,7 +239,7 @@ Compared to vanilla Meteor collections, jobCollections have a  different set of 
 
 There are currently over a dozen Meteor methods defined by each jobCollection. In many cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles separate security concerns and permit you to efficiently add allow/deny rules for groups of functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
 
-#### Logging
+### Logging
 
 The server can easily log all activity (both successes and failures) on a jobCollection by passing any valid node.js writable Stream to `jc.setLogStream(writeStream)`.
 
@@ -495,11 +509,11 @@ if (Meteor.isServer) {
 #### Create a new jobQueue to automatically work on jobs
 #### Requires permission: Server, `admin`, `worker` or `getWork`
 
-Asynchronously calls the worker function whenever jobs become available. See documentation below for `JobQueue` object API for methods on the returned `jq` object.
+Asynchronously calls the worker function whenever jobs become available. See documentation below for the `JobQueue` object API for methods on the returned `jq` object.
 
 `options:`
 * `concurrency` -- Maximum number of async calls to `worker` that can be outstanding at a time. Default: `1`
-* `cargo` -- Maximum number of job objects to provide to each worker, Default: `1` If `cargo > 1` the first paramter to `worker` will be an array of job objects rather than a single job object.
+* `cargo` -- Maximum number of job objects to provide to each worker, Default: `1` If `cargo > 1` the first parameter to `worker` will be an array of job objects rather than a single job object.
 * `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Default: `5000` (5 seconds)
 * `prefetch` -- How many extra jobs to request beyond the capacity of all workers (`concurrency * cargo`) to compensate for latency getting more work.
 
@@ -583,9 +597,11 @@ jc.jobPriorities = { "low": 10, "normal": 0, "medium": -5,
 ### jc.jobStatuses - Anywhere
 #### Possible states for the status of a job in the job collection
 
-These are the seven possible states that a job can be in. [Here is a diagram showing the relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/normal-states.dot.cairo.png) between the main five states (disregarding "paused" and "cancelled").
+These are the seven possible states that a job can be in, illustrated below along with the relationships between the main five states (disregarding "paused" and "cancelled"):
 
-A somewhat more complicated state looking diagram showing the relationship between all seven states can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/states.dot.cairo.png). If this looks crazy don't dispair, the relationships added by `.pause()` and `.cancel()` are pretty straightforward when viewed on their own. See `jc.jobStatusCancellable` and `jc.jobStatusPausable` below for more info.
+![job states diagram](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/normal-states.dot.cairo.png)
+
+A somewhat more complicated-looking diagram showing the relationship between all seven states can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/states.dot.cairo.png). If this looks crazy don't dispair, the relationships added by `.pause()` and `.cancel()` are pretty straightforward when viewed on their own. See `jc.jobStatusCancellable` and `jc.jobStatusPausable` below for more info.
 
 ```js
 jc.jobStatuses = [ 'waiting', 'paused', 'ready', 'running',
@@ -611,7 +627,9 @@ jc.jobLogLevels = [ 'info', 'success', 'warning', 'danger' ];
 ### jc.jobStatusCancellable - Anywhere
 #### Job status states that can be cancelled
 
-To be cancellable, a job must currently be in one of these states. A state diagram of the relationships of the "cancelled" state can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/cancel-states.dot.cairo.png).
+To be cancellable, a job must currently be in one of these states. Below is a state diagram of the relationships of the "cancelled" state:
+
+![canceled state relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/cancel-states.dot.cairo.png)
 
 ```js
 jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
@@ -620,7 +638,9 @@ jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
 ### jc.jobStatusPausable - Anywhere
 #### Job status states that can be paused
 
-These are the only states that may be paused. A state diagram of the relationships of the "paused" state can be seen [here](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/pause-states.dot.cairo.png).
+These are the only states that may be paused. Below is a state diagram of the relationships of the "paused" state:
+
+![paused state relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/pause-states.dot.cairo.png).
 
 ```js
 jc.jobStatusPausable = [ 'ready', 'waiting' ];
@@ -914,7 +934,7 @@ job.done("Done!");
 #### Change the state of a running job to `'failed'`.
 #### Requires permission: Server, `admin`, `worker` or `jobFail`
 
-It's next state depends on how the job's `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
+The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
 
 `options:`
 * `fatal` -- If true, no additional retries will be attempted and this job will go to a `'failed'` state. Default: `false`
@@ -1030,7 +1050,7 @@ job.restart(
 
 `options:`
 * `repeats` -- Number of times to repeat the job, as with `job.repeat()`.
-* `wait` -- Time to wait between reruns. Default is the existing `job.repeat({ wait: ms }) setting for the job.
+* `wait` -- Time to wait between reruns. Default is the existing `job.repeat({ wait: ms })` setting for the job.
 
 `callback(error, result)` -- Result is true if rerun was successful. When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 

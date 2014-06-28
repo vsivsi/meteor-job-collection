@@ -1,5 +1,11 @@
 ## Revision history
 
+### 0.0.10
+
+*    Changed the default value of `job.save()` `cancelRepeats` option to be `false`.
+*    Fixed a case where the `echo` options to `job.log()` could be sent to the server, resulting in failure of the operation.
+*    Documentation improvements courtesy of @dandv.
+
 ### 0.0.9
 
 *    Added `backoff` option to `job.retry()`. Implements resolves enhancement request [#2](https://github.com/vsivsi/meteor-job-collection/issues/2)

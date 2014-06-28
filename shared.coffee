@@ -506,7 +506,7 @@ serverMethods =
     check doc.status, Match.Where (v) ->
       Match.test(v, String) and v in [ 'waiting', 'paused' ]
     options ?= {}
-    options.cancelRepeats ?= true
+    options.cancelRepeats ?= false
     doc.repeats = Job.forever if doc.repeats > Job.forever
     doc.retries = Job.forever if doc.retries > Job.forever
     time = new Date()

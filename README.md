@@ -874,17 +874,17 @@ job.progress(
 Only valid if this is a new job, or if the job is currently paused in the job Collection. If the job is already saved and paused, then most properties of the job may change (but not all, e.g. the jobType may not be changed.)
 
 `options:`
-* `cancelRepeats`: If true and this job is an infinitely repeating job, will cancel any existing jobs of the same job type. Default is `true`. This is useful for background maintenance jobs that may get added on each server restart (potentially with new parameters).
+* `cancelRepeats`: If true and this job is an infinitely repeating job, will cancel any existing jobs of the same job type. This is useful for background maintenance jobs that may get added on each server restart (potentially with new parameters). Default is `false`.
 
 `callback(error, result)` -- Result is true if save was successful. When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
 ```js
 job.save(
   {
-    // Do not cancel any jobs of the same type,
-    // even if this job repeats forever.
-    // Default: true.
-    cancelRepeats: false
+    // Cancel any jobs of the same type,
+    // but only if this job repeats forever.
+    // Default: false.
+    cancelRepeats: true
   }
 );
 ```

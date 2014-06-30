@@ -13,6 +13,9 @@ validNumGTEZero = (v) ->
 validNumGTZero = (v) ->
   Match.test(v, Number) and v > 0.0
 
+validNumGTEOne = (v) ->
+  Match.test(v, Number) and v >= 1.0
+
 validIntGTEZero = (v) ->
   validNumGTEZero(v) and Math.floor(v) is v
 

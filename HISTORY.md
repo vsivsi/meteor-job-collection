@@ -1,5 +1,9 @@
 ## Revision history
 
+### 0.0.12
+
+*    Fixed bug due to removal of validNumGTEOne
+
 ### 0.0.11
 
 *    Fixed bug in jobProgress due to missing validNumGTZero

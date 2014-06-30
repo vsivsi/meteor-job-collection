@@ -151,8 +151,10 @@ serverMethods =
   startJobs: (options) ->
     check options, Match.Optional {}
     options ?= {}
-    Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
-    @stopped = false
+    # The client can't actually do this, so skip it
+    unless this.isSimulation
+      Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
+      @stopped = false
     return true
 
   stopJobs: (options) ->
@@ -160,21 +162,24 @@ serverMethods =
       timeout: Match.Optional(Match.Where validIntGTEOne)
     options ?= {}
     options.timeout ?= 60*1000
-    Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
-    @stopped = Meteor.setTimeout(
-      () =>
-        cursor = @find(
-          {
-            status: 'running'
-          }
-        )
-        console.warn "Failing #{cursor.count()} jobs on queue stop."
-        cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
-        if @logStream? # Shutting down closes the logStream!
-          @logStream.end()
-          @logStream = null
-      options.timeout
-    )
+
+    # The client can't actually do any of this, so skip it
+    unless this.isSimulation
+      Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
+      @stopped = Meteor.setTimeout(
+        () =>
+          cursor = @find(
+            {
+              status: 'running'
+            }
+          )
+          console.warn "Failing #{cursor.count()} jobs on queue stop."
+          cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
+          if @logStream? # Shutting down closes the logStream!
+            @logStream.end()
+            @logStream = null
+        options.timeout
+      )
     return true
 
   getJob: (ids, options) ->

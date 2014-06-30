@@ -1,5 +1,9 @@
 ## Revision history
 
+### 0.0.11
+
+*    Fixed bug in jobProgress due to missing validNumGTZero
+
 ### 0.0.10
 
 *    Changed the default value of `job.save()` `cancelRepeats` option to be `false`.

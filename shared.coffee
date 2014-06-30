@@ -10,7 +10,7 @@
 validNumGTEZero = (v) ->
   Match.test(v, Number) and v >= 0.0
 
-validNumGTEOne = (v) ->
+validNumGTZero = (v) ->
   Match.test(v, Number) and v > 0.0
 
 validIntGTEZero = (v) ->

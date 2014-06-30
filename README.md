@@ -1367,7 +1367,7 @@ Returns: `Boolean` - Success or failure
     `validJobDoc()`
 
 * `options` -- Supports the following options:
-    * `cancelRepeats` --  If true and this job is an infinitely repeating job, will cancel any existing jobs of the same job type. Default is true.
+    * `cancelRepeats` --  If true and this job is an infinitely repeating job, will cancel any existing jobs of the same job type. Default is false.
 
     `Match.Optional({
       cancelRepeats: Match.Optional(Boolean)

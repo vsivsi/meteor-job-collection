@@ -152,7 +152,7 @@ serverMethods =
     check options, Match.Optional {}
     options ?= {}
     # The client can't actually do this, so skip it
-    unless this.isSimulation
+    unless @stopped?
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = false
     return true
@@ -164,7 +164,7 @@ serverMethods =
     options.timeout ?= 60*1000
 
     # The client can't actually do any of this, so skip it
-    unless this.isSimulation
+    unless @stopped?
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = Meteor.setTimeout(
         () =>

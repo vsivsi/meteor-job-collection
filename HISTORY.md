@@ -2,6 +2,8 @@
 
 ### v.NEXT
 
+### v0.0.13
+
 *    Fixed bugs in client simulations of stopJobs and startJobs DDP methods
 
 ### v0.0.12

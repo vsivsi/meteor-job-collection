@@ -19,6 +19,9 @@ subWrapper = (sub, func) ->
     else
       func test, onComplete
 
+validId = (v) ->
+  Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
+
 defaultColl = new JobCollection()
 
 Tinytest.add 'JobCollection default constructor', (test) ->
@@ -34,9 +37,8 @@ Tinytest.add 'JobCollection default constructor', (test) ->
   else
     test.equal defaultColl.logConsole, false, "Doesn't have a logConsole"
 
-clientTestColl = new JobCollection 'ClientTest'
-
-serverTestColl = new JobCollection 'ServerTest'
+clientTestColl = new JobCollection 'ClientTest', { idGeneration: 'MONGO' }
+serverTestColl = new JobCollection 'ServerTest', { idGeneration: 'STRING' }
 testColl = null  # This will be defined differently for client / server
 
 if Meteor.isServer
@@ -69,7 +71,7 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
   job = testColl.createJob 'testJob', { some: 'data' }
   job.save (err, res) ->
     test.fail(err) if err
-    test.instanceOf res, Meteor.Collection.ObjectID , "job.save() failed in callback result"
+    test.ok validId(res), "job.save() failed in callback result"
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
       test.equal job._doc._id, res
       job.done()
@@ -86,13 +88,13 @@ Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
 
   jobs[0].save (err, res) ->
     test.fail(err) if err
-    test.instanceOf res, Meteor.Collection.ObjectID , "jobs[0].save() failed in callback result"
+    test.ok validId(res), "jobs[0].save() failed in callback result"
     jobs[1].save (err, res) ->
       test.fail(err) if err
-      test.instanceOf res, Meteor.Collection.ObjectID , "jobs[1].save() failed in callback result"
+      test.ok validId(res), "jobs[1].save() failed in callback result"
       jobs[2].save (err, res) ->
         test.fail(err) if err
-        test.instanceOf res, Meteor.Collection.ObjectID , "jobs[2].save() failed in callback result"
+        test.ok validId(res), "jobs[2].save() failed in callback result"
         q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
           counter++
           test.equal job.data.count, counter
@@ -107,7 +109,7 @@ Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onCo
   job = testColl.createJob('testJob', {some: 'data'}).retry({retries: Job.forever, wait: 0})
   job.save (err, res) ->
     test.fail(err) if err
-    test.instanceOf res, Meteor.Collection.ObjectID , "job.save() failed in callback result"
+    test.ok validId(res), "job.save() failed in callback result"
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
       counter++
       test.equal job._doc._id, res
@@ -125,7 +127,7 @@ Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
   job = testColl.createJob('testJob', {some: 'data'}).retry({retries: 2, wait: 200, backoff: 'exponential'})
   job.save (err, res) ->
     test.fail(err) if err
-    test.instanceOf res, Meteor.Collection.ObjectID , "job.save() failed in callback result"
+    test.ok validId(res), "job.save() failed in callback result"
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
       counter++
       test.equal job._doc._id, res

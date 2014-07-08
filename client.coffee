@@ -15,8 +15,16 @@ if Meteor.isClient
       unless @ instanceof JobCollection
         return new JobCollection(@root, options)
 
+      options.idGeneration ?= 'STRING'  # or 'MONGO'
+      options.noCollectionSuffix ?= false
+
+      collectionName = @root
+
+      unless options.noCollectionSuffix
+        collectionName += '.jobs'
+
       # Call super's constructor
-      super @root + '.jobs', { idGeneration: 'MONGO' }
+      super collectionName, { idGeneration: options.idGeneration }
 
       @logConsole = false
 

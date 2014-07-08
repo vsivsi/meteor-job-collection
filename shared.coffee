@@ -31,10 +31,13 @@ validLogLevel = (v) ->
 validRetryBackoff = (v) ->
   Match.test(v, String) and v in Job.jobRetryBackoffMethods
 
+validId = (v) ->
+  Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
+
 validLog = () ->
   [{
       time: Date
-      runId: Match.OneOf(Meteor.Collection.ObjectID, null)
+      runId: Match.OneOf(Match.Where(validId), null)
       level: Match.Where(validLogLevel)
       message: String
   }]
@@ -45,15 +48,15 @@ validProgress = () ->
   percent: Match.Where(validNumGTEZero)
 
 validJobDoc = () ->
-  _id: Match.Optional Match.OneOf(Meteor.Collection.ObjectID, null)
-  runId: Match.OneOf(Meteor.Collection.ObjectID, null)
+  _id: Match.Optional Match.OneOf(Match.Where(validId), null)
+  runId: Match.OneOf(Match.Where(validId), null)
   type: String
   status: Match.Where validStatus
   data: Object
   result: Match.Optional Object
   priority: Match.Integer
-  depends: [ Meteor.Collection.ObjectID ]
-  resolved: [ Meteor.Collection.ObjectID ]
+  depends: [ Match.Where(validId) ]
+  resolved: [ Match.Where(validId) ]
   after: Date
   updated: Date
   log: Match.Optional validLog()
@@ -183,13 +186,13 @@ serverMethods =
     return true
 
   getJob: (ids, options) ->
-    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
     check options, Match.Optional
       getLog: Match.Optional Boolean
     options ?= {}
     options.getLog ?= false
     single = false
-    if ids instanceof Meteor.Collection.ObjectID
+    if validId(ids)
       ids = [ids]
       single = true
     return null if ids.length is 0
@@ -246,7 +249,8 @@ serverMethods =
       }).map (d) -> d._id
 
     if ids?.length
-      runId = new Meteor.Collection.ObjectID()
+      # This is meteor internal, but it will fail hard if it goes away.
+      runId = @_makeNewID()
       num = @update(
         {
           _id:
@@ -300,10 +304,10 @@ serverMethods =
     return []
 
   jobRemove: (ids, options) ->
-    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
     check options, Match.Optional {}
     options ?= {}
-    if ids instanceof Meteor.Collection.ObjectID
+    if validId(ids)
       ids = [ids]
     return false if ids.length is 0
     num = @remove(
@@ -322,10 +326,10 @@ serverMethods =
     return false
 
   jobPause: (ids, options) ->
-    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
     check options, Match.Optional {}
     options ?= {}
-    if ids instanceof Meteor.Collection.ObjectID
+    if validId(ids)
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
@@ -358,10 +362,10 @@ serverMethods =
     return false
 
   jobResume: (ids, options) ->
-    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
     check options, Match.Optional {}
     options ?= {}
-    if ids instanceof Meteor.Collection.ObjectID
+    if validId(ids)
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
@@ -395,14 +399,14 @@ serverMethods =
     return false
 
   jobCancel: (ids, options) ->
-    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
     check options, Match.Optional
       antecedents: Match.Optional Boolean
       dependents: Match.Optional Boolean
     options ?= {}
     options.antecedents ?= false
     options.dependents ?= true
-    if ids instanceof Meteor.Collection.ObjectID
+    if validId(ids)
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
@@ -448,7 +452,7 @@ serverMethods =
     return false
 
   jobRestart: (ids, options) ->
-    check ids, Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])
+    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
     check options, Match.Optional
       retries: Match.Optional(Match.Where validIntGTEOne)
       antecedents: Match.Optional Boolean
@@ -458,7 +462,7 @@ serverMethods =
     options.retries = Job.forever if options.retries > Job.forever
     options.dependents ?= false
     options.antecedents ?= true
-    if ids instanceof Meteor.Collection.ObjectID
+    if validId(ids)
       ids = [ids]
     return false if ids.length is 0
     console.log "Restarting: #{ids}"
@@ -571,8 +575,8 @@ serverMethods =
   # Worker methods
 
   jobProgress: (id, runId, completed, total, options) ->
-    check id, Meteor.Collection.ObjectID
-    check runId, Meteor.Collection.ObjectID
+    check id, Match.Where(validId)
+    check runId, Match.Where(validId)
     check completed, Match.Where validNumGTEZero
     check total, Match.Where validNumGTZero
     check options, Match.Optional {}
@@ -612,8 +616,8 @@ serverMethods =
     return false
 
   jobLog: (id, runId, message, options) ->
-    check id, Meteor.Collection.ObjectID
-    check runId, Meteor.Collection.ObjectID
+    check id, Match.Where(validId)
+    check runId, Match.Where(validId)
     check message, String
     check options, Match.Optional
       level: Match.Optional(Match.Where validLogLevel)
@@ -641,7 +645,7 @@ serverMethods =
     return false
 
   jobRerun: (id, options) ->
-    check id, Meteor.Collection.ObjectID
+    check id, Match.Where(validId)
     check options, Match.Optional
       repeats: Match.Optional(Match.Where validIntGTEZero)
       wait: Match.Optional(Match.Where validIntGTEZero)
@@ -672,8 +676,8 @@ serverMethods =
     return false
 
   jobDone: (id, runId, result, options) ->
-    check id, Meteor.Collection.ObjectID
-    check runId, Meteor.Collection.ObjectID
+    check id, Match.Where(validId)
+    check runId, Match.Where(validId)
     check result, Object
     check options, Match.Optional {}
     options ?= {}
@@ -748,8 +752,8 @@ serverMethods =
     return false
 
   jobFail: (id, runId, err, options) ->
-    check id, Meteor.Collection.ObjectID
-    check runId, Meteor.Collection.ObjectID
+    check id, Match.Where(validId)
+    check runId, Match.Where(validId)
     check err, String
     check options, Match.Optional
       fatal: Match.Optional Boolean

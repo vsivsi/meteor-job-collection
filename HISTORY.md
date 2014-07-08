@@ -2,6 +2,8 @@
 
 ### v.NEXT
 
+*    Added `idGeneration` and `noCollectionSuffix` options to JobCollection constructor. Thanks to @mitar for suggestions.
+
 ### v0.0.13
 
 *    Fixed bugs in client simulations of stopJobs and startJobs DDP methods

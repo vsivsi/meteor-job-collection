@@ -444,7 +444,7 @@ if (Meteor.isServer) {
   // Note, the server could also use the callback pattern in the
   // else clause below, but because of Fibers, it doesn't have to.
   job = jc.getJob(  // Job will be undefined or contain a Job object
-    id,          // job id of type Meteor.Collection.ObjectID
+    id,          // job id of type Match.Where(validId)
     {
       getLog: false  // Default, don't include the log information
     }
@@ -452,7 +452,7 @@ if (Meteor.isServer) {
   // Job may be undefined
 } else {
   jc.getJob(
-    id,            // job id of type Meteor.Collection.ObjectID
+    id,            // job id of type Match.Where(validId)
     {
       getLog: true  // include the log information
     },
@@ -1163,6 +1163,11 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
 The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of jobCollection this is mostly for your information because jobs are automatically built and maintained by the package.
 
 ```js
+
+validId = (
+  Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
+);
+
 validStatus = (
   Match.test(v, String) &&
   (v in ['waiting', 'paused', 'ready', 'running',
@@ -1182,7 +1187,7 @@ validRetryBackoff = (
 validLog = [{
   time:    Date,
   runId:   Match.OneOf(
-    Meteor.Collection.ObjectID,
+    Match.Where(validId),
     null
   ),
   level:   Match.Where(validLogLevel),
@@ -1198,12 +1203,12 @@ validProgress = {
 validJobDoc = {
   _id:         Match.Optional(
     Match.OneOf(
-      Meteor.Collection.ObjectID,
+      Match.Where(validId),
       null
     )
   ),
   runId:        Match.OneOf(
-    Meteor.Collection.ObjectID,
+    Match.Where(validId),
     null
   ),
   type:         String,
@@ -1211,8 +1216,8 @@ validJobDoc = {
   data:         Object,
   result:       Match.Optional(Object),
   priority:     Match.Integer,
-  depends:      [ Meteor.Collection.ObjectID ],
-  resolved:     [ Meteor.Collection.ObjectID ],
+  depends:      [ Match.Where(validId) ],
+  resolved:     [ Match.Where(validId) ],
   after:        Date,
   updated:      Date,
   log:          Match.Optional(validLog()),
@@ -1260,7 +1265,7 @@ Returns: `Boolean` - Success or failure
 
 * `ids` -- an Id or array of Ids to get from server
 
-    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+    `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- Supports the following options:
 
@@ -1293,7 +1298,7 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if maxJobs > 1.
 
 * `ids` -- an Id or array of Ids to remove from server
 
-    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+    `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- No options currently used
 
@@ -1306,7 +1311,7 @@ Returns: `Boolean` - Success or failure
 
 * `ids` -- an Id or array of Ids to remove from server
 
-    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+    `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- No options currently used
 
@@ -1319,7 +1324,7 @@ Returns: `Boolean` - Success or failure
 
 * `ids` -- an Id or array of Ids to remove from server
 
-    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+    `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- No options currently used
 
@@ -1332,7 +1337,7 @@ Returns: `Boolean` - Success or failure
 
 * `ids` -- an Id or array of Ids to remove from server
 
-    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+    `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- Supports the following options:
     * `antecedents` -- If true, all jobs that this one depends upon will also be cancelled. Default: `false`
@@ -1350,7 +1355,7 @@ Returns: `Boolean` - Success or failure
 
 * `ids` -- an Id or array of Ids to remove from server
 
-    `ids: Match.OneOf(Meteor.Collection.ObjectID, [ Meteor.Collection.ObjectID ])`
+    `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- Supports the following options:
     * `antecedents` -- If true, all jobs that this one depends upon will also be restarted. Default: `true`
@@ -1377,14 +1382,14 @@ Returns: `Boolean` - Success or failure
       cancelRepeats: Match.Optional(Boolean)
     })`
 
-Returns: `Meteor.Collection.ObjectID` of the added job.
+Returns: `Match.Where(validId)` of the added job.
 
 ### `jobRerun(id, options)`
 #### Creates and saves a new job based on an existing job that has successfully completed.
 
 * `id` -- The id of the job to rerun
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `options` -- Supports the following options:
     * `wait` -- Amount of time to wait until the new job runs in ms. Default: 0
@@ -1395,18 +1400,18 @@ Returns: `Meteor.Collection.ObjectID` of the added job.
        wait: Match.Optional(Match.Where(validIntGTEZero))
     })`
 
-Returns: `Meteor.Collection.ObjectID` of the added job.
+Returns: `Match.Where(validId)` of the added job.
 
 ### `jobProgress(id, runId, completed, total, options)`
 #### Update the progress of a running job
 
 * `id` -- The id of the job to update
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `runId` -- The runId of this worker
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `completed` -- The estimated amount of effort completed
 
@@ -1427,11 +1432,11 @@ Returns: `Boolean` - Success or failure or `null` if jobCollection is shutting d
 
 * `id` -- The id of the job to update
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `runId` -- The runId of this worker
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `message` -- The text of the message to add to the log
 
@@ -1451,11 +1456,11 @@ Returns: `Boolean` - Success or failure
 
 * `id` -- The id of the job to update
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `runId` -- The runId of this worker
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `result` -- A result object to store with the completed job.
 
@@ -1472,11 +1477,11 @@ Returns: `Boolean` - Success or failure
 
 * `id` -- The id of the job to update
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `runId` -- The runId of this worker
 
-    `Meteor.Collection.ObjectID`
+    `Match.Where(validId)`
 
 * `err` -- An error string to store with the failed job.
 

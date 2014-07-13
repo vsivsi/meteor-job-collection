@@ -2,68 +2,71 @@
 
 ### v.NEXT
 
-*    Added `idGeneration` and `noCollectionSuffix` options to JobCollection constructor. Thanks to @mitar for suggestions.
+### v.0.0.14
+
+* Added `idGeneration` and `noCollectionSuffix` options to JobCollection constructor. Thanks to @mitar for suggestions.
+* Updated README to point to new sample app.
 
 ### v0.0.13
 
-*    Fixed bugs in client simulations of stopJobs and startJobs DDP methods
+* Fixed bugs in client simulations of stopJobs and startJobs DDP methods
 
 ### v0.0.12
 
-*    Fixed bug due to removal of validNumGTEOne
+* Fixed bug due to removal of validNumGTEOne
 
 ### v0.0.11
 
-*    Fixed bug in jobProgress due to missing validNumGTZero
+* Fixed bug in jobProgress due to missing validNumGTZero
 
 ### v0.0.10
 
-*    Changed the default value of `job.save()` `cancelRepeats` option to be `false`.
-*    Fixed a case where the `echo` options to `job.log()` could be sent to the server, resulting in failure of the operation.
-*    Documentation improvements courtesy of @dandv.
+* Changed the default value of `job.save()` `cancelRepeats` option to be `false`.
+* Fixed a case where the `echo` options to `job.log()` could be sent to the server, resulting in failure of the operation.
+* Documentation improvements courtesy of @dandv.
 
 ### v0.0.9
 
-*    Added `backoff` option to `job.retry()`. Implements resolves enhancement request [#2](https://github.com/vsivsi/meteor-job-collection/issues/2)
+* Added `backoff` option to `job.retry()`. Implements resolves enhancement request [#2](https://github.com/vsivsi/meteor-job-collection/issues/2)
 
 ### v0.0.8
 
-*    Fixed bug introduced by "integer enforcement" change in v0.0.7. Integers may now be up to 53-bits (the Javascript maxInt). Fixes [#3](https://github.com/vsivsi/meteor-job-collection/issues/3)
-*    Fixed sort inversion of priority levels in `getWork()`. Fixes [#4](https://github.com/vsivsi/meteor-job-collection/issues/4)
-*    Thanks to @chhib for reporting the above two issues.
+* Fixed bug introduced by "integer enforcement" change in v0.0.7. Integers may now be up to 53-bits (the Javascript maxInt). Fixes [#3](https://github.com/vsivsi/meteor-job-collection/issues/3)
+* Fixed sort inversion of priority levels in `getWork()`. Fixes [#4](https://github.com/vsivsi/meteor-job-collection/issues/4)
+* Thanks to @chhib for reporting the above two issues.
 
 ### v0.0.7
 
-*    Bumped meteor-job version to 0.0.9, fixing several bugs in Meteor.server and Meteor.client workers handling.
-*    Corrected validation of jobDocuments for non-negative integer attributes (integer enforcement was missing).
-*    jc.promote() formerly had a minimum valid polling rate of 1000ms, now any value > 0ms is valid
-*    Added a few more acceptance tests including client and server scheduling and running of a job.
-*    Documentation improvements
+* Bumped meteor-job version to 0.0.9, fixing several bugs in Meteor.server and Meteor.client workers handling.
+* Corrected validation of jobDocuments for non-negative integer attributes (integer enforcement was missing).
+* jc.promote() formerly had a minimum valid polling rate of 1000ms, now any value > 0ms is valid
+* Added a few more acceptance tests including client and server scheduling and running of a job.
+* Documentation improvements
 
 ### v0.0.6
 
-*    Added initial testing harness
-*    Fixed issue with collection root name in DDP method naming.
-*    Changed evaluation of allow/deny rules so deny rules run first, just like in Meteor.
-*    Documentation improvements.
+* Added initial testing harness
+* Fixed issue with collection root name in DDP method naming.
+* Changed evaluation of allow/deny rules so deny rules run first, just like in Meteor.
+* Documentation improvements.
 
 ### v0.0.5
 
-*    Really fixed issue #1, thanks again to @chhib for reporting this.
+* Really fixed issue #1, thanks again to @chhib for reporting this.
 
 ### v0.0.4
 
-*    Test release debugging git submodule issues around issue #1
+* Test release debugging git submodule issues around issue #1
 
 ### v0.0.3
 
-*    Fixed issue #1, thanks to @chhib for reporting this.
+* Fixed issue #1, thanks to @chhib for reporting this.
 
 ### v0.0.2
 
-*    Documentation improvements
-*    Removed meteor-job subproject and added npm dependency on it instead
+* Documentation improvements
+* Removed meteor-job subproject and added npm dependency on it instead
 
 ### v0.0.1
 
-*    Initial revision.
+* Initial revision.

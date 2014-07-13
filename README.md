@@ -192,32 +192,13 @@ Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your p
 
 The package exposes a global object `JobCollection` on both client and server.
 
-##### NOTE! Sample app mentioned below is not implemented yet!
-
-If you'd like to try out the sample app, you can clone the repo from github:
-
-```
-git clone --recursive \
-    https://github.com/vsivsi/meteor-job-collection.git \
-    jobCollection
-```
-
-Then go to the `sampleApp` subdirectory and run meteorite to launch:
-
-```
-cd fileCollection/sampleApp/
-mrt
-```
-
-You should now be able to point your browser to `http://localhost:3000/` and play with the sample app.
-
-##### NOTE! Only rudimentary acceptance tests are implemented right now.
-
 To run tests (using Meteor tiny-test) run from within the `jobCollection` subdirectory:
 
     meteor test-packages ./
 
 Load `http://localhost:3000/` and the tests should run in your browser and on the server.
+
+A basic sample application that implements a basic image gallery with upload/download support and automatic generation of thumbnail images is available. It also implements a basic job manager UI that allows control of both individual jobs and changes to the entire collection at once.  It is available here: https://github.com/vsivsi/meteor-file-job-sample-app
 
 ## Use
 

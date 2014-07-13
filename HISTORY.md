@@ -5,6 +5,7 @@
 ### v.0.0.14
 
 * Added `idGeneration` and `noCollectionSuffix` options to JobCollection constructor. Thanks to @mitar for suggestions.
+* Removed unnecessary console log outputs
 * Updated README to point to new sample app.
 
 ### v0.0.13

@@ -169,27 +169,27 @@ if Meteor.isServer
       if @stopped
         return
 
-        time = new Date()
-        num = @update(
-          {
-            status: "waiting"
-            after:
-              $lte: time
-            depends:
-              $size: 0
-          }
-          {
-            $set:
-              status: "ready"
-              updated: time
-            $push:
-              log:
-                time: time
-                runId: null
-                level: 'success'
-                message: "Promoted to ready"
-          }
-          {
-            multi: true
-          }
-        )
+      time = new Date()
+      num = @update(
+        {
+          status: "waiting"
+          after:
+            $lte: time
+          depends:
+            $size: 0
+        }
+        {
+          $set:
+            status: "ready"
+            updated: time
+          $push:
+            log:
+              time: time
+              runId: null
+              level: 'success'
+              message: "Promoted to ready"
+        }
+        {
+          multi: true
+        }
+      )

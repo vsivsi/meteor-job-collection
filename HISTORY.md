@@ -6,7 +6,7 @@
 
 * Added `idGeneration` and `noCollectionSuffix` options to JobCollection constructor. Thanks to @mitar for suggestions.
 * Removed unnecessary console log outputs
-* Updated README to point to new sample app.
+* Updated README to point to new sample app, and to clarify the use of `jc.promote()` in Meteor multi-instance deployments.
 
 ### v0.0.13
 

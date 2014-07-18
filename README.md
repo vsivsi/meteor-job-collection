@@ -268,6 +268,8 @@ jc.logConsole = false  // Default. Do not log method calls to the client console
 jc.promote(15*1000);  // Default: 15 seconds
 ```
 
+Note: if you are running multiple Meteor instances that share access to a single job collection, you can set the time each instance waits to promote to `N * milliseconds`, where `N` is the number of Meteor instances. The instances will each take turns promoting jobs at 1/Nth of the desired rate.
+
 ### jc.allow(options) - Server only
 #### Allow remote execution of specific jobCollection methods
 

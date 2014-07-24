@@ -536,6 +536,8 @@ serverMethods =
     # This enables the default case of "run immediately" to
     # not be impacted by a client's clock
     doc.after = time if doc.after < time
+    doc.retryUntil = time if doc.retryUntil < time
+    doc.repeatUntil = time if doc.repeatUntil < time
 
     if doc._id
       num = @update(
@@ -549,8 +551,8 @@ serverMethods =
             status: 'waiting'
             data: doc.data
             retries: doc.retries
-            retryWait: doc.retryWait
             retryUntil: doc.retryUntil
+            retryWait: doc.retryWait
             retryBackoff: doc.retryBackoff
             repeats: doc.repeats
             repeatUntil: doc.repeatUntil
@@ -742,7 +744,7 @@ serverMethods =
       }
     )
     if num is 1
-      if doc.repeats > 0 and doc.repeatUntil >= time
+      if doc.repeats > 0 and doc.repeatUntil - doc.repeatWait >= time
         jobId = rerun_job.bind(@) doc
 
       # Resolve depends
@@ -801,15 +803,15 @@ serverMethods =
       console.warn "Running job not found", id, runId
       return false
 
-    newStatus = if (not options.fatal and
-                    doc.retries > 0 and
-                    doc.retryUntil >= time) then "waiting" else "failed"
-
     after = switch doc.retryBackoff
       when 'exponential'
         new Date(time.valueOf() + doc.retryWait*Math.pow(2, doc.retried-1))
       else
         new Date(time.valueOf() + doc.retryWait)  # 'constant'
+
+    newStatus = if (not options.fatal and
+                    doc.retries > 0 and
+                    doc.retryUntil >= after) then "waiting" else "failed"
 
     num = @update(
       {

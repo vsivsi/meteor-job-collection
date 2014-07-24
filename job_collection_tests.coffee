@@ -139,3 +139,24 @@ Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
         cb()
         q.shutdown () ->
           onComplete()
+
+Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
+  counter = 0
+  job = testColl.createJob('testJob', {some: 'data'}).retry({until: new Date(new Date().valueOf() + 1500), wait: 500})
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+      counter++
+      test.equal job._doc._id, res
+      job.fail('Fail test')
+      cb()
+    Meteor.setTimeout(() ->
+      job.refresh () ->
+        console.log "Until count: #{counter}"
+        test.ok job.status is 'failed', "Until didn't cause job to stop retrying"
+        q.shutdown () ->
+          onComplete()
+    ,
+      2000
+    )

@@ -1,6 +1,6 @@
 # jobCollection
 
-**NOTE:** This Package remains experimental until v0.1.0 is released, and while the API methods described here are maturing, they may still change.
+**NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change.
 
 ## Intro
 
@@ -21,7 +21,8 @@ It solves the following problems (and more):
 - [Installation](#user-content-installation)
 - [Use](#user-content-use)
   - [Security](#user-content-security)
-- [Logging](#user-content-logging)
+  - [Performance](#user-content-performance)
+  - [Logging](#user-content-logging)
 - [JobCollection API](#user-content-jobcollection-api)
 - [Job API](#user-content-job-api)
 - [JobQueue API](#user-content-jobqueue-api)
@@ -219,6 +220,17 @@ For a client to have access to perform `find()` operations on a jobCollection, t
 Compared to vanilla Meteor collections, jobCollections have a  different set of remote methods with specific security implications. Where the allow/deny methods on a Meteor collection take functions to grant permission for `insert`, `update` and `remove`, jobCollection has more functionality to secure and configure.
 
 There are currently over a dozen Meteor methods defined by each jobCollection. In many cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles separate security concerns and permit you to efficiently add allow/deny rules for groups of functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
+
+### Performance
+
+The performance of jobCollection will almost entirely be dependant on the speed of the MongoDB server it is hosted on. If you anticipate having large jobCollections (ie. with over 1000 jobs at a time) you will want to ensure that MongoDB to indexes the folowing document fields in the underlying collection:
+
+```json
+{
+  "type" : 1,
+  "status" : 1
+}
+```
 
 ### Logging
 

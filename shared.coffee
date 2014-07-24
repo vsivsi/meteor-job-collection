@@ -530,6 +530,11 @@ serverMethods =
     doc.retries = Job.forever if doc.retries > Job.forever
 
     time = new Date()
+
+    # This enables the default case of "run immediately" to
+    # not be impacted by a client's clock
+    doc.after = time if doc.after < time
+
     if doc._id
       num = @update(
         {

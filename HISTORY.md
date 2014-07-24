@@ -5,7 +5,7 @@
 * Added `until` option for `job.repeat()`, `job.retry()`, job.restart() and job.rerun().
 * Added `jc.foreverDate` to indicate a Date that will never come
 * Fixed bug where `jc.forever` was not available
-* Default Date for `job.after()` should be in the past (thanks @daeq)
+* Default Date for `job.after()` is now based on the server clock, not the clock of the machine creating the job. (thanks @daeq)
 
 ### v.0.0.14
 

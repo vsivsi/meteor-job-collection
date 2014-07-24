@@ -2,6 +2,8 @@
 
 ### v.NEXT
 
+### v.0.0.15
+
 * Added `until` option for `job.repeat()`, `job.retry()`, job.restart() and job.rerun().
 * Added `jc.foreverDate` to indicate a Date that will never come
 * Fixed bug where `jc.forever` was not available

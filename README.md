@@ -225,11 +225,8 @@ There are currently over a dozen Meteor methods defined by each jobCollection. I
 
 The performance of jobCollection will almost entirely be dependant on the speed of the MongoDB server it is hosted on. If you anticipate having large jobCollections (ie. with over 1000 jobs at a time) you will want to ensure that MongoDB to indexes the folowing document fields in the underlying collection:
 
-```json
-{
-  "type" : 1,
-  "status" : 1
-}
+```js
+jc._ensureIndex({ type : 1, status : 1 });
 ```
 
 ### Logging

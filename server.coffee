@@ -28,6 +28,7 @@ if Meteor.isServer
 
       # Call super's constructor
       super collectionName, { idGeneration: options.idGeneration }
+
       @stopped = true
 
       # No client mutators allowed

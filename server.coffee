@@ -106,6 +106,8 @@ if Meteor.isServer
     jobStatusPausable: Job.jobStatusPausable
     jobStatusRemovable: Job.jobStatusRemovable
     jobStatusRestartable: Job.jobStatusRestartable
+    forever: Job.forever
+    foreverDate: Job.foreverDate
 
     ddpMethods: Job.ddpMethods
     ddpPermissionLevels: Job.ddpPermissionLevels

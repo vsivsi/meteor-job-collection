@@ -106,7 +106,7 @@ Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
 
 Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onComplete) ->
   counter = 0
-  job = testColl.createJob('testJob', {some: 'data'}).retry({retries: Job.forever, wait: 0})
+  job = testColl.createJob('testJob', {some: 'data'}).retry({retries: testColl.forever, wait: 0})
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"

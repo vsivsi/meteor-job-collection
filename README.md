@@ -571,6 +571,15 @@ job = jc.createJob('jobType', { work: "to", be: "done" })
   .repeat({ repeats: jc.forever });  // Default for .repeat()
 ```
 
+### jc.foreverDate - Anywhere
+Constant value used to indicate a future Date that will never arrive
+
+```js
+job = jc.createJob('jobQueue', 'jobType', { work: "to", be: "done" })
+   .retry({ until: Job.foreverDate })    // Default for .retry()
+   .repeat({ until: Job.foreverDate });  // Default for .repeat()
+```
+
 ### jc.jobPriorities - Anywhere
 #### Valid non-numeric job priorities
 
@@ -738,6 +747,7 @@ Returns `job`, so it is chainable.
 
 `options:`
 * `retries` -- Number of times to retry a failing job. Default: `Job.forever`
+* `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever comes first. Default: `Job.foreverDate`. Note that if you specify a value for `until` on a repeating job, it will only apply to the first run of the job. Any repeated runs of the job will use the repeat `until` value for all retries.
 * `wait` -- Initial value for how long to wait between attempts, in ms. Default: `300000` (5 minutes)
 * `backoff` -- Method to use in determining how to calculate wait value for each retry:
     * `'constant'`:  Always delay retrying by `wait` ms.  Default value.
@@ -762,6 +772,7 @@ Each time it is re-run, a new job is created in the job collection. This is equi
 
 `options:`
 * `repeats` -- Number of times to rerun the job. Default: `Job.forever`
+* `until` -- Keep repeating until this `Date`, or until the number of repeats is exhausted, whichever comes first. Default: `Job.foreverDate`
 * `wait`  -- How long to wait between re-runs, in ms. Default: `300000` (5 minutes)
 
 `[options]` may also be a non-negative integer, which is interpreted as `{ repeats: [options] }`
@@ -1010,6 +1021,7 @@ A restarted job will retain any repeat count state it had when it failed or was 
 
 `options:`
 * `retries` -- Number of additional retries to attempt before failing with `job.retry()`. Default: `0`. These retries add to any remaining retries already on the job (such as if it was cancelled).
+* `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever comes first. Default: Prior value of `until`. Note that if you specify a value for `until` when restarting a repeating job, it will only apply to the first run of the job. Any repeated runs of the job will use the repeat `until` value for retries.
 * `antecedents` -- Also restart all `'cancelled'` or `'failed'` jobs that this job depends on.  Default: `true`
 * `dependents` -- Also restart all `'cancelled'` or `'failed'` jobs that depend on this job.  Default: `false`
 
@@ -1037,6 +1049,7 @@ job.restart(
 
 `options:`
 * `repeats` -- Number of times to repeat the job, as with `job.repeat()`.
+* `until` -- Keep repeating until this `Date`, or until the number of repeats is exhausted, whichever comes first. Default: prior value of `until`
 * `wait` -- Time to wait between reruns. Default is the existing `job.repeat({ wait: ms })` setting for the job.
 
 `callback(error, result)` -- Result is true if rerun was successful. When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
@@ -1207,10 +1220,12 @@ validJobDoc = {
   progress:     validProgress(),
   retries:      Match.Where(validIntGTEZero),
   retried:      Match.Where(validIntGTEZero),
+  retryUntil:   Date,
   retryWait:    Match.Where(validIntGTEZero),
   retryBackoff: Match.Where(validRetryBackoff),
   repeats:      Match.Where(validIntGTEZero),
   repeated:     Match.Where(validIntGTEZero),
+  repeatUntil:  Date,
   repeatWait:   Match.Where(validIntGTEZero)
 };
 ```
@@ -1327,7 +1342,7 @@ Returns: `Boolean` - Success or failure
     * `dependents` -- If true, all jobs that depend on this one will also be be cancelled. Default: `true`
 
     `Match.Optional({
-        antecedents: Match.Optional(Boolean)
+        antecedents: Match.Optional(Boolean),
         dependents: Match.Optional(Boolean)
     })`
 
@@ -1341,11 +1356,15 @@ Returns: `Boolean` - Success or failure
     `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- Supports the following options:
+    * `retries` -- Number of additional times to retry running this job. Default: 1
+    * `until` -- Retry until this time, or until the retries count is exhausted, whicever comes first. Default: prior value.
     * `antecedents` -- If true, all jobs that this one depends upon will also be restarted. Default: `true`
     * `dependents` -- If true, all jobs that depend on this one will also be be restarted. Default: `false`
 
     `Match.Optional({
-        antecedents: Match.Optional(Boolean)
+        retries: Match.Optional(Match.Where validIntGTEOne),
+        until: Match.Optional(Date),
+        antecedents: Match.Optional(Boolean),
         dependents: Match.Optional(Boolean)
     })`
 
@@ -1377,10 +1396,12 @@ Returns: `Match.Where(validId)` of the added job.
 * `options` -- Supports the following options:
     * `wait` -- Amount of time to wait until the new job runs in ms. Default: 0
     * `repeats` -- Number of times to repeat the new job. Default: 0
+    * `until` -- Repeat until this time, or until the repeats count is exhausted, whicever comes first. Default: prior value.
 
     `Match.Optional({
-       repeats: Match.Optional(Match.Where(validIntGTEZero)),
-       wait: Match.Optional(Match.Where(validIntGTEZero))
+      repeats: Match.Optional(Match.Where validIntGTEZero),
+      until: Match.Optional(Date),
+      wait: Match.Optional(Match.Where validIntGTEZero)
     })`
 
 Returns: `Match.Where(validId)` of the added job.

@@ -2,8 +2,9 @@
 
 ### v.NEXT
 
-* Added `until` option for `job.repeat()` and `job.retry()`
-* Added `job.foreverDate` to indicate a Date that will never come
+* Added `until` option for `job.repeat()`, `job.retry()`, job.restart() and job.rerun().
+* Added `jc.foreverDate` to indicate a Date that will never come
+* Fixed bug where `jc.forever` was not available
 * Default Date for `job.after()` should be in the past (thanks @daeq)
 
 ### v.0.0.14

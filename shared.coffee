@@ -63,10 +63,12 @@ validJobDoc = () ->
   progress: validProgress()
   retries: Match.Where validIntGTEZero
   retried: Match.Where validIntGTEZero
+  retryUntil: Date
   retryWait: Match.Where validIntGTEZero
   retryBackoff: Match.Where validRetryBackoff
   repeats: Match.Where validIntGTEZero
   repeated: Match.Where validIntGTEZero
+  repeatUntil: Date
   repeatWait: Match.Where validIntGTEZero
 
 idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
@@ -111,7 +113,7 @@ idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
       dependsIds.push d._id unless d._id in dependsIds
   return dependsIds
 
-rerun_job = (doc, repeats = doc.repeats - 1, wait = doc.repeatWait) ->
+rerun_job = (doc, repeats = doc.repeats - 1, wait = doc.repeatWait, repeatUntil = doc.repeatUntil) ->
   # Repeat? if so, make a new job from the old one
   id = doc._id
   runId = doc.runId
@@ -122,9 +124,11 @@ rerun_job = (doc, repeats = doc.repeats - 1, wait = doc.repeatWait) ->
   doc.status = "waiting"
   doc.retries = doc.retries + doc.retried
   doc.retries = Job.forever if doc.retries > Job.forever
+  doc.retryUntil = repeatUntil
   doc.retried = 0
   doc.repeats = repeats
   doc.repeats = Job.forever if doc.repeats > Job.forever
+  doc.repeatUntil = repeatUntil
   doc.repeated = doc.repeated + 1
   doc.updated = time
   doc.progress =
@@ -242,6 +246,7 @@ serverMethods =
       {
         sort:
           priority: 1
+          retryUntil: 1
           after: 1
         limit: options.maxJobs ? 1
         fields:
@@ -455,6 +460,7 @@ serverMethods =
     check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
     check options, Match.Optional
       retries: Match.Optional(Match.Where validIntGTEOne)
+      until: Match.Optional Date
       antecedents: Match.Optional Boolean
       dependents: Match.Optional Boolean
     options ?= {}
@@ -467,34 +473,35 @@ serverMethods =
     return false if ids.length is 0
     console.log "Restarting: #{ids}"
     time = new Date()
-    num = @update(
-      {
-        _id:
-          $in: ids
-        status:
-          $in: Job.jobStatusRestartable
-      }
-      {
-        $set:
-          status: "waiting"
-          progress:
-            completed: 0
-            total: 1
-            percent: 0
-          updated: time
-        $inc:
-          retries: options.retries
-        $push:
-          log:
-            time: time
-            runId: null
-            level: 'info'
-            message: "Job Restarted"
-      }
-      {
-        multi: true
-      }
-    )
+
+    query =
+      _id:
+        $in: ids
+      status:
+        $in: Job.jobStatusRestartable
+
+    mods =
+      $set:
+        status: "waiting"
+        progress:
+          completed: 0
+          total: 1
+          percent: 0
+        updated: time
+      $inc:
+        retries: options.retries
+      $push:
+        log:
+          time: time
+          runId: null
+          level: 'info'
+          message: "Job Restarted"
+
+    if options.until?
+      mods.$set.retryUntil = options.until
+
+    num = @update query, mods, {multi: true}
+
     # Restart the entire tree of dependents
     restartIds = idsOfDeps.bind(@) ids, options.antecedents, options.dependents, Job.jobStatusRestartable
 
@@ -521,6 +528,7 @@ serverMethods =
     options.cancelRepeats ?= false
     doc.repeats = Job.forever if doc.repeats > Job.forever
     doc.retries = Job.forever if doc.retries > Job.forever
+
     time = new Date()
     if doc._id
       num = @update(
@@ -535,8 +543,10 @@ serverMethods =
             data: doc.data
             retries: doc.retries
             retryWait: doc.retryWait
+            retryUntil: doc.retryUntil
             retryBackoff: doc.retryBackoff
             repeats: doc.repeats
+            repeatUntil: doc.repeatUntil
             repeatWait: doc.repeatWait
             depends: doc.depends
             priority: doc.priority
@@ -648,12 +658,8 @@ serverMethods =
     check id, Match.Where(validId)
     check options, Match.Optional
       repeats: Match.Optional(Match.Where validIntGTEZero)
+      until: Match.Optional Date
       wait: Match.Optional(Match.Where validIntGTEZero)
-
-    options ?= {}
-    options.repeats ?= 0
-    options.repeats = Job.forever if options.repeats > Job.forever
-    options.wait ?= 0
 
     doc = @findOne(
       {
@@ -671,7 +677,12 @@ serverMethods =
     )
 
     if doc?
-      return rerun_job.bind(@) doc, options.repeats, options.wait
+      options ?= {}
+      options.repeats ?= 0
+      options.repeats = Job.forever if options.repeats > Job.forever
+      options.until ?= doc.repeatUntil
+      options.wait ?= 0
+      return rerun_job.bind(@) doc, options.repeats, options.wait, options.until
 
     return false
 
@@ -723,7 +734,7 @@ serverMethods =
       }
     )
     if num is 1
-      if doc.repeats > 0
+      if doc.repeats > 0 and doc.repeatUntil >= time
         jobId = rerun_job.bind(@) doc
 
       # Resolve depends
@@ -781,7 +792,10 @@ serverMethods =
     unless doc?
       console.warn "Running job not found", id, runId
       return false
-    newStatus = if (doc.retries > 0 and not options.fatal) then "waiting" else "failed"
+
+    newStatus = if (not options.fatal and
+                    doc.retries > 0 and
+                    doc.retryUntil >= time) then "waiting" else "failed"
 
     after = switch doc.retryBackoff
       when 'exponential'

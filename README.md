@@ -1235,7 +1235,8 @@ validJobDoc = {
   repeats:      Match.Where(validIntGTEZero),
   repeated:     Match.Where(validIntGTEZero),
   repeatUntil:  Date,
-  repeatWait:   Match.Where(validIntGTEZero)
+  repeatWait:   Match.Where(validIntGTEZero),
+  created:      Date
 };
 ```
 

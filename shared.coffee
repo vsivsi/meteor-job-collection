@@ -70,6 +70,7 @@ validJobDoc = () ->
   repeated: Match.Where validIntGTEZero
   repeatUntil: Date
   repeatWait: Match.Where validIntGTEZero
+  created: Date
 
 idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
   # Cancel the entire tree of antecedents and/or dependents
@@ -131,6 +132,7 @@ rerun_job = (doc, repeats = doc.repeats - 1, wait = doc.repeatWait, repeatUntil 
   doc.repeatUntil = repeatUntil
   doc.repeated = doc.repeated + 1
   doc.updated = time
+  doc.created = time
   doc.progress =
     completed: 0
     total: 1
@@ -579,6 +581,7 @@ serverMethods =
               $in: Job.jobStatusCancellable
           }
         ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id, {})
+      doc.created = time
       doc.log.push
         time: time
         runId: null

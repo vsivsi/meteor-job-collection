@@ -6,6 +6,7 @@
 * Added `jc.foreverDate` to indicate a Date that will never come
 * Fixed bug where `jc.forever` was not available
 * Default Date for `job.after()` is now based on the server clock, not the clock of the machine creating the job. (thanks @daeq)
+* Added `created` field to job document model to keep track of when a job was first created on the server
 
 ### v.0.0.14
 

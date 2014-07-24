@@ -3,7 +3,7 @@
   "description": "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere",
   "homepage": "https://github.com/vsivsi/meteor-job-collection",
   "author": "Vaughn Iverson (https://github.com/vsivsi)",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "git": "https://github.com/vsivsi/meteor-job-collection.git",
   "packages" : {}
 }

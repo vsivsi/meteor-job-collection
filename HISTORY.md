@@ -2,6 +2,10 @@
 
 ### v.NEXT
 
+### v.0.0.16
+
+* Updated to use the latest version of the `meteor-job` npm package
+
 ### v.0.0.15
 
 * Added `until` option for `job.repeat()`, `job.retry()`, job.restart() and job.rerun().

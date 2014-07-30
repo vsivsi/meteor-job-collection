@@ -211,6 +211,7 @@ serverMethods =
       {
         fields:
           log: if options.getLog then 1 else 0
+          _private: 0
       }
     ).fetch()
     if d
@@ -290,6 +291,7 @@ serverMethods =
           {
             fields:
               log: 0
+              _private: 0
           }
         ).fetch()
         if dd?.length

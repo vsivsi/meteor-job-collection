@@ -2,6 +2,8 @@
 
 ### v.NEXT
 
+* Jobs that are ready-to-run go straight from `waiting` to `ready` without waiting for a promote cycle to come around.
+
 ### v.0.0.16
 
 * Updated to use the latest version of the `meteor-job` npm package

@@ -145,6 +145,7 @@ rerun_job = (doc, repeats = doc.repeats - 1, wait = doc.repeatWait, repeatUntil 
   ]
   doc.after = new Date(time.valueOf() + wait)
   if jobId = @insert doc
+    @_promote_jobs? [jobId]
     return jobId
   else
     console.warn "Job rerun/repeat failed to reschedule!", id, runId
@@ -399,6 +400,7 @@ serverMethods =
       }
     )
     if num > 0
+      @_promote_jobs? ids
       console.log "jobResume succeeded"
       return true
     else
@@ -512,6 +514,7 @@ serverMethods =
       depsRestarted = serverMethods.jobRestart.bind(@)(restartIds, options)
 
     if num > 0 or depsRestarted
+      @_promote_jobs? ids
       console.log "jobRestart succeeded"
       return true
     else
@@ -570,6 +573,7 @@ serverMethods =
         }
       )
       if num
+        @_promote_jobs? [doc._id]
         return doc._id
       else
         return null
@@ -590,7 +594,9 @@ serverMethods =
         level: 'info'
         message: "Job Submitted"
 
-      return @insert doc
+      newId = @insert doc
+      @_promote_jobs? [newId]
+      return newId
 
   # Worker methods
 

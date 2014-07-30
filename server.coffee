@@ -164,23 +164,30 @@ if Meteor.isServer
       if typeof milliseconds is 'number' and milliseconds > 0
         if @interval
           Meteor.clearInterval @interval
-        @interval = Meteor.setInterval @_poll.bind(@), milliseconds
+        @interval = Meteor.setInterval @_promote_jobs.bind(@), milliseconds
       else
         console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"
 
-    _poll: () ->
+    _promote_jobs: (ids = []]) ->
       if @stopped
         return
 
       time = new Date()
+
+      query =
+        status: "waiting"
+        after:
+          $lte: time
+        depends:
+          $size: 0
+
+      # Support updating a single document
+      if ids.length > 0
+        query._id =
+          $in: ids
+
       num = @update(
-        {
-          status: "waiting"
-          after:
-            $lte: time
-          depends:
-            $size: 0
-        }
+        query
         {
           $set:
             status: "ready"

@@ -168,7 +168,7 @@ if Meteor.isServer
       else
         console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"
 
-    _promote_jobs: (ids = []]) ->
+    _promote_jobs: (ids = []) ->
       if @stopped
         return
 

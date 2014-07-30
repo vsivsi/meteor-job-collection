@@ -203,7 +203,7 @@ serverMethods =
       ids = [ids]
       single = true
     return null if ids.length is 0
-    d = @find(
+    docs = @find(
       {
         _id:
           $in: ids
@@ -214,12 +214,14 @@ serverMethods =
           _private: 0
       }
     ).fetch()
-    if d
-      check d, [validJobDoc()]
+    if docs?.length
+      if scrub?
+        docs = @scrub d for d in docs
+      check docs, [validJobDoc()]
       if single
-        return d[0]
+        return docs[0]
       else
-        return d
+        return docs
     return null
 
   getWork: (type, options) ->
@@ -282,7 +284,7 @@ serverMethods =
         }
       )
       if num >= 1
-        dd = @find(
+        docs = @find(
           {
             _id:
               $in: ids
@@ -294,9 +296,11 @@ serverMethods =
               _private: 0
           }
         ).fetch()
-        if dd?.length
-          check dd, [ validJobDoc() ]
-          return dd
+        if docs?.length
+          if scrub?
+            docs = @scrub d for d in docs
+          check docs, [ validJobDoc() ]
+          return docs
         else
           console.warn "find after update failed"
       else

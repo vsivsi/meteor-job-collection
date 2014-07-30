@@ -241,10 +241,6 @@ serverMethods =
           $in: type
         status: 'ready'
         runId: null
-        after:
-          $lte: time
-        retries:
-          $gt: 0
       }
       {
         sort:
@@ -265,10 +261,6 @@ serverMethods =
             $in: ids
           status: 'ready'
           runId: null
-          after:
-            $lte: time
-          retries:
-            $gt: 0
         }
         {
           $set:

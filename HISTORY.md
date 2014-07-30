@@ -3,6 +3,7 @@
 ### v.NEXT
 
 * Jobs that are ready-to-run go straight from `waiting` to `ready` without waiting for a promote cycle to come around.
+* Don't check for `after` and `retries` in `getWork()`
 
 ### v.0.0.16
 

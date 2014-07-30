@@ -1167,8 +1167,10 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
 
 The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of jobCollection this is mostly for your information because jobs are automatically built and maintained by the package.
 
-```js
+**Note:** If you would like to add private server-side data to a job document, you may add whatever you would like in a subdocument called `_private`. Such data will not be accepted via or returned from any of the jobCollection method calls.
+**IMPORTANT CAVEAT!** If you use this feature, you *must* be careful to exclude `_private` from any query cursors returned from within a `publish` function, or you will leak this data to potentially untrusted clients.
 
+```js
 validId = (
   Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
 );

@@ -2,6 +2,7 @@
 
 ### v.NEXT
 
+* `job.fail()` now takes an object for `error`. Previously this was a string message.
 * Jobs that are ready-to-run go straight from `waiting` to `ready` without waiting for a promote cycle to come around.
 * Don't check for `after` and `retries` in `getWork()`
 * Allow the server to add data to `job._private` that won't be shared with a client via `getWork()` and `getJob()`. Be sure not to publish cursors that return `job._private`!

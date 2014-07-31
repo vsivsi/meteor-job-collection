@@ -823,7 +823,7 @@ class JobCollectionBase extends Meteor.Collection
   _DDPMethod_jobFail: (id, runId, err, options) ->
     check id, Match.Where(_validId)
     check runId, Match.Where(_validId)
-    check err, String
+    check err, Object
     check options, Match.Optional
       fatal: Match.Optional Boolean
 
@@ -870,6 +870,7 @@ class JobCollectionBase extends Meteor.Collection
         $set:
           status: newStatus
           runId: null
+          result: err
           after: after
           progress:
             completed: 0
@@ -881,7 +882,7 @@ class JobCollectionBase extends Meteor.Collection
             time: time
             runId: runId
             level: if newStatus is 'failed' then 'danger' else 'warning'
-            message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err}"
+            message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err.value if err.value? and typeof err.value is 'string'}."
       }
     )
     if newStatus is "failed" and num is 1

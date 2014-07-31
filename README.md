@@ -937,11 +937,11 @@ job.done("Done!");
 // { "value": "Done!" }
 ```
 
-### job.fail(message, [options], [callback]) - Anywhere
+### job.fail(error, [options], [callback]) - Anywhere
 #### Change the state of a running job to `'failed'`.
 #### Requires permission: Server, `admin`, `worker` or `jobFail`
 
-The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
+The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `error` is any EJSON object and will be saved as an object. If passed error is not an object, it will be wrapped in one.
 
 `options:`
 * `fatal` -- If true, no additional retries will be attempted and this job will go to a `'failed'` state. Default: `false`
@@ -950,7 +950,10 @@ The job's next state depends on how the its `job.retry()` settings are configure
 
 ```js
 job.fail(
-  'This job has failed again!',
+  {
+    reason: 'This job has failed again!',
+    code: 44
+  }
   {
     fatal: false  // Default case
   },
@@ -960,6 +963,11 @@ job.fail(
     }
   }
 });
+
+// Pass a non-object error
+job.fail("Error!");
+// This will be saved as:
+// { "value": "Error!" }
 ```
 
 ### job.pause([options], [callback]) - Anywhere
@@ -1499,9 +1507,9 @@ Returns: `Boolean` - Success or failure
 
     `Match.Where(validId)`
 
-* `err` -- An error string to store with the failed job.
+* `err` -- An error object to store with the failed job.
 
-    `String`
+    `Object`
 
 * `options` -- Supports the following options:
     * `fatal` -- If true, cancels any remaining repeat runs this job was scheduled to have. Default: false.

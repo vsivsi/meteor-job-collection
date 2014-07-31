@@ -241,8 +241,10 @@ class JobCollectionBase extends Meteor.Collection
     check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional
       getLog: Match.Optional Boolean
+      getFailures: Match.Optional Boolean
     options ?= {}
     options.getLog ?= false
+    options.getFailures ?= false
     single = false
     if _validId(ids)
       ids = [ids]
@@ -256,7 +258,7 @@ class JobCollectionBase extends Meteor.Collection
       {
         fields:
           log: if options.getLog then 1 else 0
-          failures: 0
+          failures: if options.getFailures then 1 else 0
           _private: 0
       }
     ).fetch()

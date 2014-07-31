@@ -38,7 +38,11 @@ if Meteor.isServer
         @allows[level] = []
         @denys[level] = []
 
-      Meteor.methods @_generateMethods()
+      localMethods = @_generateMethods()
+      Job.ddpApply = (name, params, cb) ->
+        localMethods[name] params, cb
+
+      Meteor.methods localMethods
 
     _toLog: (userId, method, message) =>
       @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"

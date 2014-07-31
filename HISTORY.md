@@ -6,6 +6,7 @@
 * Don't check for `after` and `retries` in `getWork()`
 * Allow the server to add data to `job._private` that won't be shared with a client via `getWork()` and `getJob()`. Be sure not to publish cursors that return `job._private`!
 * Added support for `@scrub` hook function to sanitize documents before validating them in `getWork()` and `getJob()`
+* Refactor JobCollection classes
 
 ### v.0.0.16
 

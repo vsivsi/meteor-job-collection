@@ -39,8 +39,8 @@ if Meteor.isServer
         @denys[level] = []
 
       localMethods = @_generateMethods()
-      Job.ddpApply = (name, params, cb) ->
-        localMethods[name] params, cb
+      Job.ddp_apply = (name, params, cb) ->
+        Meteor.setTimeout (() -> cb null, localMethods[name].apply(this, params)), 0
 
       Meteor.methods localMethods
 

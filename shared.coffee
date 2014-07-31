@@ -256,6 +256,7 @@ class JobCollectionBase extends Meteor.Collection
       {
         fields:
           log: if options.getLog then 1 else 0
+          failures: 0
           _private: 0
       }
     ).fetch()
@@ -338,6 +339,7 @@ class JobCollectionBase extends Meteor.Collection
           {
             fields:
               log: 0
+              failures: 0
               _private: 0
           }
         ).fetch()

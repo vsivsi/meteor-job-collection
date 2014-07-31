@@ -40,10 +40,10 @@ if Meteor.isServer
 
       Meteor.methods @_generateMethods()
 
-    _methodWrapper: (method, func) ->
+    _toLog: (userId, method, message) =>
+      @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"
 
-      toLog = (userId, message) =>
-        @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"
+    _methodWrapper: (method, func) ->
 
       myTypeof = (val) ->
         type = typeof val
@@ -74,13 +74,13 @@ if Meteor.isServer
         user = this.userId ? "[UNAUTHENTICATED]"
         unless this.connection
           user = "[SERVER]"
-        toLog user, "params: " + JSON.stringify(params)
+        @_toLog user, method, "params: " + JSON.stringify(params)
         unless this.connection and not permitted(this.userId, params)
           retval = func(params...)
-          toLog user, "returned: " + JSON.stringify(retval)
+          @_toLog user, method, "returned: " + JSON.stringify(retval)
           return retval
         else
-          toLog this.userId, "UNAUTHORIZED."
+          @_toLog this.userId, method, "UNAUTHORIZED."
           throw new Meteor.Error 403, "Method not authorized", "Authenticated user is not permitted to invoke this method."
 
     setLogStream: (writeStream = null) ->

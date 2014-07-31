@@ -51,6 +51,7 @@ _validJobDoc = () ->
   status: Match.Where _validStatus
   data: Object
   result: Match.Optional Object
+  failures: Match.Optional [ Object ]
   priority: Match.Integer
   depends: [ Match.Where(_validId) ]
   resolved: [ Match.Where(_validId) ]
@@ -870,7 +871,6 @@ class JobCollectionBase extends Meteor.Collection
         $set:
           status: newStatus
           runId: null
-          result: err
           after: after
           progress:
             completed: 0
@@ -878,6 +878,8 @@ class JobCollectionBase extends Meteor.Collection
             percent: 0
           updated: time
         $push:
+          failures:
+            err
           log:
             time: time
             runId: runId

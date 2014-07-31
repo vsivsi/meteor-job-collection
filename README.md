@@ -1230,6 +1230,7 @@ validJobDoc = {
   status:       Match.Where(validStatus),
   data:         Object,
   result:       Match.Optional(Object),
+  failures:     Match.Optional([ Object ]),
   priority:     Match.Integer,
   depends:      [ Match.Where(validId) ],
   resolved:     [ Match.Where(validId) ],

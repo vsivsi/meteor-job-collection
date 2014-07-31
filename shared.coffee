@@ -88,6 +88,19 @@ class JobCollectionBase extends Meteor.Collection
     # Call super's constructor
     super collectionName, { idGeneration: options.idGeneration }
 
+  _validNumGTEZero: _validNumGTEZero
+  _validNumGTZero: _validNumGTZero
+  _validNumGTEOne: _validNumGTEOne
+  _validIntGTEZero: _validIntGTEZero
+  _validIntGTEOne: _validIntGTEOne
+  _validStatus: _validStatus
+  _validLogLevel: _validLogLevel
+  _validRetryBackoff: _validRetryBackoff
+  _validId: _validId
+  _validLog: _validLog
+  _validProgress: _validProgress
+  _validJobDoc: _validJobDoc
+
   jobLogLevels: Job.jobLogLevels
   jobPriorities: Job.jobPriorities
   jobStatuses: Job.jobPriorities

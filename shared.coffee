@@ -830,6 +830,9 @@ class JobCollectionBase extends Meteor.Collection
               level: 'info'
               message: "Dependency resolved for #{id} by #{runId}"
         }
+        {
+          multi: true
+        }
       )
       console.log "Job #{id} Resolved #{n} depends"
       console.log "jobDone succeeded"

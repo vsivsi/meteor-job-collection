@@ -1,6 +1,6 @@
 # jobCollection
 
-**NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention, as I'm aiming to release v0.1.0 before August 1st.
+**NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention, as I'm aiming to release v0.1.0 before September 15th.
 
 ## Intro
 

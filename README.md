@@ -50,7 +50,7 @@ if (Meteor.isServer) {
     // Normal Meteor publish call, the server always
     // controls what each client can see
     Meteor.publish('allJobs', function () {
-      myJobs.find({});
+      return myJobs.find({});
     });
 
     // Start the myJobs queue running

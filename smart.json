@@ -1,5 +1,5 @@
 {
-  "name": "jobCollection",
+  "name": "job-collection",
   "description": "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere",
   "homepage": "https://github.com/vsivsi/meteor-job-collection",
   "author": "Vaughn Iverson (https://github.com/vsivsi)",

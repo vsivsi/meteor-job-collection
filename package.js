@@ -1,11 +1,11 @@
 /***************************************************************************
 ###     Copyright (C) 2014 by Vaughn Iverson
-###     jobCollection is free software released under the MIT/X11 license.
+###     job-collection is free software released under the MIT/X11 license.
 ###     See included LICENSE file for details.
 ***************************************************************************/
 
 Package.describe({
-   name: 'jobCollection',
+   name: 'job-collection',
    summary: "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere"
 });
 
@@ -23,6 +23,6 @@ Package.on_use(function(api) {
 
 Package.on_test(function (api) {
   api.use('coffeescript', ['server','client']);
-  api.use(['jobCollection','tinytest', 'test-helpers'], ['server','client']);
+  api.use(['job-collection','tinytest', 'test-helpers'], ['server','client']);
   api.add_files('job_collection_tests.coffee', ['server', 'client']);
 });

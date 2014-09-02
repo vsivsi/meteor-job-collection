@@ -54,7 +54,7 @@ if (Meteor.isServer) {
     });
 
     // Start the myJobs queue running
-    myJobs.startJobs();
+    return myJobs.startJobs();
   });
 }
 ```

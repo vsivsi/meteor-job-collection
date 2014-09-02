@@ -1,28 +1,30 @@
 /***************************************************************************
 ###     Copyright (C) 2014 by Vaughn Iverson
-###     jobCollection is free software released under the MIT/X11 license.
+###     job-collection is free software released under the MIT/X11 license.
 ###     See included LICENSE file for details.
 ***************************************************************************/
 
 Package.describe({
-   name: 'jobCollection',
-   summary: "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere"
+   summary: "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere",
+   name: 'vsivsi:job-collection',
+   version: '0.1.0',
+   git: 'https://github.com/vsivsi/meteor-job-collection.git'
 });
 
 Npm.depends({});
 
-Package.on_use(function(api) {
+Package.onUse(function(api) {
    api.use('coffeescript', ['server','client']);
-   api.add_files('job/src/job_class.coffee', ['server','client']);
-   api.add_files('shared.coffee', ['server','client']);
-   api.add_files('server.coffee', 'server');
-   api.add_files('client.coffee', 'client');
+   api.addFiles('job/src/job_class.coffee', ['server','client']);
+   api.addFiles('shared.coffee', ['server','client']);
+   api.addFiles('server.coffee', 'server');
+   api.addFiles('client.coffee', 'client');
    api.export('Job');
    api.export('JobCollection');
 });
 
-Package.on_test(function (api) {
+Package.onTest(function (api) {
   api.use('coffeescript', ['server','client']);
-  api.use(['jobCollection','tinytest', 'test-helpers'], ['server','client']);
-  api.add_files('job_collection_tests.coffee', ['server', 'client']);
+  api.use(['job-collection','tinytest', 'test-helpers'], ['server','client']);
+  api.addFiles('job_collection_tests.coffee', ['server', 'client']);
 });

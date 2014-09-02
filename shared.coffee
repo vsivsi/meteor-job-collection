@@ -277,7 +277,7 @@ class JobCollectionBase extends Meteor.Collection
     ).fetch()
     if docs?.length
       if @scrub?
-        docs = @scrub d for d in docs
+        docs = (@scrub d for d in docs)
       check docs, [_validJobDoc()]
       if single
         return docs[0]
@@ -359,8 +359,8 @@ class JobCollectionBase extends Meteor.Collection
           }
         ).fetch()
         if docs?.length
-          if scrub?
-            docs = @scrub d for d in docs
+          if @scrub?
+            docs = (@scrub d for d in docs)
           check docs, [ _validJobDoc() ]
           return docs
         else

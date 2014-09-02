@@ -113,6 +113,10 @@ if Meteor.isServer
     deny: (denyOptions) ->
       @denys[type].push(func) for type, func of denyOptions when type of @denys
 
+    # Hook function to sanitize documents before validating them in getWork() and getJob()
+    scrub: (job) ->
+      job
+
     promote: (milliseconds = 15*1000) ->
       if typeof milliseconds is 'number' and milliseconds > 0
         if @interval

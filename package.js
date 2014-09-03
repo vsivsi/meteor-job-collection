@@ -5,13 +5,14 @@
 ***************************************************************************/
 
 Package.describe({
-   name: 'jobCollection',
+   name: 'vsivsi:meteor-job-collection',
    summary: "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere"
 });
 
 Npm.depends({});
 
 Package.on_use(function(api) {
+  api.versionsFrom("METEOR@0.9.0");
    api.use('coffeescript', ['server','client']);
    api.add_files('job/src/job_class.coffee', ['server','client']);
    api.add_files('shared.coffee', ['server','client']);
@@ -23,6 +24,6 @@ Package.on_use(function(api) {
 
 Package.on_test(function (api) {
   api.use('coffeescript', ['server','client']);
-  api.use(['jobCollection','tinytest', 'test-helpers'], ['server','client']);
+  api.use(["vsivsi:meteor-job-collection",'tinytest', 'test-helpers'], ['server','client']);
   api.add_files('job_collection_tests.coffee', ['server', 'client']);
 });

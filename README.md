@@ -1,6 +1,6 @@
 # job-collection
 
-Note! joc-collection was formerly called jobCollection, but changes in the packaging system in Meteor 0.9 do not permit uppercase letters in package names, so the name had to change.
+Note! job-collection was formerly called jobCollection, but changes in the packaging system in Meteor 0.9 do not permit uppercase letters in package names, so the name had to change.
 
 **NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention, as I'm aiming to release v0.1.0 before September 15th.
 

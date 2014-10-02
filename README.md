@@ -1,6 +1,8 @@
 # jobCollection
 
-**NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention, as I'm aiming to release v0.1.0 before September 15th.
+**Note:** If you are looking for a Meteor v0.9.x compatible version of this package, please see the `meteor-0.9-package` branch. It has the same v0.0.x functionality as the `master` branch, but with Meteor v0.9.x package compatibility.  Note, I do not intend to publish this version of the package. New style Meteor packaging will be officially added in the v0.1.0 release.
+
+**NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention, as I'm aiming to release v0.1.0 coninciding with the release of Meteor 1.0.0. If you want to live dangerously, development is occuring on the `v0.1.0_RC` branch.
 
 ## Intro
 

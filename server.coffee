@@ -1,19 +1,19 @@
 ############################################################################
 #     Copyright (C) 2014 by Vaughn Iverson
-#     jobCollection is free software released under the MIT/X11 license.
+#     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
 
 if Meteor.isServer
 
   ################################################################
-  ## jobCollection server class
+  ## job-collection server class
 
   class JobCollection extends share.JobCollectionBase
 
     constructor: (root = 'queue', options = {}) ->
       unless @ instanceof JobCollection
-        return new JobCollection(@root, options)
+        return new JobCollection(root, options)
 
       # Call super's constructor
       super root, options
@@ -95,7 +95,7 @@ if Meteor.isServer
 
     setLogStream: (writeStream = null) ->
       if @logStream
-        throw new Error "logStream may only be set once per jobCollection startup/shutdown cycle"
+        throw new Error "logStream may only be set once per job-collection startup/shutdown cycle"
 
       @logStream = writeStream
       unless not @logStream? or

@@ -8,6 +8,7 @@
 * Allow the server to add data to `job._private` that won't be shared with a client via `getWork()` and `getJob()`. Be sure not to publish cursors that return `job._private`!
 * Added support for `@scrub` hook function to sanitize documents before validating them in `getWork()` and `getJob()`
 * Refactor JobCollection classes
+* Added support for Meteor 0.9.x style packages, including name change to accomodate
 
 ### v.0.0.16
 

@@ -1,163 +1,222 @@
 ############################################################################
 #     Copyright (C) 2014 by Vaughn Iverson
-#     jobCollection is free software released under the MIT/X11 license.
+#     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
 
-#####################################
-## Shared between server and client
-
-validNumGTEZero = (v) ->
+_validNumGTEZero = (v) ->
   Match.test(v, Number) and v >= 0.0
 
-validNumGTZero = (v) ->
+_validNumGTZero = (v) ->
   Match.test(v, Number) and v > 0.0
 
-validNumGTEOne = (v) ->
+_validNumGTEOne = (v) ->
   Match.test(v, Number) and v >= 1.0
 
-validIntGTEZero = (v) ->
-  validNumGTEZero(v) and Math.floor(v) is v
+_validIntGTEZero = (v) ->
+  _validNumGTEZero(v) and Math.floor(v) is v
 
-validIntGTEOne = (v) ->
-  validNumGTEOne(v) and Math.floor(v) is v
+_validIntGTEOne = (v) ->
+  _validNumGTEOne(v) and Math.floor(v) is v
 
-validStatus = (v) ->
+_validStatus = (v) ->
   Match.test(v, String) and v in Job.jobStatuses
 
-validLogLevel = (v) ->
+_validLogLevel = (v) ->
   Match.test(v, String) and v in Job.jobLogLevels
 
-validRetryBackoff = (v) ->
+_validRetryBackoff = (v) ->
   Match.test(v, String) and v in Job.jobRetryBackoffMethods
 
-validId = (v) ->
+_validId = (v) ->
   Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
 
-validLog = () ->
+_validLog = () ->
   [{
       time: Date
-      runId: Match.OneOf(Match.Where(validId), null)
-      level: Match.Where(validLogLevel)
+      runId: Match.OneOf(Match.Where(_validId), null)
+      level: Match.Where(_validLogLevel)
       message: String
   }]
 
-validProgress = () ->
-  completed: Match.Where(validNumGTEZero)
-  total: Match.Where(validNumGTEZero)
-  percent: Match.Where(validNumGTEZero)
+_validProgress = () ->
+  completed: Match.Where(_validNumGTEZero)
+  total: Match.Where(_validNumGTEZero)
+  percent: Match.Where(_validNumGTEZero)
 
-validJobDoc = () ->
-  _id: Match.Optional Match.OneOf(Match.Where(validId), null)
-  runId: Match.OneOf(Match.Where(validId), null)
+_validJobDoc = () ->
+  _id: Match.Optional Match.OneOf(Match.Where(_validId), null)
+  runId: Match.OneOf(Match.Where(_validId), null)
   type: String
-  status: Match.Where validStatus
+  status: Match.Where _validStatus
   data: Object
   result: Match.Optional Object
+  failures: Match.Optional [ Object ]
   priority: Match.Integer
-  depends: [ Match.Where(validId) ]
-  resolved: [ Match.Where(validId) ]
+  depends: [ Match.Where(_validId) ]
+  resolved: [ Match.Where(_validId) ]
   after: Date
   updated: Date
-  log: Match.Optional validLog()
-  progress: validProgress()
-  retries: Match.Where validIntGTEZero
-  retried: Match.Where validIntGTEZero
+  log: Match.Optional _validLog()
+  progress: _validProgress()
+  retries: Match.Where _validIntGTEZero
+  retried: Match.Where _validIntGTEZero
   retryUntil: Date
-  retryWait: Match.Where validIntGTEZero
-  retryBackoff: Match.Where validRetryBackoff
-  repeats: Match.Where validIntGTEZero
-  repeated: Match.Where validIntGTEZero
+  retryWait: Match.Where _validIntGTEZero
+  retryBackoff: Match.Where _validRetryBackoff
+  repeats: Match.Where _validIntGTEZero
+  repeated: Match.Where _validIntGTEZero
   repeatUntil: Date
-  repeatWait: Match.Where validIntGTEZero
+  repeatWait: Match.Where _validIntGTEZero
   created: Date
 
-idsOfDeps = (ids, antecedents, dependents, jobStatuses) ->
-  # Cancel the entire tree of antecedents and/or dependents
-  # Dependents: jobs that list one of the ids in their depends list
-  # Antecedents: jobs with an id listed in the depends list of one of the jobs in ids
-  dependsQuery = []
-  if dependents
-    dependsQuery.push
-      depends:
-        $elemMatch:
-          $in: ids
-  if antecedents
-    antsArray = []
-    @find(
-      {
-        _id:
-          $in: ids
-      }
-      {
-        fields:
-          depends: 1
-      }
-    ).forEach (d) -> antsArray.push(i) for i in d.depends unless i in antsArray
-    if antsArray.length > 0
+
+class JobCollectionBase extends Meteor.Collection
+
+  constructor: (@root = 'queue', options = {}) ->
+    unless @ instanceof JobCollectionBase
+      return new JobCollectionBase(@root, options)
+
+    options.idGeneration ?= 'STRING'  # or 'MONGO'
+    options.noCollectionSuffix ?= false
+
+    collectionName = @root
+
+    unless options.noCollectionSuffix
+      collectionName += '.jobs'
+
+    # Call super's constructor
+    super collectionName, { idGeneration: options.idGeneration }
+
+  _validNumGTEZero: _validNumGTEZero
+  _validNumGTZero: _validNumGTZero
+  _validNumGTEOne: _validNumGTEOne
+  _validIntGTEZero: _validIntGTEZero
+  _validIntGTEOne: _validIntGTEOne
+  _validStatus: _validStatus
+  _validLogLevel: _validLogLevel
+  _validRetryBackoff: _validRetryBackoff
+  _validId: _validId
+  _validLog: _validLog
+  _validProgress: _validProgress
+  _validJobDoc: _validJobDoc
+
+  jobLogLevels: Job.jobLogLevels
+  jobPriorities: Job.jobPriorities
+  jobStatuses: Job.jobPriorities
+  jobStatusCancellable: Job.jobStatusCancellable
+  jobStatusPausable: Job.jobStatusPausable
+  jobStatusRemovable: Job.jobStatusRemovable
+  jobStatusRestartable: Job.jobStatusRestartable
+  forever: Job.forever
+  foreverDate: Job.foreverDate
+
+  ddpMethods: Job.ddpMethods
+  ddpPermissionLevels: Job.ddpPermissionLevels
+  ddpMethodPermissions: Job.ddpMethodPermissions
+
+  createJob: (params...) -> new Job @root, params...
+  processJobs: (params...) -> new Job.processJobs @root, params...
+  getJob: (params...) -> Job.getJob @root, params...
+  getWork: (params...) -> Job.getWork @root, params...
+  startJobs: (params...) -> Job.startJobs @root, params...
+  stopJobs: (params...) -> Job.stopJobs @root, params...
+  makeJob: (params...) -> Job.makeJob @root, params...
+  getJobs: (params...) -> Job.getJobs @root, params...
+  cancelJobs: (params...) -> Job.cancelJobs @root, params...
+  pauseJobs: (params...) -> Job.pauseJobs @root, params...
+  resumeJobs: (params...) -> Job.resumeJobs @root, params...
+  restartJobs: (params...) -> Job.restartJobs @root, params...
+  removeJobs: (params...) -> Job.removeJobs @root, params...
+
+  _generateMethods: () ->
+    methodsOut = {}
+    methodPrefix = '_DDPMethod_'
+    for methodName, methodFunc of @ when methodName[0...methodPrefix.length] is methodPrefix
+      baseMethodName = methodName[methodPrefix.length..]
+      methodsOut["#{@root}_#{baseMethodName}"] = @_methodWrapper(baseMethodName, methodFunc.bind(@))
+    return methodsOut
+
+  _idsOfDeps: (ids, antecedents, dependents, jobStatuses) ->
+    # Cancel the entire tree of antecedents and/or dependents
+    # Dependents: jobs that list one of the ids in their depends list
+    # Antecedents: jobs with an id listed in the depends list of one of the jobs in ids
+    dependsQuery = []
+    if dependents
       dependsQuery.push
-        _id:
-          $in: antsArray
-  if dependsQuery
-    dependsIds = []
-    @find(
-      {
-        status:
-          $in: jobStatuses
-        $or: dependsQuery
-      }
-      {
-        fields:
-          _id: 1
-      }
-    ).forEach (d) ->
-      dependsIds.push d._id unless d._id in dependsIds
-  return dependsIds
+        depends:
+          $elemMatch:
+            $in: ids
+    if antecedents
+      antsArray = []
+      @find(
+        {
+          _id:
+            $in: ids
+        }
+        {
+          fields:
+            depends: 1
+        }
+      ).forEach (d) -> antsArray.push(i) for i in d.depends unless i in antsArray
+      if antsArray.length > 0
+        dependsQuery.push
+          _id:
+            $in: antsArray
+    if dependsQuery
+      dependsIds = []
+      @find(
+        {
+          status:
+            $in: jobStatuses
+          $or: dependsQuery
+        }
+        {
+          fields:
+            _id: 1
+        }
+      ).forEach (d) ->
+        dependsIds.push d._id unless d._id in dependsIds
+    return dependsIds
 
-rerun_job = (doc, repeats = doc.repeats - 1, wait = doc.repeatWait, repeatUntil = doc.repeatUntil) ->
-  # Repeat? if so, make a new job from the old one
-  id = doc._id
-  runId = doc.runId
-  time = new Date()
-  delete doc._id
-  delete doc.result
-  doc.runId = null
-  doc.status = "waiting"
-  doc.retries = doc.retries + doc.retried
-  doc.retries = Job.forever if doc.retries > Job.forever
-  doc.retryUntil = repeatUntil
-  doc.retried = 0
-  doc.repeats = repeats
-  doc.repeats = Job.forever if doc.repeats > Job.forever
-  doc.repeatUntil = repeatUntil
-  doc.repeated = doc.repeated + 1
-  doc.updated = time
-  doc.created = time
-  doc.progress =
-    completed: 0
-    total: 1
-    percent: 0
-  doc.log = [
-    time: time
-    runId: null
-    level: 'info'
-    message: "Repeating job #{id} from run #{runId}"
-  ]
-  doc.after = new Date(time.valueOf() + wait)
-  if jobId = @insert doc
-    return jobId
-  else
-    console.warn "Job rerun/repeat failed to reschedule!", id, runId
-  return null
+  _rerun_job: (doc, repeats = doc.repeats - 1, wait = doc.repeatWait, repeatUntil = doc.repeatUntil) ->
+    # Repeat? if so, make a new job from the old one
+    id = doc._id
+    runId = doc.runId
+    time = new Date()
+    delete doc._id
+    delete doc.result
+    doc.runId = null
+    doc.status = "waiting"
+    doc.retries = doc.retries + doc.retried
+    doc.retries = @forever if doc.retries > @forever
+    doc.retryUntil = repeatUntil
+    doc.retried = 0
+    doc.repeats = repeats
+    doc.repeats = @forever if doc.repeats > @forever
+    doc.repeatUntil = repeatUntil
+    doc.repeated = doc.repeated + 1
+    doc.updated = time
+    doc.created = time
+    doc.progress =
+      completed: 0
+      total: 1
+      percent: 0
+    doc.log = [
+      time: time
+      runId: null
+      level: 'info'
+      message: "Repeating job #{id} from run #{runId}"
+    ]
+    doc.after = new Date(time.valueOf() + wait)
+    if jobId = @insert doc
+      @_promote_jobs? [jobId]
+      return jobId
+    else
+      console.warn "Job rerun/repeat failed to reschedule!", id, runId
+    return null
 
-####################################
-# Define Meteor.methods
-####################################
-
-serverMethods =
-  # Job manager methods
-
-  startJobs: (options) ->
+  _DDPMethod_startJobs: (options) ->
     check options, Match.Optional {}
     options ?= {}
     # The client can't actually do this, so skip it
@@ -166,9 +225,9 @@ serverMethods =
       @stopped = false
     return true
 
-  stopJobs: (options) ->
+  _DDPMethod_stopJobs: (options) ->
     check options, Match.Optional
-      timeout: Match.Optional(Match.Where validIntGTEOne)
+      timeout: Match.Optional(Match.Where _validIntGTEOne)
     options ?= {}
     options.timeout ?= 60*1000
 
@@ -183,7 +242,7 @@ serverMethods =
             }
           )
           console.warn "Failing #{cursor.count()} jobs on queue stop."
-          cursor.forEach (d) => serverMethods.jobFail.bind(@)(d._id, d.runId, "Running at queue stop.")
+          cursor.forEach (d) => @_DDPMethod_jobFail d._id, d.runId, "Running at queue stop."
           if @logStream? # Shutting down closes the logStream!
             @logStream.end()
             @logStream = null
@@ -191,18 +250,20 @@ serverMethods =
       )
     return true
 
-  getJob: (ids, options) ->
-    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
+  _DDPMethod_getJob: (ids, options) ->
+    check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional
       getLog: Match.Optional Boolean
+      getFailures: Match.Optional Boolean
     options ?= {}
     options.getLog ?= false
+    options.getFailures ?= false
     single = false
-    if validId(ids)
+    if _validId(ids)
       ids = [ids]
       single = true
     return null if ids.length is 0
-    d = @find(
+    docs = @find(
       {
         _id:
           $in: ids
@@ -210,20 +271,24 @@ serverMethods =
       {
         fields:
           log: if options.getLog then 1 else 0
+          failures: if options.getFailures then 1 else 0
+          _private: 0
       }
     ).fetch()
-    if d
-      check d, [validJobDoc()]
+    if docs?.length
+      if @scrub?
+        docs = (@scrub d for d in docs)
+      check docs, [_validJobDoc()]
       if single
-        return d[0]
+        return docs[0]
       else
-        return d
+        return docs
     return null
 
-  getWork: (type, options) ->
+  _DDPMethod_getWork: (type, options) ->
     check type, Match.OneOf String, [ String ]
     check options, Match.Optional
-      maxJobs: Match.Optional(Match.Where validIntGTEOne)
+      maxJobs: Match.Optional(Match.Where _validIntGTEOne)
     options ?= {}
 
     # Don't put out any more jobs while shutting down
@@ -240,10 +305,6 @@ serverMethods =
           $in: type
         status: 'ready'
         runId: null
-        after:
-          $lte: time
-        retries:
-          $gt: 0
       }
       {
         sort:
@@ -264,10 +325,6 @@ serverMethods =
             $in: ids
           status: 'ready'
           runId: null
-          after:
-            $lte: time
-          retries:
-            $gt: 0
         }
         {
           $set:
@@ -288,7 +345,7 @@ serverMethods =
         }
       )
       if num >= 1
-        dd = @find(
+        docs = @find(
           {
             _id:
               $in: ids
@@ -297,11 +354,15 @@ serverMethods =
           {
             fields:
               log: 0
+              failures: 0
+              _private: 0
           }
         ).fetch()
-        if dd?.length
-          check dd, [ validJobDoc() ]
-          return dd
+        if docs?.length
+          if @scrub?
+            docs = (@scrub d for d in docs)
+          check docs, [ _validJobDoc() ]
+          return docs
         else
           console.warn "find after update failed"
       else
@@ -310,11 +371,11 @@ serverMethods =
       # console.log "Didn't find a job to process"
     return []
 
-  jobRemove: (ids, options) ->
-    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
+  _DDPMethod_jobRemove: (ids, options) ->
+    check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional {}
     options ?= {}
-    if validId(ids)
+    if _validId(ids)
       ids = [ids]
     return false if ids.length is 0
     num = @remove(
@@ -322,7 +383,7 @@ serverMethods =
         _id:
           $in: ids
         status:
-          $in: Job.jobStatusRemovable
+          $in: @jobStatusRemovable
       }
     )
     if num > 0
@@ -332,11 +393,11 @@ serverMethods =
       console.warn "jobRemove failed"
     return false
 
-  jobPause: (ids, options) ->
-    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
+  _DDPMethod_jobPause: (ids, options) ->
+    check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional {}
     options ?= {}
-    if validId(ids)
+    if _validId(ids)
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
@@ -345,7 +406,7 @@ serverMethods =
         _id:
           $in: ids
         status:
-          $in: Job.jobStatusPausable
+          $in: @jobStatusPausable
       }
       {
         $set:
@@ -368,11 +429,11 @@ serverMethods =
       console.warn "jobPause failed"
     return false
 
-  jobResume: (ids, options) ->
-    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
+  _DDPMethod_jobResume: (ids, options) ->
+    check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional {}
     options ?= {}
-    if validId(ids)
+    if _validId(ids)
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
@@ -399,21 +460,22 @@ serverMethods =
       }
     )
     if num > 0
+      @_promote_jobs? ids
       console.log "jobResume succeeded"
       return true
     else
       console.warn "jobResume failed"
     return false
 
-  jobCancel: (ids, options) ->
-    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
+  _DDPMethod_jobCancel: (ids, options) ->
+    check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional
       antecedents: Match.Optional Boolean
       dependents: Match.Optional Boolean
     options ?= {}
     options.antecedents ?= false
     options.dependents ?= true
-    if validId(ids)
+    if _validId(ids)
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
@@ -422,7 +484,7 @@ serverMethods =
         _id:
           $in: ids
         status:
-          $in: Job.jobStatusCancellable
+          $in: @jobStatusCancellable
       }
       {
         $set:
@@ -445,11 +507,11 @@ serverMethods =
       }
     )
     # Cancel the entire tree of dependents
-    cancelIds = idsOfDeps.bind(@) ids, options.antecedents, options.dependents, Job.jobStatusCancellable
+    cancelIds = @_idsOfDeps ids, options.antecedents, options.dependents, @jobStatusCancellable
 
     depsCancelled = false
     if cancelIds.length > 0
-      depsCancelled = serverMethods.jobCancel.bind(@)(cancelIds, options)
+      depsCancelled = @_DDPMethod_jobCancel cancelIds, options
 
     if num > 0 or depsCancelled
       console.log "jobCancel succeeded"
@@ -458,19 +520,19 @@ serverMethods =
       console.warn "jobCancel failed"
     return false
 
-  jobRestart: (ids, options) ->
-    check ids, Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])
+  _DDPMethod_jobRestart: (ids, options) ->
+    check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional
-      retries: Match.Optional(Match.Where validIntGTEOne)
+      retries: Match.Optional(Match.Where _validIntGTEOne)
       until: Match.Optional Date
       antecedents: Match.Optional Boolean
       dependents: Match.Optional Boolean
     options ?= {}
     options.retries ?= 1
-    options.retries = Job.forever if options.retries > Job.forever
+    options.retries = @forever if options.retries > @forever
     options.dependents ?= false
     options.antecedents ?= true
-    if validId(ids)
+    if _validId(ids)
       ids = [ids]
     return false if ids.length is 0
     console.log "Restarting: #{ids}"
@@ -480,7 +542,7 @@ serverMethods =
       _id:
         $in: ids
       status:
-        $in: Job.jobStatusRestartable
+        $in: @jobStatusRestartable
 
     mods =
       $set:
@@ -505,13 +567,14 @@ serverMethods =
     num = @update query, mods, {multi: true}
 
     # Restart the entire tree of dependents
-    restartIds = idsOfDeps.bind(@) ids, options.antecedents, options.dependents, Job.jobStatusRestartable
+    restartIds = @_idsOfDeps ids, options.antecedents, options.dependents, @jobStatusRestartable
 
     depsRestarted = false
     if restartIds.length > 0
-      depsRestarted = serverMethods.jobRestart.bind(@)(restartIds, options)
+      depsRestarted = @_DDPMethod_jobRestart restartIds, options
 
     if num > 0 or depsRestarted
+      @_promote_jobs? ids
       console.log "jobRestart succeeded"
       return true
     else
@@ -520,16 +583,16 @@ serverMethods =
 
   # Job creator methods
 
-  jobSave: (doc, options) ->
-    check doc, validJobDoc()
+  _DDPMethod_jobSave: (doc, options) ->
+    check doc, _validJobDoc()
     check options, Match.Optional
       cancelRepeats: Match.Optional Boolean
     check doc.status, Match.Where (v) ->
       Match.test(v, String) and v in [ 'waiting', 'paused' ]
     options ?= {}
     options.cancelRepeats ?= false
-    doc.repeats = Job.forever if doc.repeats > Job.forever
-    doc.retries = Job.forever if doc.retries > Job.forever
+    doc.repeats = @forever if doc.repeats > @forever
+    doc.retries = @forever if doc.retries > @forever
 
     time = new Date()
 
@@ -570,19 +633,20 @@ serverMethods =
         }
       )
       if num
+        @_promote_jobs? [doc._id]
         return doc._id
       else
         return null
     else
-      if doc.repeats is Job.forever and options.cancelRepeats
+      if doc.repeats is @forever and options.cancelRepeats
         # If this is unlimited repeating job, then cancel any existing jobs of the same type
         @find(
           {
             type: doc.type
             status:
-              $in: Job.jobStatusCancellable
+              $in: @jobStatusCancellable
           }
-        ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id, {})
+        ).forEach (d) => @_DDPMethod_jobCancel d._id, {}
       doc.created = time
       doc.log.push
         time: time
@@ -590,15 +654,17 @@ serverMethods =
         level: 'info'
         message: "Job Submitted"
 
-      return @insert doc
+      newId = @insert doc
+      @_promote_jobs? [newId]
+      return newId
 
   # Worker methods
 
-  jobProgress: (id, runId, completed, total, options) ->
-    check id, Match.Where(validId)
-    check runId, Match.Where(validId)
-    check completed, Match.Where validNumGTEZero
-    check total, Match.Where validNumGTZero
+  _DDPMethod_jobProgress: (id, runId, completed, total, options) ->
+    check id, Match.Where(_validId)
+    check runId, Match.Where(_validId)
+    check completed, Match.Where _validNumGTEZero
+    check total, Match.Where _validNumGTZero
     check options, Match.Optional {}
     options ?= {}
 
@@ -635,12 +701,12 @@ serverMethods =
       console.warn "jobProgress failed"
     return false
 
-  jobLog: (id, runId, message, options) ->
-    check id, Match.Where(validId)
-    check runId, Match.Where(validId)
+  _DDPMethod_jobLog: (id, runId, message, options) ->
+    check id, Match.Where(_validId)
+    check runId, Match.Where(_validId)
     check message, String
     check options, Match.Optional
-      level: Match.Optional(Match.Where validLogLevel)
+      level: Match.Optional(Match.Where _validLogLevel)
     options ?= {}
     time = new Date()
     num = @update(
@@ -664,12 +730,12 @@ serverMethods =
       console.warn "jobLog failed"
     return false
 
-  jobRerun: (id, options) ->
-    check id, Match.Where(validId)
+  _DDPMethod_jobRerun: (id, options) ->
+    check id, Match.Where(_validId)
     check options, Match.Optional
-      repeats: Match.Optional(Match.Where validIntGTEZero)
+      repeats: Match.Optional(Match.Where _validIntGTEZero)
       until: Match.Optional Date
-      wait: Match.Optional(Match.Where validIntGTEZero)
+      wait: Match.Optional(Match.Where _validIntGTEZero)
 
     doc = @findOne(
       {
@@ -689,16 +755,16 @@ serverMethods =
     if doc?
       options ?= {}
       options.repeats ?= 0
-      options.repeats = Job.forever if options.repeats > Job.forever
+      options.repeats = @forever if options.repeats > @forever
       options.until ?= doc.repeatUntil
       options.wait ?= 0
-      return rerun_job.bind(@) doc, options.repeats, options.wait, options.until
+      return @_rerun_job doc, options.repeats, options.wait, options.until
 
     return false
 
-  jobDone: (id, runId, result, options) ->
-    check id, Match.Where(validId)
-    check runId, Match.Where(validId)
+  _DDPMethod_jobDone: (id, runId, result, options) ->
+    check id, Match.Where(_validId)
+    check runId, Match.Where(_validId)
     check result, Object
     check options, Match.Optional {}
     options ?= {}
@@ -745,7 +811,7 @@ serverMethods =
     )
     if num is 1
       if doc.repeats > 0 and doc.repeatUntil - doc.repeatWait >= time
-        jobId = rerun_job.bind(@) doc
+        jobId = @_rerun_job doc
 
       # Resolve depends
       n = @update(
@@ -764,6 +830,9 @@ serverMethods =
               level: 'info'
               message: "Dependency resolved for #{id} by #{runId}"
         }
+        {
+          multi: true
+        }
       )
       console.log "Job #{id} Resolved #{n} depends"
       console.log "jobDone succeeded"
@@ -772,10 +841,10 @@ serverMethods =
       console.warn "jobDone failed"
     return false
 
-  jobFail: (id, runId, err, options) ->
-    check id, Match.Where(validId)
-    check runId, Match.Where(validId)
-    check err, String
+  _DDPMethod_jobFail: (id, runId, err, options) ->
+    check id, Match.Where(_validId)
+    check runId, Match.Where(_validId)
+    check err, Object
     check options, Match.Optional
       fatal: Match.Optional Boolean
 
@@ -829,11 +898,13 @@ serverMethods =
             percent: 0
           updated: time
         $push:
+          failures:
+            err
           log:
             time: time
             runId: runId
             level: if newStatus is 'failed' then 'danger' else 'warning'
-            message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err}"
+            message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err.value if err.value? and typeof err.value is 'string'}."
       }
     )
     if newStatus is "failed" and num is 1
@@ -843,7 +914,7 @@ serverMethods =
           depends:
             $all: [ id ]
         }
-      ).forEach (d) => serverMethods.jobCancel.bind(@)(d._id)
+      ).forEach (d) => @_DDPMethod_jobCancel d._id
     if num is 1
       console.log "jobFail succeeded"
       return true
@@ -853,4 +924,4 @@ serverMethods =
 
 # Share these methods so they'll be available on server and client
 
-share.serverMethods = serverMethods
+share.JobCollectionBase = JobCollectionBase

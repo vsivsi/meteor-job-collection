@@ -1,12 +1,14 @@
-# jobCollection
+# job-collection
 
-**Note:** If you are looking for a Meteor v0.9.x compatible version of this package, please see the `meteor-0.9-package` branch. It has the same v0.0.x functionality as the `master` branch, but with Meteor v0.9.x package compatibility.  Note, I do not intend to publish this version of the package. New style Meteor packaging will be officially added in the v0.1.0 release.
+Note! job-collection was formerly called jobCollection, but changes in the packaging system in Meteor 0.9 do not permit uppercase letters in package names, so the name had to change.
+
+**Note:** If you are looking for a Meteor v0.8.x compatible version of this package, please see the `meteor-0.8-compat` branch. It has the same functionality as the `master` branch, but with old-skool Meteor v0.8.x package compatibility. Note, there will be no further development on this version of the package.
 
 **NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention, as I'm aiming to release v0.1.0 coninciding with the release of Meteor 1.0.0. If you want to live dangerously, development is occuring on the `v0.1.0_RC` branch.
 
 ## Intro
 
-jobCollection is a powerful and easy to use job manager designed and built for [Meteor.js](http://meteor.com).
+job-collection is a powerful and easy to use job manager designed and built for [Meteor.js](http://meteor.com).
 
 It solves the following problems (and more):
 
@@ -56,7 +58,7 @@ if (Meteor.isServer) {
     });
 
     // Start the myJobs queue running
-    myJobs.startJobs();
+    return myJobs.startJobs();
   });
 }
 ```
@@ -119,7 +121,7 @@ if (Meteor.isClient) {
 **A:** Anywhere you want!
 
 Below is a pure node.js program that can obtain jobs from the server above and "get 'em done".
-Powerfully, this can be run ***anywhere*** that has node.js and can connect to the server. The secret sauce here is the [meteor-job npm package](https://www.npmjs.org/search?q=meteor-job), which is fully interoperable with jobCollection.
+Powerfully, this can be run ***anywhere*** that has node.js and can connect to the server. The secret sauce here is the [meteor-job npm package](https://www.npmjs.org/search?q=meteor-job), which is fully interoperable with job-collection.
 
 ```js
 ///////////////////
@@ -129,7 +131,7 @@ var DDPlogin = require('ddp-login');
 var Job = require('meteor-job');
 
 // `Job` here has essentially the same API as JobCollection on Meteor.
-// In fact, jobCollection is built on top of the 'meteor-job' npm package!
+// In fact, job-collection is built on top of the 'meteor-job' npm package!
 
 // Setup the DDP connection
 var ddp = new DDP({
@@ -181,7 +183,7 @@ Worker code very similar to the above (without all of the DDP setup) can run on 
 
 ### Design
 
-The design of jobCollection is heavily influenced by [Kue](https://github.com/LearnBoost/kue) and to a lesser extent by the [Maui Cluster Scheduler](https://en.wikipedia.org/wiki/Maui_Cluster_Scheduler). However, unlike Kue's use of Redis Pub/Sub and an HTTP API, jobCollection uses MongoDB, Meteor, and Meteor's DDP protocol to provide persistence, reactivity, and secure remote access.
+The design of job-collection is heavily influenced by [Kue](https://github.com/LearnBoost/kue) and to a lesser extent by the [Maui Cluster Scheduler](https://en.wikipedia.org/wiki/Maui_Cluster_Scheduler). However, unlike Kue's use of Redis Pub/Sub and an HTTP API, job-collection uses MongoDB, Meteor, and Meteor's DDP protocol to provide persistence, reactivity, and secure remote access.
 
 As the name implies, a `JobCollection` looks and acts like a Meteor Collection because under the hood it actually is one. However, other than `.find()` and `.findOne()`, most accesses to a `JobCollection` happen via the easy to use API on `Job` objects. Most `Job` API calls are transformed internally to Meteor [Method](http://docs.meteor.com/#methods_header) calls. This is cool because the underlying `Job` class is implemented as pure Javascript that can run in both the Meteor server and client environments, and most significantly as pure node.js code running independently from Meteor (as shown in the example code above).
 
@@ -191,11 +193,11 @@ I've only tested with Meteor v0.8. It may run on Meteor v0.7 as well, I don't kn
 
 Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your project, run:
 
-    mrt add jobCollection
+    meteor add vsivsi:job-collection
 
 The package exposes a global object `JobCollection` on both client and server.
 
-To run tests (using Meteor tiny-test) run from within the `jobCollection` subdirectory:
+To run tests (using Meteor tiny-test) run from within the `job-collection` subdirectory:
 
     meteor test-packages ./
 
@@ -205,27 +207,27 @@ A basic sample application that implements a basic image gallery with upload/dow
 
 ## Use
 
-jobCollections are backed by [Meteor Collections](http://docs.meteor.com/#collections) and may be used in similar ways. `.find()` and `.findOne()` work as you would expect and are fully reactive on the client just as with a normal collection.
+job-collections are backed by [Meteor Collections](http://docs.meteor.com/#collections) and may be used in similar ways. `.find()` and `.findOne()` work as you would expect and are fully reactive on the client just as with a normal collection.
 
-Other than the find methods mentioned above, interactions with a jobCollection occur using the `JobCollection`, `Job` and `JobQueue` APIs documented below. The Job document model used in the jobCollection is fully specified, maintained and enforced by the APIs.
+Other than the find methods mentioned above, interactions with a job collection occur using the `JobCollection`, `Job` and `JobQueue` APIs documented below. The Job document model used in a job collection is fully specified, maintained and enforced by the APIs.
 
-Meteor clients are automatically denied permission to directly `insert`, `update` or `remove` jobs from a jobCollection. To accomplish these types of tasks, a client must use the provided APIs, subject to permissions set by specific allow/deny rules on the jobCollection. Servers retain access to the standard `insert`, `update` or `remove` methods, but should avoid using them unless absolutely necessary, favoring the jobCollection APIs to perform various tasks.
+Meteor clients are automatically denied permission to directly `insert`, `update` or `remove` jobs from a job collection. To accomplish these types of tasks, a client must use the provided APIs, subject to permissions set by specific allow/deny rules on the job collection. Servers retain access to the standard `insert`, `update` or `remove` methods, but should avoid using them unless absolutely necessary, favoring the job collection APIs to perform various tasks.
 
-It is also possible (and highly useful!) to write your own clients outside of Meteor as vanilla node.js programs using the `meteor-job` [npm package](https://www.npmjs.org/package/meteor-job), which is actually used by jobCollection internally, and implements essentially identical functionality via the same interfaces.
+It is also possible (and highly useful!) to write your own clients outside of Meteor as vanilla node.js programs using the `meteor-job` [npm package](https://www.npmjs.org/package/meteor-job), which is actually used by job-collection internally, and implements essentially identical functionality via the same interfaces.
 
 ### Security
 
-Securing a jobCollection is done using mechanisms that will be familiar to anyone who has used the [Meteor `publish` and `subscribe` mechanism](http://docs.meteor.com/#publishandsubscribe) and [Meteor Collection allow/deny rules](http://docs.meteor.com/#allow).
+Securing a job collection is done using mechanisms that will be familiar to anyone who has used the [Meteor `publish` and `subscribe` mechanism](http://docs.meteor.com/#publishandsubscribe) and [Meteor Collection allow/deny rules](http://docs.meteor.com/#allow).
 
-For a client to have access to perform `find()` operations on a jobCollection, the server must publish the collection and the client must subscribe to it. This works identically to normal Meteor collections.
+For a client to have access to perform `find()` operations on a job collection, the server must publish the collection and the client must subscribe to it. This works identically to normal Meteor collections.
 
-Compared to vanilla Meteor collections, jobCollections have a  different set of remote methods with specific security implications. Where the allow/deny methods on a Meteor collection take functions to grant permission for `insert`, `update` and `remove`, jobCollection has more functionality to secure and configure.
+Compared to vanilla Meteor collections, job-collections have a  different set of remote methods with specific security implications. Where the allow/deny methods on a Meteor collection take functions to grant permission for `insert`, `update` and `remove`, job-collection has more functionality to secure and configure.
 
-There are currently over a dozen Meteor methods defined by each jobCollection. In many cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles separate security concerns and permit you to efficiently add allow/deny rules for groups of functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
+There are currently over a dozen Meteor methods defined by each job-collection. In many cases it will be most convenient to write allow/deny rules to one of the four predefined permission groups: `admin`, `manager`, `creator` and `worker`. These defined roles separate security concerns and permit you to efficiently add allow/deny rules for groups of functions that various client functionalities are likely to need. Where these roles do not meet the requirements of a specific project, each remote method can also be individually secured with custom allow/deny rules.
 
 ### Performance
 
-The performance of jobCollection will almost entirely be dependant on the speed of the MongoDB server it is hosted on. If you anticipate having large jobCollections (ie. with over 1000 jobs at a time) you will want to ensure that MongoDB indexes the following document fields in the underlying collection:
+The performance of job-collection will be almost entirely be dependant on the speed of the MongoDB server it is hosted on. If you anticipate having large job collections (ie. with over 1000 jobs at a time) you will want to ensure that MongoDB indexes the following document fields in the underlying collection:
 
 ```js
 jc._ensureIndex({ type : 1, status : 1 });
@@ -233,7 +235,7 @@ jc._ensureIndex({ type : 1, status : 1 });
 
 ### Logging
 
-The server can easily log all activity (both successes and failures) on a jobCollection by passing any valid node.js writable Stream to `jc.setLogStream(writeStream)`.
+The server can easily log all activity (both successes and failures) on a job collection by passing any valid node.js writable Stream to `jc.setLogStream(writeStream)`.
 
 ## JobCollection API
 
@@ -254,9 +256,9 @@ jc = JobCollection('defaultJobCollection');
 ```
 
 ### jc.setLogStream(writeStream) - Server only
-#### Sets where the jobCollection method invocation log will be written
+#### Sets where the job collection method invocation log will be written
 
-You can log everything that happens to a jobCollection on the server by providing any valid writable stream. You may only call this once, unless you first call `jc.shutdown()`, which will automatically close the existing `logStream`.
+You can log everything that happens to a job collection on the server by providing any valid writable stream. You may only call this once, unless you first call `jc.shutdown()`, which will automatically close the existing `logStream`.
 
 ```js
 // Log everything to stdout
@@ -273,7 +275,7 @@ jc.logConsole = false  // Default. Do not log method calls to the client console
 ### jc.promote([milliseconds]) - Server only
 #### Sets time between checks for delayed jobs that are now ready to run
 
-`jc.promote()` may be called at any time to change the polling rate. jobCollection must poll for this operation because it is time that is changing, not the contents of the database, so there are no database updates to listen for.
+`jc.promote()` may be called at any time to change the polling rate. job-collection must poll for this operation because it is time that is changing, not the contents of the database, so there are no database updates to listen for.
 
 ```js
 jc.promote(15*1000);  // Default: 15 seconds
@@ -282,9 +284,9 @@ jc.promote(15*1000);  // Default: 15 seconds
 Note: if you are running multiple Meteor instances that share access to a single job collection, you can set the time each instance waits to promote to `N * milliseconds`, where `N` is the number of Meteor instances. The instances will each take turns promoting jobs at 1/Nth of the desired rate.
 
 ### jc.allow(options) - Server only
-#### Allow remote execution of specific jobCollection methods
+#### Allow remote execution of specific job-collection methods
 
-By default no remote operations are allowed, and in this configuration jobCollection exists only as a server-side service; with the creation, management and execution of all jobs dependent on server-side Meteor code.
+By default no remote operations are allowed, and in this configuration job-collection exists only as a server-side service; with the creation, management and execution of all jobs dependent on server-side Meteor code.
 
 The opposite extreme is to allow any remote client to perform any action. Obviously this is totally insecure, but is perhaps valuable for early development stages on a local firewalled network.
 
@@ -324,13 +326,13 @@ jc.allow({
 
 In addition to the all-encompassing `admin` method group, there are three others:
 
-*    `manager` -- Managers can remotely manage the jobCollection (e.g. cancelling jobs).
+*    `manager` -- Managers can remotely manage the job collection (e.g. cancelling jobs).
 *    `creator` -- Creators can remotely make new jobs to run.
 *    `worker` -- Workers can get Jobs to work on and can update their status as work proceeds.
 
-All remote methods affecting the jobCollection fall into at least one of the four groups, and for each client-capable API method below, the group(s) it belongs to will be noted.
+All remote methods affecting the job collection fall into at least one of the four groups, and for each client-capable API method below, the group(s) it belongs to will be noted.
 
-In addition to the above groups, it is possible to write allow/deny rules specific to each jobCollection DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to grant permission to create new "email" jobs to a single userId:
+In addition to the above groups, it is possible to write allow/deny rules specific to each job-collection DDP method. This is a more advanced feature and the intent is that the four permission groups described above should be adequate for many applications. The DDP methods are generally lower-level than the methods available on `Job` and they do not necessarily have a one-to-one relationship. Here's an example of how to grant permission to create new "email" jobs to a single userId:
 
 ```js
 // Assumes emailCreator contains a Meteor userId
@@ -349,7 +351,7 @@ jc.allow({
 ### jc.deny(options) - Server only
 #### Override allow rules
 
-This call has the same semantic relationship with `allow()` as it does in Meteor collections. If any deny rule is true, then permission for a remote method call will be denied, regardless of the status of any other allow/deny rules. This is powerful and far reaching. For example, the following code will turn off all remote access to a jobCollection (regardless of any other rules that may be in force):
+This call has the same semantic relationship with `allow()` as it does in Meteor collections. If any deny rule is true, then permission for a remote method call will be denied, regardless of the status of any other allow/deny rules. This is powerful and far reaching. For example, the following code will turn off all remote access to a job collection (regardless of any other rules that may be in force):
 
 ```js
 jc.deny({
@@ -407,7 +409,7 @@ job = jc.createJob(
 ```
 
 ### jc.makeJob(jobDoc) - Anywhere
-#### Make a Job object from a jobCollection document
+#### Make a Job object from a job-collection document
 
 See documentation below for `Job` object API
 
@@ -460,10 +462,10 @@ if (Meteor.isServer) {
 ```
 
 ### jc.getWork(type, [options], [callback]) - Anywhere
-#### Get one or more jobs from the jobCollection, setting status to `'running'`
+#### Get one or more jobs from the job collection, setting status to `'running'`
 #### Requires permission: Server, `admin`, `worker` or `getWork`
 
-`getWork` differs from `getJob` in that the status of the returned job(s) is now "running" in the jobCollection, and it is the responsibility of the caller to eventually call `job.done()` or `job.fail()` on each job. While running, a job will never be assigned to another worker. If unreliable workers are an issue, it is straightforward to write a recurring server job that identifies stale running jobs (whose workers have presumably died) and "autofail" them so that they may be retried by another worker.
+`getWork` differs from `getJob` in that the status of the returned job(s) is now "running" in the job collection, and it is the responsibility of the caller to eventually call `job.done()` or `job.fail()` on each job. While running, a job will never be assigned to another worker. If unreliable workers are an issue, it is straightforward to write a recurring server job that identifies stale running jobs (whose workers have presumably died) and "autofail" them so that they may be retried by another worker.
 
 `getWork` implements a "pull" model, where each call will return zero or more jobs depending on availability of work and the value of `maxJobs`. See `jc.processJobs()` below for a "push"-like model for automatically obtaining jobs to work on.
 
@@ -672,9 +674,9 @@ jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 ```
 
 ### jc.ddpMethods - Anywhere
-#### Array of the root names of all DDP methods used by jobCollection
+#### Array of the root names of all DDP methods used by job-collection
 
-These are all of valid jobCollection DDP method names. These are also the names of the coinciding method-specific allow/deny rules. For more information about the DDP method API see the documentaion on that topic near the end of this README.
+These are all of valid job-collection DDP method names. These are also the names of the coinciding method-specific allow/deny rules. For more information about the DDP method API see the documentaion on that topic near the end of this README.
 
 ```js
 jc.ddpMethods = [ 'startJobs', 'stopJobs', 'jobRemove', 'jobPause',
@@ -695,7 +697,7 @@ jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
 ### jc.ddpMethodPermissions - Anywhere
 #### Object mapping permission levels to DDP method names
 
-This is the mapping between jobCollection DDP methods and permission groups.
+This is the mapping between job-collection DDP methods and permission groups.
 
 ```js
 jc.ddpMethodPermissions = {
@@ -722,8 +724,8 @@ jc.ddpMethodPermissions = {
 New `Job` objects are created using the following JobCollection API calls:
 * `jc.createJob()` -- Creates a new `Job` object
 * `jc.makeJob()` -- Makes a `Job` object from a job document (as retrieved from MongoDB)
-* `jc.getJob()` -- Get a `Job` object from the jobCollection by Id
-* `jc.getJobs()` -- Get multiple `Job` objects from a jobCollection using an array of Ids
+* `jc.getJob()` -- Get a `Job` object from the job collection by Id
+* `jc.getJobs()` -- Get multiple `Job` objects from a job collection using an array of Ids
 
 The methods below may be performed on `Job` objects regardless of their source. All `Job` methods may be run on the client or server.
 
@@ -898,13 +900,14 @@ job.save(
 );
 ```
 ### job.refresh([options], [callback]) - Anywhere
-#### Refreshes the current job object state with the state on the remote jobCollection
+#### Refreshes the current job object state with the state on the remote job-collection
 #### Requires permission: Server, `admin`, `worker` or `getJob`
 
 Note that if you subscribe to the job Collection, the job documents will stay in sync with the server automatically via Meteor reactivity.
 
 `options:`
 * `getLog` -- If true, also refresh the jobs log data (which may be large).  Default: `false`
+* `getFailures` -- If true, also refresh the jobs failure results (which may be large).  Default: `false`
 
 `callback(error, result)` -- Result is true if refresh was successful. When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
@@ -939,11 +942,11 @@ job.done("Done!");
 // { "value": "Done!" }
 ```
 
-### job.fail(message, [options], [callback]) - Anywhere
+### job.fail(error, [options], [callback]) - Anywhere
 #### Change the state of a running job to `'failed'`.
 #### Requires permission: Server, `admin`, `worker` or `jobFail`
 
-The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `message` is a string.
+The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `error` is any EJSON object and will be saved as an object. If passed error is not an object, it will be wrapped in one.
 
 `options:`
 * `fatal` -- If true, no additional retries will be attempted and this job will go to a `'failed'` state. Default: `false`
@@ -952,7 +955,10 @@ The job's next state depends on how the its `job.retry()` settings are configure
 
 ```js
 job.fail(
-  'This job has failed again!',
+  {
+    reason: 'This job has failed again!',
+    code: 44
+  }
   {
     fatal: false  // Default case
   },
@@ -962,6 +968,11 @@ job.fail(
     }
   }
 });
+
+// Pass a non-object error
+job.fail("Error!");
+// This will be saved as:
+// { "value": "Error!" }
 ```
 
 ### job.pause([options], [callback]) - Anywhere
@@ -1112,9 +1123,9 @@ Always an object. This may not be changed after a job is created.
 
 ## JobQueue API
 
-JobQueue is similar in spirit to the [async.js](https://github.com/caolan/async) [queue](https://github.com/caolan/async#queue) and [cargo]([queue](https://github.com/caolan/async#cargo)) except that it gets its work from the jobCollection via calls to `jc.getWork()`
+JobQueue is similar in spirit to the [async.js](https://github.com/caolan/async) [queue](https://github.com/caolan/async#queue) and [cargo]([queue](https://github.com/caolan/async#cargo)) except that it gets its work from the job collection via calls to `jc.getWork()`
 
-New jobQueues are created by calling the following jobCollection method (documented above):
+New jobQueues are created by calling the following job-collection method (documented above):
 `q = jc.processJobs()`
 
 All `JobQueue` methods may be run on the server or client
@@ -1167,10 +1178,12 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
 
 ## Job document data models
 
-The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of jobCollection this is mostly for your information because jobs are automatically built and maintained by the package.
+The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As a user of job-collection this is mostly for your information because jobs are automatically built and maintained by the package.
+
+**Note:** If you would like to add private server-side data to a job document, you may add whatever you would like in a subdocument called `_private`. Such data will not be accepted via or returned from any of the jobCollection method calls.
+**IMPORTANT CAVEAT!** If you use this feature, you *must* be careful to exclude `_private` from any query cursors returned from within a `publish` function, or you will leak this data to potentially untrusted clients.
 
 ```js
-
 validId = (
   Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
 );
@@ -1222,6 +1235,7 @@ validJobDoc = {
   status:       Match.Where(validStatus),
   data:         Object,
   result:       Match.Optional(Object),
+  failures:     Match.Optional([ Object ]),
   priority:     Match.Integer,
   depends:      [ Match.Where(validId) ],
   resolved:     [ Match.Where(validId) ],
@@ -1246,10 +1260,10 @@ validJobDoc = {
 
 These are the underlying Meteor methods that are actually invoked when a method like `.save()` or `.getWork()` is called. In most cases you will not need to program to this interface because the `JobCollection` and `Job` APIs do this work for you. One exception to this general rule is if you need finer control over allow/deny rules than is provided by the predefined `admin`, `manager`, `creator`, and `worker` access categories.
 
-Each jobCollection you create on a server causes a number of Meteor methods to be defined. The method names are prefaced with the name of the jobCollection (e.g. "myJobs_getWork") so that multiple jobCollections on a server will not interfere with one another. Below you will find the Method API reference.
+Each job-collection you create on a server causes a number of Meteor methods to be defined. The method names are prefaced with the name of the job collection (e.g. "myJobs_getWork") so that multiple job-collections on a server will not interfere with one another. Below you will find the Method API reference.
 
 ### `startJobs(options)`
-#### Start running the jobCollection
+#### Start running the job collection
 
 * `options` -- No options currently used
 
@@ -1258,7 +1272,7 @@ Each jobCollection you create on a server causes a number of Meteor methods to b
 Returns: `Boolean` - Success or failure
 
 ### `stopJobs(options)`
-#### Shut down the jobCollection
+#### Shut down the job collection
 
 * `options` -- Supports the following options:
 
@@ -1304,7 +1318,7 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if maxJobs > 1.
 
 
 ### `jobRemove(ids, options)`
-#### Permanently remove jobs from the jobCollection
+#### Permanently remove jobs from the job collection
 
 * `ids` -- an Id or array of Ids to remove from server
 
@@ -1317,7 +1331,7 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if maxJobs > 1.
 Returns: `Boolean` - Success or failure
 
 ### `jobPause(ids, options)`
-#### Pauses a job in the jobCollection, changes status to `paused` which prevents it from running
+#### Pauses a job in the job collection, changes status to `paused` which prevents it from running
 
 * `ids` -- an Id or array of Ids to remove from server
 
@@ -1330,7 +1344,7 @@ Returns: `Boolean` - Success or failure
 Returns: `Boolean` - Success or failure
 
 ### `jobResume(ids, options)`
-#### Resumes (unpauses) a job in the jobCollection, returns it to the `waiting` state
+#### Resumes (unpauses) a job in the job collection, returns it to the `waiting` state
 
 * `ids` -- an Id or array of Ids to remove from server
 
@@ -1343,7 +1357,7 @@ Returns: `Boolean` - Success or failure
 Returns: `Boolean` - Success or failure
 
 ### `jobCancel(ids, options)`
-#### Cancels a job in the jobCollection. Cancelled jobs will not run and will stop running if already running.
+#### Cancels a job in the job collection. Cancelled jobs will not run and will stop running if already running.
 
 * `ids` -- an Id or array of Ids to remove from server
 
@@ -1383,9 +1397,9 @@ Returns: `Boolean` - Success or failure
 Returns: `Boolean` - Success or failure
 
 ### `jobSave(doc, options)`
-#### Adds a job to the jobCollection in the `waiting` or `paused` state
+#### Adds a job to the job collection in the `waiting` or `paused` state
 
-* `doc` -- Job document of job to save to the server jobCollection
+* `doc` -- Job document of job to save to the server job-collection
 
     `validJobDoc()`
 
@@ -1441,7 +1455,7 @@ Returns: `Match.Where(validId)` of the added job.
 
     `Match.Optional({})`
 
-Returns: `Boolean` - Success or failure or `null` if jobCollection is shutting down
+Returns: `Boolean` - Success or failure or `null` if job-collection is shutting down
 
 ### `jobLog(id, runId, message, options)`
 #### Add an entry in the job log of a running job
@@ -1499,9 +1513,9 @@ Returns: `Boolean` - Success or failure
 
     `Match.Where(validId)`
 
-* `err` -- An error string to store with the failed job.
+* `err` -- An error object to store with the failed job.
 
-    `String`
+    `Object`
 
 * `options` -- Supports the following options:
     * `fatal` -- If true, cancels any remaining repeat runs this job was scheduled to have. Default: false.

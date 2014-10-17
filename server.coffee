@@ -1,33 +1,22 @@
 ############################################################################
 #     Copyright (C) 2014 by Vaughn Iverson
-#     jobCollection is free software released under the MIT/X11 license.
+#     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
 
 if Meteor.isServer
 
-  ###############################################################
-  # jobCollection server DDP methods
-
   ################################################################
-  ## jobCollection server class
+  ## job-collection server class
 
-  class JobCollection extends Meteor.Collection
+  class JobCollection extends share.JobCollectionBase
 
-    constructor: (@root = 'queue', options = {}) ->
+    constructor: (root = 'queue', options = {}) ->
       unless @ instanceof JobCollection
-        return new JobCollection(@root, options)
-
-      options.idGeneration ?= 'STRING'  # or 'MONGO'
-      options.noCollectionSuffix ?= false
-
-      collectionName = @root
-
-      unless options.noCollectionSuffix
-        collectionName += '.jobs'
+        return new JobCollection(root, options)
 
       # Call super's constructor
-      super collectionName, { idGeneration: options.idGeneration }
+      super root, options
 
       @stopped = true
 
@@ -49,12 +38,22 @@ if Meteor.isServer
         @allows[level] = []
         @denys[level] = []
 
-      Meteor.methods(@_generateMethods share.serverMethods)
+      localMethods = @_generateMethods()
 
-    _method_wrapper: (method, func) ->
+      Job.ddp_apply = (name, params, cb) ->
+        if cb?
+          Meteor.setTimeout (() -> cb null, localMethods[name].apply(this, params)), 0
+        else
+          localMethods[name].apply(this, params)
 
-      toLog = (userId, message) =>
-        @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"
+      Meteor.methods localMethods
+
+    _toLog: (userId, method, message) =>
+      @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"
+
+    _methodWrapper: (method, func) ->
+
+      toLog = @_toLog
 
       myTypeof = (val) ->
         type = typeof val
@@ -85,64 +84,18 @@ if Meteor.isServer
         user = this.userId ? "[UNAUTHENTICATED]"
         unless this.connection
           user = "[SERVER]"
-        toLog user, "params: " + JSON.stringify(params)
+        toLog user, method, "params: " + JSON.stringify(params)
         unless this.connection and not permitted(this.userId, params)
           retval = func(params...)
-          toLog user, "returned: " + JSON.stringify(retval)
+          toLog user, method, "returned: " + JSON.stringify(retval)
           return retval
         else
-          toLog this.userId, "UNAUTHORIZED."
+          toLog this.userId, method, "UNAUTHORIZED."
           throw new Meteor.Error 403, "Method not authorized", "Authenticated user is not permitted to invoke this method."
-
-    _generateMethods: (methods) ->
-      methodsOut = {}
-      for methodName, methodFunc of methods
-        methodsOut["#{@root}_#{methodName}"] = @_method_wrapper(methodName, methodFunc.bind(@))
-      return methodsOut
-
-    jobLogLevels: Job.jobLogLevels
-    jobPriorities: Job.jobPriorities
-    jobStatuses: Job.jobStatuses
-    jobStatusCancellable: Job.jobStatusCancellable
-    jobStatusPausable: Job.jobStatusPausable
-    jobStatusRemovable: Job.jobStatusRemovable
-    jobStatusRestartable: Job.jobStatusRestartable
-    forever: Job.forever
-    foreverDate: Job.foreverDate
-
-    ddpMethods: Job.ddpMethods
-    ddpPermissionLevels: Job.ddpPermissionLevels
-    ddpMethodPermissions: Job.ddpMethodPermissions
-
-    createJob: (params...) -> new Job @root, params...
-
-    processJobs: (params...) -> new Job.processJobs @root, params...
-
-    getJob: (params...) -> Job.getJob @root, params...
-
-    getWork: (params...) -> Job.getWork @root, params...
-
-    startJobs: (params...) -> Job.startJobs @root, params...
-
-    stopJobs: (params...) -> Job.stopJobs @root, params...
-
-    makeJob: (params...) -> Job.makeJob @root, params...
-
-    getJobs: (params...) -> Job.getJobs @root, params...
-
-    cancelJobs: (params...) -> Job.cancelJobs @root, params...
-
-    pauseJobs: (params...) -> Job.pauseJobs @root, params...
-
-    resumeJobs: (params...) -> Job.resumeJobs @root, params...
-
-    restartJobs: (params...) -> Job.restartJobs @root, params...
-
-    removeJobs: (params...) -> Job.removeJobs @root, params...
 
     setLogStream: (writeStream = null) ->
       if @logStream
-        throw new Error "logStream may only be set once per jobCollection startup/shutdown cycle"
+        throw new Error "logStream may only be set once per job-collection startup/shutdown cycle"
 
       @logStream = writeStream
       unless not @logStream? or
@@ -160,27 +113,38 @@ if Meteor.isServer
     deny: (denyOptions) ->
       @denys[type].push(func) for type, func of denyOptions when type of @denys
 
+    # Hook function to sanitize documents before validating them in getWork() and getJob()
+    scrub: (job) ->
+      job
+
     promote: (milliseconds = 15*1000) ->
       if typeof milliseconds is 'number' and milliseconds > 0
         if @interval
           Meteor.clearInterval @interval
-        @interval = Meteor.setInterval @_poll.bind(@), milliseconds
+        @interval = Meteor.setInterval @_promote_jobs.bind(@), milliseconds
       else
         console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"
 
-    _poll: () ->
+    _promote_jobs: (ids = []) ->
       if @stopped
         return
 
       time = new Date()
+
+      query =
+        status: "waiting"
+        after:
+          $lte: time
+        depends:
+          $size: 0
+
+      # Support updating a single document
+      if ids.length > 0
+        query._id =
+          $in: ids
+
       num = @update(
-        {
-          status: "waiting"
-          after:
-            $lte: time
-          depends:
-            $size: 0
-        }
+        query
         {
           $set:
             status: "ready"

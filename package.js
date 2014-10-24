@@ -14,7 +14,7 @@ Package.describe({
 Npm.depends({});
 
 Package.onUse(function(api) {
-   api.use('coffeescript', ['server','client']);
+   api.use('coffeescript@1.0.3', ['server','client']);
    api.addFiles('job/src/job_class.coffee', ['server','client']);
    api.addFiles('shared.coffee', ['server','client']);
    api.addFiles('server.coffee', 'server');
@@ -24,7 +24,7 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function (api) {
-  api.use('coffeescript', ['server','client']);
-  api.use(['vsivsi:job-collection','tinytest', 'test-helpers'], ['server','client']);
+  api.use(['server','client']);
+  api.use(['vsivsi:job-collection', 'coffeescript', 'tinytest', 'test-helpers'], ['server','client']);
   api.addFiles('job_collection_tests.coffee', ['server', 'client']);
 });

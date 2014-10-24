@@ -24,7 +24,6 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function (api) {
-  api.use(['server','client']);
   api.use(['vsivsi:job-collection', 'coffeescript', 'tinytest', 'test-helpers'], ['server','client']);
   api.addFiles('job_collection_tests.coffee', ['server', 'client']);
 });

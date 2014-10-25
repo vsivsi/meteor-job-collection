@@ -2,13 +2,21 @@
 
 ### v.NEXT
 
+
+### v.0.0.17
+
+#### Note! There are some breaking changes here!  Specifically, the `job.fail()` change below. See the docs for specifics.
+
+* Added support for Meteor 0.9.x style packages, including name change to accomodate
 * `job.fail()` now takes an object for `error`. Previously this was a string message.
+* Refactored JobCollection classes
 * Jobs that are ready-to-run go straight from `waiting` to `ready` without waiting for a promote cycle to come around.
 * Don't check for `after` and `retries` in `getWork()`
+
+#### The following two features are experimental and may change significantly or be eliminated.
+
 * Allow the server to add data to `job._private` that won't be shared with a client via `getWork()` and `getJob()`. Be sure not to publish cursors that return `job._private`!
 * Added support for `@scrub` hook function to sanitize documents before validating them in `getWork()` and `getJob()`
-* Refactor JobCollection classes
-* Added support for Meteor 0.9.x style packages, including name change to accomodate
 
 ### v.0.0.16
 

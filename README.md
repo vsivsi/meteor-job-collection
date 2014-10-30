@@ -189,8 +189,6 @@ As the name implies, a `JobCollection` looks and acts like a Meteor Collection b
 
 ## Installation
 
-I've only tested with Meteor v0.8. It may run on Meteor v0.7 as well, I don't know.
-
 Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your project, run:
 
     meteor add vsivsi:job-collection

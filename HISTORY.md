@@ -2,6 +2,7 @@
 
 ### v.NEXT
 
+* Fixed issue #51, which caused errors on the server-side when multiple job-collection instances were used.
 
 ### v.0.0.17
 

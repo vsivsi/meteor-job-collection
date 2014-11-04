@@ -39,6 +39,9 @@ Tinytest.add 'JobCollection default constructor', (test) ->
 
 clientTestColl = new JobCollection 'ClientTest', { idGeneration: 'MONGO' }
 serverTestColl = new JobCollection 'ServerTest', { idGeneration: 'STRING' }
+# The line below is a regression test for issue #51
+dummyTestColl = new JobCollection 'DummyTest', { idGeneration: 'STRING' }
+
 testColl = null  # This will be defined differently for client / server
 
 if Meteor.isServer

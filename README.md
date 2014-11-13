@@ -3,7 +3,7 @@
 Note! job-collection was formerly called jobCollection, but changes in the packaging system in Meteor 0.9 do not permit uppercase letters in package names, so the name had to change.
 
 **Note:** If you are looking for a Meteor v0.8.x compatible version of this package, please see the `meteor-0.8-compat` branch. It has the same functionality as the `master` branch, but with old-skool Meteor v0.8.x package compatibility. Note, there will be no further development on this version of the package.
-
+m
 **NOTE:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention, as I'm aiming to release v0.1.0 coninciding with the release of Meteor 1.0.0. If you want to live dangerously, development is occuring on the `v0.1.0_RC` branch.
 
 ## Intro
@@ -189,7 +189,7 @@ As the name implies, a `JobCollection` looks and acts like a Meteor Collection b
 
 ## Installation
 
-Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your project, run:
+To add to your project, run:
 
     meteor add vsivsi:job-collection
 

@@ -189,7 +189,7 @@ As the name implies, a `JobCollection` looks and acts like a Meteor Collection b
 
 ## Installation
 
-Requires [meteorite](https://atmospherejs.com/docs/installing). To add to your project, run:
+To add to your project, run:
 
     meteor add vsivsi:job-collection
 

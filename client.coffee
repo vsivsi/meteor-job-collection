@@ -1,5 +1,5 @@
 ############################################################################
-#     Copyright (C) 2014 by Vaughn Iverson
+#     Copyright (C) 2014-2015 by Vaughn Iverson
 #     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
@@ -13,7 +13,7 @@ if Meteor.isClient
 
     constructor: (root = 'queue', options = {}) ->
       unless @ instanceof JobCollection
-        return new JobCollection(@root, options)
+        return new JobCollection(root, options)
 
       # Call super's constructor
       super root, options

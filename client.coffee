@@ -13,7 +13,7 @@ if Meteor.isClient
 
     constructor: (root = 'queue', options = {}) ->
       unless @ instanceof JobCollection
-        return new JobCollection(@root, options)
+        return new JobCollection(root, options)
 
       # Call super's constructor
       super root, options

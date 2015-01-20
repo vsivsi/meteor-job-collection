@@ -2,15 +2,15 @@
   "dependencies": [
     [
       "coffeescript",
-      "1.0.4"
+      "1.0.5"
     ],
     [
       "meteor",
-      "1.1.3"
+      "1.1.4"
     ],
     [
       "underscore",
-      "1.0.1"
+      "1.0.2"
     ]
   ],
   "pluginDependencies": [],

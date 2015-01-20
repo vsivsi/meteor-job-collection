@@ -1,5 +1,5 @@
 /***************************************************************************
-###     Copyright (C) 2014 by Vaughn Iverson
+###     Copyright (C) 2014-2015 by Vaughn Iverson
 ###     job-collection is free software released under the MIT/X11 license.
 ###     See included LICENSE file for details.
 ***************************************************************************/
@@ -14,7 +14,7 @@ Package.describe({
 Npm.depends({});
 
 Package.onUse(function(api) {
-   api.use('coffeescript@1.0.3', ['server','client']);
+   api.use('coffeescript@1.0.5', ['server','client']);
    api.addFiles('job/src/job_class.coffee', ['server','client']);
    api.addFiles('shared.coffee', ['server','client']);
    api.addFiles('server.coffee', 'server');

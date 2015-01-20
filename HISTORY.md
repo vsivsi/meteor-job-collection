@@ -2,6 +2,9 @@
 
 ### v.NEXT
 
+* Fixed an issue similar to #51 on the client-side.
+* Updated versions of package dependencies
+
 ### v.0.0.18
 
 * Fixed issue #51, which caused errors on the server-side when multiple job-collection instances were used.

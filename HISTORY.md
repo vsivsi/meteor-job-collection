@@ -2,6 +2,8 @@
 
 ### v.NEXT
 
+### v.0.0.19
+
 * Fixed an issue similar to #51 on the client-side.
 * Updated versions of package dependencies
 

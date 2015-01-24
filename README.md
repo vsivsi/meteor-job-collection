@@ -243,8 +243,8 @@ The server can easily log all activity (both successes and failures) on a job co
 Creating a new `JobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`). On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
 
 `options`:
-* `idGeneration` -- Set the type of document ids used. 'STRING' (default) or 'MONGO'
 * `noCollectionSuffix` -- If `true`, `'.jobs'` won't be appended to the collection name. Default: `false`
+* In addition, JobCollection supports the same options as Meteor [Mongo.Collection](http://docs.meteor.com/#/full/mongo_collection)
 
 For security and simplicity the traditional client allow/deny rules for Meteor collections are preset to deny all direct client `insert`, `update` and `remove` type operations on a `JobCollection`. This effectively channels all remote activity through the `JobCollection` DDP methods, which may be secured using allow/deny rules specific to `JobCollection`. See the documentation for `jc.allow()` and `jc.deny()` for more information.
 

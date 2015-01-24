@@ -71,13 +71,12 @@ _validJobDoc = () ->
   created: Date
 
 
-class JobCollectionBase extends Meteor.Collection
+class JobCollectionBase extends Mongo.Collection
 
   constructor: (@root = 'queue', options = {}) ->
     unless @ instanceof JobCollectionBase
       return new JobCollectionBase(@root, options)
 
-    options.idGeneration ?= 'STRING'  # or 'MONGO'
     options.noCollectionSuffix ?= false
 
     collectionName = @root
@@ -85,8 +84,12 @@ class JobCollectionBase extends Meteor.Collection
     unless options.noCollectionSuffix
       collectionName += '.jobs'
 
+    # Remove non-standard options before
+    # calling Mongo.Collection constructor
+    delete options.noCollectionSuffix
+
     # Call super's constructor
-    super collectionName, { idGeneration: options.idGeneration }
+    super collectionName, options
 
   _validNumGTEZero: _validNumGTEZero
   _validNumGTZero: _validNumGTZero

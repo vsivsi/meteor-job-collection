@@ -367,9 +367,9 @@ class JobCollectionBase extends Mongo.Collection
           check docs, [ _validJobDoc() ]
           return docs
         else
-          console.warn "find after update failed"
+          throw new Error "Find after update failed"
       else
-        console.warn "Missing running job"
+        throw new Error "Missing running job"
     else
       # console.log "Didn't find a job to process"
     return []

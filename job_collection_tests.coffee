@@ -1,5 +1,5 @@
 ############################################################################
-#     Copyright (C) 2014 by Vaughn Iverson
+#     Copyright (C) 2014-2015 by Vaughn Iverson
 #     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
@@ -156,7 +156,6 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
       cb()
     Meteor.setTimeout(() ->
       job.refresh () ->
-        console.log "Until count: #{counter}"
         test.ok job.status is 'failed', "Until didn't cause job to stop retrying"
         q.shutdown () ->
           onComplete()

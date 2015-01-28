@@ -392,7 +392,6 @@ class JobCollectionBase extends Mongo.Collection
       }
     )
     if num > 0
-      console.log "jobRemove succeeded"
       return true
     else
       console.warn "jobRemove failed"
@@ -428,7 +427,6 @@ class JobCollectionBase extends Mongo.Collection
       }
     )
     if num > 0
-      console.log "jobPause succeeded"
       return true
     else
       console.warn "jobPause failed"
@@ -466,7 +464,6 @@ class JobCollectionBase extends Mongo.Collection
     )
     if num > 0
       @_promote_jobs? ids
-      console.log "jobResume succeeded"
       return true
     else
       console.warn "jobResume failed"
@@ -519,7 +516,6 @@ class JobCollectionBase extends Mongo.Collection
       depsCancelled = @_DDPMethod_jobCancel cancelIds, options
 
     if num > 0 or depsCancelled
-      console.log "jobCancel succeeded"
       return true
     else
       console.warn "jobCancel failed"
@@ -580,7 +576,6 @@ class JobCollectionBase extends Mongo.Collection
 
     if num > 0 or depsRestarted
       @_promote_jobs? ids
-      console.log "jobRestart succeeded"
       return true
     else
       console.warn "jobRestart failed"
@@ -700,7 +695,6 @@ class JobCollectionBase extends Mongo.Collection
       }
     )
     if num is 1
-      console.log "jobProgress succeeded", progress
       return true
     else
       console.warn "jobProgress failed"
@@ -839,8 +833,6 @@ class JobCollectionBase extends Mongo.Collection
           multi: true
         }
       )
-      console.log "Job #{id} Resolved #{n} depends"
-      console.log "jobDone succeeded"
       return true
     else
       console.warn "jobDone failed"
@@ -921,7 +913,6 @@ class JobCollectionBase extends Mongo.Collection
         }
       ).forEach (d) => @_DDPMethod_jobCancel d._id
     if num is 1
-      console.log "jobFail succeeded"
       return true
     else
       console.warn "jobFail failed"

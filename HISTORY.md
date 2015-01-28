@@ -10,6 +10,7 @@
 * Fixed issue #41. The potential race condition in getWork is handled internally
 * Fixed issue #57. Default MongoDB indexes enabled by default
 * Fixed issue #55, all valid Mongo.Collection options are now supported. However, transformed documents may fail to validate unless "scrubbed". More work needs to go into documenting this.
+* Fixed #28. Eliminated all "success" console logs.
 
 ### v.0.0.18
 

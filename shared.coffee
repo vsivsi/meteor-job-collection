@@ -70,7 +70,6 @@ _validJobDoc = () ->
   repeatWait: Match.Where _validIntGTEZero
   created: Date
 
-
 class JobCollectionBase extends Mongo.Collection
 
   constructor: (@root = 'queue', options = {}) ->

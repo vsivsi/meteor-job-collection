@@ -7,7 +7,7 @@
 Package.describe({
    summary: "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere",
    name: 'vsivsi:job-collection',
-   version: '0.1.0',
+   version: '0.0.19',
    git: 'https://github.com/vsivsi/meteor-job-collection.git'
 });
 

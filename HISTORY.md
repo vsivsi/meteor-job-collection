@@ -5,8 +5,9 @@
 ### v.0.0.19
 
 * Fixed an issue similar to #51 on the client-side.
-* Fixed issue #55. Alll standard Mongo.Collection options should now work with JobCollections as well.
+* Fixed issue #55. All standard Mongo.Collection options should now work with JobCollections as well.
 * Updated versions of package dependencies
+* Fixed issue #41. The potential race condition in getWork is handled internally
 
 ### v.0.0.18
 

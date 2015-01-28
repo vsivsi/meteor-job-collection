@@ -29,7 +29,7 @@ _validRetryBackoff = (v) ->
   Match.test(v, String) and v in Job.jobRetryBackoffMethods
 
 _validId = (v) ->
-  Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
+  Match.test(v, Match.OneOf(String, Mongo.Collection.ObjectID))
 
 _validLog = () ->
   [{

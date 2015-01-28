@@ -1,5 +1,5 @@
 ############################################################################
-#     Copyright (C) 2014 by Vaughn Iverson
+#     Copyright (C) 2014-2015 by Vaughn Iverson
 #     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
@@ -69,7 +69,6 @@ _validJobDoc = () ->
   repeatUntil: Date
   repeatWait: Match.Where _validIntGTEZero
   created: Date
-
 
 class JobCollectionBase extends Mongo.Collection
 
@@ -293,7 +292,7 @@ class JobCollectionBase extends Mongo.Collection
     check options, Match.Optional
       maxJobs: Match.Optional(Match.Where _validIntGTEOne)
     options ?= {}
-
+    options.maxJobs ?= 1
     # Don't put out any more jobs while shutting down
     if @stopped
       return []
@@ -302,26 +301,31 @@ class JobCollectionBase extends Mongo.Collection
     if typeof type is 'string'
       type = [ type ]
     time = new Date()
-    ids = @find(
-      {
-        type:
-          $in: type
-        status: 'ready'
-        runId: null
-      }
-      {
-        sort:
-          priority: 1
-          retryUntil: 1
-          after: 1
-        limit: options.maxJobs ? 1
-        fields:
-          _id: 1
-      }).map (d) -> d._id
+    docs = []
+    runId = @_makeNewID() # This is meteor internal, but it will fail hard if it goes away.
 
-    if ids?.length
-      # This is meteor internal, but it will fail hard if it goes away.
-      runId = @_makeNewID()
+    while docs.length < options.maxJobs
+
+      ids = @find(
+        {
+          type:
+            $in: type
+          status: 'ready'
+          runId: null
+        }
+        {
+          sort:
+            priority: 1
+            retryUntil: 1
+            after: 1
+          limit: options.maxJobs - docs.length # never ask for more than is needed
+          fields:
+            _id: 1
+        }).map (d) -> d._id
+
+      unless ids?.length > 0
+        break  # Don't keep looping when there's no available work
+
       num = @update(
         {
           _id:
@@ -347,8 +351,9 @@ class JobCollectionBase extends Mongo.Collection
           multi: true
         }
       )
-      if num >= 1
-        docs = @find(
+
+      if num > 0
+        foundDocs = @find(
           {
             _id:
               $in: ids
@@ -361,18 +366,15 @@ class JobCollectionBase extends Mongo.Collection
               _private: 0
           }
         ).fetch()
-        if docs?.length
+
+        if foundDocs?.length > 0
           if @scrub?
-            docs = (@scrub d for d in docs)
+            foundDocs = (@scrub d for d in foundDocs)
           check docs, [ _validJobDoc() ]
-          return docs
-        else
-          console.warn "find after update failed"
-      else
-        console.warn "Missing running job"
-    else
-      # console.log "Didn't find a job to process"
-    return []
+          docs = docs.concat foundDocs
+        # else
+        #   console.warn "getWork: find after update failed"
+    return docs
 
   _DDPMethod_jobRemove: (ids, options) ->
     check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])

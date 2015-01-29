@@ -397,7 +397,7 @@ jc.stopJobs(
 
 Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
 
-Note that this call only creates a new job object locally, it does not added it to the job collection. See documentation below for `Job` object API, and specifically `job.save()` to see how to do that.
+Note that this call only creates a new job object locally, it does not add it to the job collection. See documentation below for `Job` object API, and specifically `job.save()` to see how to do that.
 
 ```js
 job = jc.createJob(

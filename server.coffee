@@ -1,5 +1,5 @@
 ############################################################################
-#     Copyright (C) 2014 by Vaughn Iverson
+#     Copyright (C) 2014-2015 by Vaughn Iverson
 #     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
@@ -25,6 +25,9 @@ if Meteor.isServer
         update: () => true
         insert: () => true
         remove: () => true
+
+      # Default indexes
+      @._ensureIndex { type : 1, status : 1 }
 
       @promote()
 

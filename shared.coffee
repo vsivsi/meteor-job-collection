@@ -76,6 +76,9 @@ class JobCollectionBase extends Mongo.Collection
     unless @ instanceof JobCollectionBase
       return new JobCollectionBase(@root, options)
 
+    unless @ instanceof Mongo.Collection
+      throw new Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'  
+
     options.noCollectionSuffix ?= false
 
     collectionName = @root

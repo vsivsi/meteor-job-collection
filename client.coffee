@@ -35,6 +35,3 @@ if Meteor.isClient
         retval = func(params...)
         toLog user, "returned: " + JSON.stringify(retval)
         return retval
-
-
-

@@ -170,6 +170,7 @@ class JobCollectionBase extends Mongo.Collection
         {
           fields:
             depends: 1
+          transform: null
         }
       ).forEach (d) -> antsArray.push(i) for i in d.depends unless i in antsArray
       if antsArray.length > 0
@@ -187,6 +188,7 @@ class JobCollectionBase extends Mongo.Collection
         {
           fields:
             _id: 1
+          transform: null
         }
       ).forEach (d) ->
         dependsIds.push d._id unless d._id in dependsIds
@@ -252,6 +254,9 @@ class JobCollectionBase extends Mongo.Collection
           cursor = @find(
             {
               status: 'running'
+            },
+            {
+              transform: null
             }
           )
           console.warn "Failing #{cursor.count()} jobs on queue stop."
@@ -286,6 +291,7 @@ class JobCollectionBase extends Mongo.Collection
           log: if options.getLog then 1 else 0
           failures: if options.getFailures then 1 else 0
           _private: 0
+        transform: null
       }
     ).fetch()
     if docs?.length
@@ -332,6 +338,7 @@ class JobCollectionBase extends Mongo.Collection
           limit: options.maxJobs - docs.length # never ask for more than is needed
           fields:
             _id: 1
+          transform: null
         }).map (d) -> d._id
 
       unless ids?.length > 0
@@ -375,6 +382,7 @@ class JobCollectionBase extends Mongo.Collection
               log: 0
               failures: 0
               _private: 0
+            transform: null
           }
         ).fetch()
 
@@ -656,6 +664,9 @@ class JobCollectionBase extends Mongo.Collection
             type: doc.type
             status:
               $in: @jobStatusCancellable
+          },
+          {
+            transform: null
           }
         ).forEach (d) => @_DDPMethod_jobCancel d._id, {}
       doc.created = time
@@ -759,6 +770,7 @@ class JobCollectionBase extends Mongo.Collection
           updated: 0
           after: 0
           status: 0
+        transform: null
       }
     )
 
@@ -792,6 +804,7 @@ class JobCollectionBase extends Mongo.Collection
           updated: 0
           after: 0
           status: 0
+        transform: null
       }
     )
     unless doc?
@@ -874,6 +887,7 @@ class JobCollectionBase extends Mongo.Collection
           after: 0
           runId: 0
           status: 0
+        transform: null
       }
     )
     unless doc?
@@ -921,6 +935,9 @@ class JobCollectionBase extends Mongo.Collection
         {
           depends:
             $all: [ id ]
+        },
+        {
+          transform: null
         }
       ).forEach (d) => @_DDPMethod_jobCancel d._id
     if num is 1

@@ -100,7 +100,7 @@ if (Meteor.isClient) {
   // its status changes, etc.
 
   // Any job document from myJobs can be turned into a Job object
-  job = myJobs.makeJob(myJobs.findOne({}));
+  job = myJobs.createJob(myJobs.findOne({}));
 
   // Or a job can be fetched from the server by _id
   myJobs.getJob(_id, function (err, job) {
@@ -393,29 +393,24 @@ jc.stopJobs(
 );  // Callback is optional
 ```
 
-### job = jc.createJob(type, data) - Anywhere
-#### Create a new `Job` object
+### jc.createJob(type, data) or jc.createJob(jobDoc) - Anywhere
+#### Create a new `Job` object or make one from an existing job document
 
 Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
 
 Note that this call only creates a new job object locally, it does not add it to the job collection. See documentation below for `Job` object API, and specifically `job.save()` to see how to do that.
+
+Existing jobDocs must be valid job documents.
 
 ```js
 job = jc.createJob(
   'jobType',    // type of the job
   { /* ... */ } // Data for the worker, any valid EJSON object
 );
-```
 
-### jc.makeJob(jobDoc) - Anywhere
-#### Make a Job object from a job-collection document
-
-See documentation below for `Job` object API
-
-```js
 doc = jc.findOne({});
 if (doc) {
-  job = jc.makeJob('jobQueue', doc);
+  job = jc.createJob(doc);
 }
 ```
 

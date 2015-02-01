@@ -1112,13 +1112,16 @@ job.remove(function (err, result) {
 ### job.type - Anywhere
 #### Contains the type of a job
 
-Useful for when `getWork` or `processJobs` are configured to accept multiple job types. This may not be changed after a job is created.
+Always a string. Useful for when `getWork` or `processJobs` are configured to accept multiple job types. This may not be changed after a job is created.
 
 ### job.data - Anywhere
 #### Contains the job data needed by the worker to complete a job of a given type
 
 Always an object. This may not be changed after a job is created.
 
+### job.doc - Anywhere
+#### Contains the full job document for the job
+Always an object, as stored in the underlying JobCollection. This may not be changed after a job is created.
 
 ## JobQueue API
 

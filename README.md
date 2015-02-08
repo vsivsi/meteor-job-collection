@@ -1171,7 +1171,7 @@ q = jc.processJobs(
   // Can also be an array of job types
   'jobType',
   {
-    pollInterval: 1000000000, # Don't poll
+    pollInterval: 1000000000, // Don't poll
   },
   function (job, callback) {
     // Only called when there is a valid job

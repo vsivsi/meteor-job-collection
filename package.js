@@ -16,6 +16,7 @@ Npm.depends({});
 Package.onUse(function(api) {
    api.use('coffeescript@1.0.5', ['server','client']);
    api.use('mongo@1.0.11', ['server','client']);
+   api.use('check@1.0.4', ['server','client'])
    api.addFiles('job/src/job_class.coffee', ['server','client']);
    api.addFiles('shared.coffee', ['server','client']);
    api.addFiles('server.coffee', 'server');

@@ -24,6 +24,9 @@ validId = (v) ->
 
 defaultColl = new JobCollection()
 
+validJobDoc = (d) ->
+  Match.test(d, defaultColl.jobDocPattern)
+
 Tinytest.add 'JobCollection default constructor', (test) ->
   test.instanceOf defaultColl, JobCollection, "JobCollection constructor failed"
   test.equal defaultColl.root, 'queue', "default root isn't 'queue'"
@@ -72,7 +75,7 @@ Tinytest.addAsync 'Run startJobs on new job collection', (test, onComplete) ->
 
 Tinytest.addAsync 'Create a job and see that it is added to the collection and runs', (test, onComplete) ->
   job = testColl.createJob 'testJob', { some: 'data' }
-  test.ok Match.test(job.doc, testColl.jobDocPattern)
+  test.ok validJobDoc(job.doc)
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"

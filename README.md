@@ -915,7 +915,7 @@ Note that if you subscribe to the job Collection, the job documents will stay in
 * `getLog` -- If true, also refresh the jobs log data (which may be large).  Default: `false`
 * `getFailures` -- If true, also refresh the jobs failure results (which may be large).  Default: `false`
 
-`callback(error, result)` -- Result is true if refresh was successful. When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
+`callback(error, result)` -- Result is true if refresh was successful. When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result, so in this case this method is chainable.
 
 ```js
 job.refresh(function (err, result) {

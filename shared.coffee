@@ -839,26 +839,43 @@ class JobCollectionBase extends Mongo.Collection
         jobId = @_rerun_job doc
 
       # Resolve depends
-      n = @update(
+      ids = @find(
         {
           depends:
             $all: [ id ]
-        }
+        },
         {
-          $pull:
-            depends: id
-          $push:
-            resolved: id
-            log:
-              time: time
-              runId: null
-              level: 'info'
-              message: "Dependency resolved for #{id} by #{runId}"
+          transform: null
+          fields:
+            _id: 1
         }
-        {
-          multi: true
-        }
-      )
+      ).fetch().map (d) => d._id
+
+      if ids.length > 0
+        n = @update(
+          {
+            _id:
+              $in: ids
+          }
+          {
+            $pull:
+              depends: id
+            $push:
+              resolved: id
+              log:
+                time: time
+                runId: null
+                level: 'info'
+                message: "Dependency resolved for #{id} by #{runId}"
+          }
+          {
+            multi: true
+          }
+        )
+        if n isnt ids.length
+          console.warn "Not all dependent jobs were resolved #{ids.length} > #{n}"
+        # Try to promote any jobs that just had a dependency resolved
+        @_promote_jobs? ids
       return true
     else
       console.warn "jobDone failed"

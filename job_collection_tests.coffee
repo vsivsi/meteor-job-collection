@@ -55,7 +55,7 @@ if Meteor.isServer
   Tinytest.add 'Set permissions to allow admin on ClientTest', (test) ->
     test.equal clientTestColl.allows.admin[0](), true
 
-  Tinytest.add 'Set polliing interval', (test) ->
+  Tinytest.add 'Set polling interval', (test) ->
     interval = clientTestColl.interval
     clientTestColl.promote 250
     test.notEqual interval, clientTestColl.interval, "clientTestColl interval not updated"
@@ -83,8 +83,28 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
       test.equal job._doc._id, res
       job.done()
       cb()
-      q.shutdown () ->
+      q.shutdown { level: 'soft', quiet: true }, () ->
         onComplete()
+
+Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) ->
+  job = testColl.createJob 'testJob', { order: 1 }
+  job2 = testColl.createJob 'testJob', { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    job2.save (err, res) ->
+      test.fail(err) if err
+      test.ok validId(res), "job.save() failed in callback result"
+      count = 0
+      q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+        count++
+        test.equal count, job.data.order
+        job.done()
+        cb()
+        if count is 2
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
 
 Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
   counter = 0
@@ -108,7 +128,7 @@ Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
           job.done()
           cb()
           if counter is 3
-            q.shutdown () ->
+            q.shutdown { level: 'soft', quiet: true }, () ->
               onComplete()
 
 Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onComplete) ->
@@ -119,14 +139,14 @@ Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onCo
     test.ok validId(res), "job.save() failed in callback result"
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
       counter++
-      test.equal job._doc._id, res
+      test.equal job.doc._id, res
       if counter < 3
         job.fail('Fail test')
         cb()
       else
         job.fail('Fail test', { fatal: true })
         cb()
-        q.shutdown () ->
+        q.shutdown { level: 'soft', quiet: true }, () ->
           onComplete()
 
 Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
@@ -137,14 +157,14 @@ Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
     test.ok validId(res), "job.save() failed in callback result"
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
       counter++
-      test.equal job._doc._id, res
+      test.equal job.doc._id, res
       if counter < 3
         job.fail('Fail test')
         cb()
       else
         job.fail('Fail test')
         cb()
-        q.shutdown () ->
+        q.shutdown { level: 'soft', quiet: true }, () ->
           onComplete()
 
 Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
@@ -155,13 +175,13 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
     test.ok validId(res), "job.save() failed in callback result"
     q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
       counter++
-      test.equal job._doc._id, res
+      test.equal job.doc._id, res
       job.fail('Fail test')
       cb()
     Meteor.setTimeout(() ->
       job.refresh () ->
         test.ok job.status is 'failed', "Until didn't cause job to stop retrying"
-        q.shutdown () ->
+        q.shutdown { level: 'soft', quiet: true }, () ->
           onComplete()
     ,
       2000

@@ -945,7 +945,7 @@ class JobCollectionBase extends Mongo.Collection
             time: time
             runId: runId
             level: if newStatus is 'failed' then 'danger' else 'warning'
-            message: "Job Failed with #{"Fatal" if options.fatal} Error: #{err.value if err.value? and typeof err.value is 'string'}."
+            message: "Job Failed with#{if options.fatal then " Fatal" else ""} Error#{if err.value? and typeof err.value is 'string' then " :"+ err.value else ""}."
       }
     )
     if newStatus is "failed" and num is 1

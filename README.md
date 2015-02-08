@@ -244,6 +244,7 @@ The server can easily log all activity (both successes and failures) on a job co
 Creating a new `JobCollection` is similar to creating a new Meteor Collection. You simply specify a name (which defaults to `"queue"`). On the server there are some additional methods you will probably want to invoke on the returned object to configure it further.
 
 `options`:
+
 * `noCollectionSuffix` -- If `true`, `'.jobs'` won't be appended to the collection name. Default: `false`
 * In addition, JobCollection supports the same options as Meteor [Mongo.Collection](http://docs.meteor.com/#/full/mongo_collection)
 
@@ -381,6 +382,7 @@ jc.startJobs();  // Callback is optional
 #### Requires permission: Server, `admin`, or `stopJobs`
 
 `options`:
+
 * `timeout`: In ms, how long until the server forcibly fails all still running jobs. Default: `60*1000` (1 minute)
 
 `callback(error, result)` -- Result is true if successful.
@@ -425,6 +427,7 @@ Returns `undefined` if no such job exists.
 `id`: -- The id of the job to get.
 
 `options`:
+
 * `getLog` -- If `true`, get the current log of the job. Default is `false` to save bandwidth since logs can be large.
 
 `callback(error, result)` -- Optional only on Meteor Server with Fibers. `result` is a job object or `undefined`
@@ -464,6 +467,7 @@ if (Meteor.isServer) {
 `getWork` implements a "pull" model, where each call will return zero or more jobs depending on availability of work and the value of `maxJobs`. See `jc.processJobs()` below for a "push"-like model for automatically obtaining jobs to work on.
 
 `options`:
+
 * `maxJobs` -- Maximum number of jobs to get. Default `1`  If `maxJobs > 1` the result will be an array of job objects, otherwise it is a single job object, or `undefined` if no jobs were available
 
 `callback(error, result)` -- Optional only on Meteor Server with Fibers. Result will be an array or single value depending on `options.maxJobs`.
@@ -506,12 +510,14 @@ if (Meteor.isServer) {
 Asynchronously calls the worker function whenever jobs become available. See documentation below for the `JobQueue` object API for methods on the returned `jq` object.
 
 `options:`
+
 * `concurrency` -- Maximum number of async calls to `worker` that can be outstanding at a time. Default: `1`
 * `cargo` -- Maximum number of job objects to provide to each worker, Default: `1` If `cargo > 1` the first parameter to `worker` will be an array of job objects rather than a single job object.
 * `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Default: `5000` (5 seconds)
 * `prefetch` -- How many extra jobs to request beyond the capacity of all workers (`concurrency * cargo`) to compensate for latency getting more work.
 
 `worker(result, callback)`
+
 * `result` -- either a single job object or an array of job objects depending on `options.cargo`.
 * `callback` -- must be eventually called exactly once when `job.done()` or `job.fail()` has been called on all jobs in result.
 
@@ -754,6 +760,7 @@ job.priority(-10);     // Same as above
 Returns `job`, so it is chainable.
 
 `options:`
+
 * `retries` -- Number of times to retry a failing job. Default: `Job.forever`
 * `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever comes first. Default: `Job.foreverDate`. Note that if you specify a value for `until` on a repeating job, it will only apply to the first run of the job. Any repeated runs of the job will use the repeat `until` value for all retries.
 * `wait` -- Initial value for how long to wait between attempts, in ms. Default: `300000` (5 minutes)
@@ -779,6 +786,7 @@ job.retry({
 Each time it is re-run, a new job is created in the job collection. This is equivalent to running `job.rerun()`. Only `'completed'` jobs are repeated. Failing jobs that exhaust their retries will not repeat. By default, if an infinitely repeating job is added to the job Collection, any existing repeating jobs of the same type that are cancellable, will be cancelled.  See `option.cancelRepeats` for `job.save()` for more info. Returns `job`, so it is chainable.
 
 `options:`
+
 * `repeats` -- Number of times to rerun the job. Default: `Job.forever`
 * `until` -- Keep repeating until this `Date`, or until the number of repeats is exhausted, whichever comes first. Default: `Job.foreverDate`
 * `wait`  -- How long to wait between re-runs, in ms. Default: `300000` (5 minutes)
@@ -822,6 +830,7 @@ job.after(new Date());
 May be called before a new job is saved. `message` must be a string.
 
 `options:`
+
 * `level`: One of `Jobs.jobLogLevels`: `'info'`, `'success'`, `'warning'`, or `'danger'`.  Default is `'info'`.
 * `echo`: Echo this log entry to the console. `'danger'` and `'warning'` level messages are echoed using `console.error()` and `console.warn()` respectively. Others are echoed using `console.log()`. If echo is `true` all messages will be echoed. If `echo` is one of the `Job.jobLogLevels` levels, only messages of that level or higher will be echoed.
 
@@ -854,6 +863,7 @@ job.log("Don't echo this",
 May be called before a new job is saved. `completed` must be a number `>= 0` and `total` must be a number `> 0` with `total >= completed`.
 
 `options:`
+
 * `echo`: Echo this progress update to the console using `console.log()`.
 
 `callback(error, result)` -- Result is true if progress update was successful. When running as `Meteor.isServer` with fibers, for a saved object the callback may be omitted and the return value is the result. If called on an unsaved object, the result is `job` and can be chained.
@@ -901,6 +911,7 @@ job.save(
 Note that if you subscribe to the job Collection, the job documents will stay in sync with the server automatically via Meteor reactivity.
 
 `options:`
+
 * `getLog` -- If true, also refresh the jobs log data (which may be large).  Default: `false`
 * `getFailures` -- If true, also refresh the jobs failure results (which may be large).  Default: `false`
 
@@ -944,6 +955,7 @@ job.done("Done!");
 The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `error` is any EJSON object and will be saved as an object. If passed error is not an object, it will be wrapped in one.
 
 `options:`
+
 * `fatal` -- If true, no additional retries will be attempted and this job will go to a `'failed'` state. Default: `false`
 
 `callback(error, result)` -- Result is true if failure was successful (heh). When running as `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
@@ -1011,6 +1023,7 @@ job.resume(function (err, result) {
 Any job that isn't `'completed'`, `'failed'` or already `'cancelled'` may be cancelled. Cancelled jobs retain any remaining retries and/or repeats if they are later restarted.
 
 `options:`
+
 * `antecedents` -- Also cancel all cancellable jobs that this job depends on.  Default: `false`
 * `dependents` -- Also cancel all cancellable jobs that depend on this job.  Default: `true`
 
@@ -1037,6 +1050,7 @@ job.cancel(
 A restarted job will retain any repeat count state it had when it failed or was cancelled.
 
 `options:`
+
 * `retries` -- Number of additional retries to attempt before failing with `job.retry()`. Default: `0`. These retries add to any remaining retries already on the job (such as if it was cancelled).
 * `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever comes first. Default: Prior value of `until`. Note that if you specify a value for `until` when restarting a repeating job, it will only apply to the first run of the job. Any repeated runs of the job will use the repeat `until` value for retries.
 * `antecedents` -- Also restart all `'cancelled'` or `'failed'` jobs that this job depends on.  Default: `true`
@@ -1065,6 +1079,7 @@ job.restart(
 #### Requires permission: Server, `admin`, `creator` or `jobRerun`
 
 `options:`
+
 * `repeats` -- Number of times to repeat the job, as with `job.repeat()`.
 * `until` -- Keep repeating until this `Date`, or until the number of repeats is exhausted, whichever comes first. Default: prior value of `until`
 * `wait` -- Time to wait between reruns. Default is the existing `job.repeat({ wait: ms })` setting for the job.
@@ -1136,22 +1151,53 @@ This means that no more work will be requested from the job collection, and no n
 ```js
 q.pause()
 ```
+
 ### q.resume() - Anywhere
 #### Undoes a `q.pause()`, returning the queue to the normal running state
 
 ```js
 q.resume()
 ```
+
+### q.trigger() - Anywhere
+#### Externally trigger the JobQueue to seek new work
+
+This method manually causes the same action that expiration of the `pollInterval` does internally within JobQueue. This is useful for creating responsive JobQueues that are triggered by a Meteor [observe](http://docs.meteor.com/#/full/observe) based mechanism, rather than time based polling.
+
+```js
+# Simple observe based queue
+q = jc.processJobs(
+  // Type of job to request
+  // Can also be an array of job types
+  'jobType',
+  {
+    pollInterval: Job.forever, # Don't ever poll
+  },
+  function (job, callback) {
+    // Only called when there is a valid job
+    job.done();
+    callback();
+  }
+);
+
+jc.find({ type: 'jobType', status: 'ready' })
+  .observe({
+     added: function () { q.trigger(); }
+  })'
+```
+
 ### q.shutdown([options], [callback]) - Anywhere
 #### Shuts down the queue, with several possible levels of urgency
 
 `options:`
+
 * `level` -- May be 'hard' or 'soft'. Any other value will lead to a "normal" shutdown.
 * `quiet` -- true or false. False by default, which leads to a "Shutting down..." message on `process.stderr`.
 
 `callback()` -- Invoked once the requested shutdown conditions have been achieved.
 
 Shutdown levels:
+
 * `'soft'` -- Allow all local jobs in the queue to start and run to a finish, but do not request any more work. Normal program exit should be possible.
 * `'normal'` -- Allow all running jobs to finish, but do not request any more work and fail any jobs that are in the local queue but haven't started to run. Normal program exit should be possible.
 * `'hard'` -- Fail all local jobs, running or not. Return as soon as the server has been updated. Note: after a hard shutdown, there may still be outstanding work in the event loop. To exit immediately may require `process.exit()` depending on how often asynchronous workers invoke `'job.progress()'` and whether they die when it fails.
@@ -1161,6 +1207,7 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
   // shutdown complete
 });
 ```
+
 ### q.length() - Anywhere
 #### Number of tasks ready to run
 
@@ -1172,7 +1219,6 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
 
 ### q.idle() - Anywhere
 #### `true` if no work is currently running.
-
 
 ## Job document data models
 

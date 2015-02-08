@@ -716,10 +716,11 @@ jc.ddpMethodPermissions = {
 ## Job API
 
 New `Job` objects are created using the following JobCollection API calls:
-* `jc.createJob()` -- Creates a new `Job` object
-* `jc.makeJob()` -- Makes a `Job` object from a job document (as retrieved from MongoDB)
+
+* `jc.createJob()` -- Creates a new `Job` object or makes one from a job document (as retrieved from MongoDB)
 * `jc.getJob()` -- Get a `Job` object from the job collection by Id
 * `jc.getJobs()` -- Get multiple `Job` objects from a job collection using an array of Ids
+* `new Job()` -- Use of `jc.createJob()` is preferred, as this method requires providing the [collection name](https://www.npmjs.com/package/meteor-job#j-jobroot-type-data). 
 
 The methods below may be performed on `Job` objects regardless of their source. All `Job` methods may be run on the client or server.
 

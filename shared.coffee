@@ -133,6 +133,8 @@ class JobCollectionBase extends Mongo.Collection
   restartJobs: (params...) -> Job.restartJobs @root, params...
   removeJobs: (params...) -> Job.removeJobs @root, params...
 
+  jobDocPattern: _validJobDoc()
+
   # Deprecated. Remove in next major version
   makeJob: do () ->
     dep = false

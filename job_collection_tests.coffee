@@ -72,6 +72,7 @@ Tinytest.addAsync 'Run startJobs on new job collection', (test, onComplete) ->
 
 Tinytest.addAsync 'Create a job and see that it is added to the collection and runs', (test, onComplete) ->
   job = testColl.createJob 'testJob', { some: 'data' }
+  test.ok Match.test(job.doc, testColl.jobDocPattern)
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"

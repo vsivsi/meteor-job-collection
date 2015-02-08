@@ -11,6 +11,7 @@
 * Fixed #28. Eliminated all "success" console logs.
 * job objects now have `job.doc` readable attribute
 * `jc.makeJob()` has been deprecated, use `jc.createJob(jobDoc)` instead.
+* `jc.jobDocPattern` can now be used to validate Job documents.
 
 ### v.0.0.18
 

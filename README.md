@@ -12,7 +12,7 @@ It solves the following problems (and more):
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
-**Note:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention. If you want to live dangerously, development is occuring on the `v0.1.0_RC` branch.
+**Note:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention. If you want to live dangerously, development is occuring on the `dev` branch.
 
 **Note:** job-collection was formerly called jobCollection, but changes in the packaging system since Meteor 0.9 do not permit uppercase letters in package names, so the name had to change.
 

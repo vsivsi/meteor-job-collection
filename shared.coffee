@@ -203,6 +203,7 @@ class JobCollectionBase extends Mongo.Collection
     time = new Date()
     delete doc._id
     delete doc.result
+    delete doc.failures
     doc.runId = null
     doc.status = "waiting"
     doc.retries = doc.retries + doc.retried
@@ -767,6 +768,8 @@ class JobCollectionBase extends Mongo.Collection
       }
       {
         fields:
+          result: 0
+          failures: 0
           log: 0
           progress: 0
           updated: 0

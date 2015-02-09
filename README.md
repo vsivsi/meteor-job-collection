@@ -796,7 +796,7 @@ job.retry({
 ### job.repeat([options]) - Anywhere
 #### Set how many times this job will be automatically re-run by the job Collection
 
-Each time it is re-run, a new job is created in the job collection. This is equivalent to running `job.rerun()`. Only `'completed'` jobs are repeated. Failing jobs that exhaust their retries will not repeat. By default, if an infinitely repeating job is added to the job Collection, any existing repeating jobs of the same type that are cancellable, will be cancelled.  See `option.cancelRepeats` for `job.save()` for more info. Returns `job`, so it is chainable.
+Each time it is re-run, a new job is created in the job collection. This is equivalent to running `job.rerun()`. Only `'completed'` jobs are repeated. Failing jobs that exhaust their retries will not repeat. By default, if an infinitely repeating job is added to the job Collection, any existing repeating jobs of the same type will also continue to repeat.  See `option.cancelRepeats` for `job.save()` for more info on how to override this behavior. Returns `job`, so it is chainable.
 
 `options:`
 

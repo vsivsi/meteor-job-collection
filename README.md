@@ -1178,7 +1178,7 @@ q.resume()
 This method manually causes the same action that expiration of the `pollInterval` does internally within JobQueue. This is useful for creating responsive JobQueues that are triggered by a Meteor [observe](http://docs.meteor.com/#/full/observe) based mechanism, rather than time based polling.
 
 ```js
-# Simple observe based queue
+// Simple observe based queue
 q = jc.processJobs(
   // Type of job to request
   // Can also be an array of job types

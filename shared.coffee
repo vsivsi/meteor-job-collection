@@ -37,6 +37,7 @@ _validLog = () ->
       runId: Match.OneOf(Match.Where(_validId), null)
       level: Match.Where(_validLogLevel)
       message: String
+      data: Match.Optional Object
   }]
 
 _validProgress = () ->
@@ -731,19 +732,23 @@ class JobCollectionBase extends Mongo.Collection
     check message, String
     check options, Match.Optional
       level: Match.Optional(Match.Where _validLogLevel)
+      data: Match.Optional Object
     options ?= {}
     time = new Date()
+    logObj =
+        time: time
+        runId: runId
+        level: options.level ? 'info'
+        message: message
+    logObj.data = options.data if options.data?
+
     num = @update(
       {
         _id: id
       }
       {
         $push:
-          log:
-            time: time
-            runId: runId
-            level: options.level ? 'info'
-            message: message
+          log: logObj
         $set:
           updated: time
       }
@@ -926,11 +931,14 @@ class JobCollectionBase extends Mongo.Collection
                     doc.retries > 0 and
                     doc.retryUntil >= after) then "waiting" else "failed"
 
+    err.runId = runId  # Link each failure to the run that generated it.
+
     num = @update(
       {
         _id: id
         runId: runId
-        status: "running" }
+        status: "running"
+      }
       {
         $set:
           status: newStatus

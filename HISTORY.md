@@ -12,6 +12,11 @@
 * job objects now have `job.doc` readable attribute
 * `jc.makeJob()` has been deprecated, use `jc.createJob(jobDoc)` instead.
 * `jc.jobDocPattern` can now be used to validate Job documents.
+* `j.refresh()` is now chainable
+* Added `jq.trigger()` method to provide a mechanism to trigger `getWork` using an alternative method to `pollInterval`
+* `job.log()` can now accept a `data` option, which must be an object.
+* `log.data` field is now permitted in the Job document model.
+* WHen `job.fail(err)` is used, the error object stored in the `failures` array will have the `runId` as an added field.
 
 ### v.0.0.18
 

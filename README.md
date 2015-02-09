@@ -71,7 +71,7 @@ Alright, the server is set-up and running, now let's add some client code to cre
 if (Meteor.isClient) {
 
   var myJobs = JobCollection('myJobQueue');
-  
+
   Meteor.startup(function () {
      Meteor.subscribe('allJobs');
 
@@ -115,7 +115,7 @@ if (Meteor.isClient) {
        job.remove();
        // etc...
      });
-  });   
+  });
 }
 ```
 
@@ -845,6 +845,7 @@ May be called before a new job is saved. `message` must be a string.
 `options:`
 
 * `level`: One of `Jobs.jobLogLevels`: `'info'`, `'success'`, `'warning'`, or `'danger'`.  Default is `'info'`.
+* `data`: An arbitrary object that will be written to the `data` field in the log entry.
 * `echo`: Echo this log entry to the console. `'danger'` and `'warning'` level messages are echoed using `console.error()` and `console.warn()` respectively. Others are echoed using `console.log()`. If echo is `true` all messages will be echoed. If `echo` is one of the `Job.jobLogLevels` levels, only messages of that level or higher will be echoed.
 
 `callback(error, result)` -- Result is true if logging was successful. When running as `Meteor.isServer` with fibers, for a saved object the callback may be omitted and the return value is the result. If called on an unsaved object, the result is `job` and can be chained.
@@ -1268,7 +1269,8 @@ validLog = [{
     null
   ),
   level:   Match.Where(validLogLevel),
-  message: String
+  message: String,
+  data: Match.Optional(Object)
 }];
 
 validProgress = {
@@ -1362,9 +1364,11 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if `ids` is a singl
 #### Returns jobs ready-to-run to a requesting worker
 
 * `type` -- a string job type or an array of such types
+
     `type: Match.OneOf(String, [ String ])`
 
 * `options` -- Supports the following options:
+
     * `maxJobs` -- The maximum number of jobs to return, Default: `1`
 
     `Match.Optional({
@@ -1477,6 +1481,7 @@ Returns: `Match.Where(validId)` of the added job.
     `Match.Where(validId)`
 
 * `options` -- Supports the following options:
+
     * `wait` -- Amount of time to wait until the new job runs in ms. Default: 0
     * `repeats` -- Number of times to repeat the new job. Default: 0
     * `until` -- Repeat until this time, or until the repeats count is exhausted, whicever comes first. Default: prior value.
@@ -1530,10 +1535,13 @@ Returns: `Boolean` - Success or failure or `null` if job-collection is shutting 
     `String`
 
 * `options` -- Supports the following options:
+
     * `level` -- The information level of this log entry. Must be a valid log level. Default: `'info'`
+    * `data` -- An arbitrary object to store in the log entry
 
     `Match.Optional({
        level: Match.Optional(Match.Where(validLogLevel))
+       data: Match.Optional Object
     })`
 
 Returns: `Boolean` - Success or failure

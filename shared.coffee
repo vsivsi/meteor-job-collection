@@ -367,6 +367,7 @@ class JobCollectionBase extends Mongo.Collection
             log:
               time: time
               runId: runId
+              level: 'info'
               message: "Job Running"
         }
         {
@@ -443,6 +444,7 @@ class JobCollectionBase extends Mongo.Collection
           log:
             time: time
             runId: null
+            level: 'info'
             message: "Job Paused"
       }
       {
@@ -479,6 +481,7 @@ class JobCollectionBase extends Mongo.Collection
           log:
             time: time
             runId: null
+            level: 'info'
             message: "Job Resumed"
       }
       {
@@ -810,6 +813,7 @@ class JobCollectionBase extends Mongo.Collection
       {
         fields:
           log: 0
+          failures: 0
           progress: 0
           updated: 0
           after: 0
@@ -909,6 +913,7 @@ class JobCollectionBase extends Mongo.Collection
       {
         fields:
           log: 0
+          failures: 0
           progress: 0
           updated: 0
           after: 0

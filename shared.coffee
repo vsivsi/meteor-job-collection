@@ -145,6 +145,27 @@ class JobCollectionBase extends Mongo.Collection
         console.warn "WARNING: jc.makeJob() has been deprecated. Use jc.createJob() instead."
       new Job @root, params...
 
+  _createLogEntry = (message = '', runId = null, level = 'info', time = new Date()) ->
+    l = { time: time, runId: runId, message: message, level: level }
+    # console.warn "LOG! ", l
+    return l
+
+  _logMessage =
+    'rerun': (id, runId) -> _createLogEntry "Rerunning job #{id} from run #{runId}"
+    'running': (runId) -> _createLogEntry "Job Running", runId
+    'paused': () -> _createLogEntry "Job Paused"
+    'resumed': () -> _createLogEntry "Job Resumed"
+    'cancelled': () -> _createLogEntry "Job Cancelled", null, 'warn'
+    'restarted': () -> _createLogEntry "Job Restarted"
+    'resubmitted': () -> _createLogEntry "Job Resubmitted"
+    'submitted': () -> _createLogEntry "Job Submitted"
+    'completed': (runId) -> _createLogEntry "Job Completed Successfully", runId    
+    'resolved': (id, runId) -> _createLogEntry "Dependency resolved for #{id} by #{runId}", runId    
+    'failed': (runId, fatal, value) -> 
+      msg = "Job Failed with#{if fatal then ' Fatal' else ''} Error#{if value? and typeof value is 'string' then ': ' + value else ''}."
+      level = if fatal then 'danger' else 'warning'
+      _createLogEntry msg, runId, level
+
   _generateMethods: () ->
     methodsOut = {}
     methodPrefix = '_DDPMethod_'
@@ -221,12 +242,11 @@ class JobCollectionBase extends Mongo.Collection
       completed: 0
       total: 1
       percent: 0
-    doc.log = [
-      time: time
-      runId: null
-      level: 'info'
-      message: "Repeating job #{id} from run #{runId}"
-    ]
+    if logObj = _logMessage.rerun id, runId
+      doc.log = [logObj]
+    else
+      doc.log = [] 
+
     doc.after = new Date(time.valueOf() + wait)
     if jobId = @insert doc
       @_promote_jobs? [jobId]
@@ -348,6 +368,19 @@ class JobCollectionBase extends Mongo.Collection
       unless ids?.length > 0
         break  # Don't keep looping when there's no available work
 
+      mods =
+        $set:
+          status: 'running'
+          runId: runId
+          updated: time
+        $inc:
+          retries: -1
+          retried: 1
+
+      if logObj = _logMessage.running runId
+        mods.$push =
+          log: logObj
+
       num = @update(
         {
           _id:
@@ -355,21 +388,7 @@ class JobCollectionBase extends Mongo.Collection
           status: 'ready'
           runId: null
         }
-        {
-          $set:
-            status: 'running'
-            runId: runId
-            updated: time
-          $inc:
-            retries: -1
-            retried: 1
-          $push:
-            log:
-              time: time
-              runId: runId
-              level: 'info'
-              message: "Job Running"
-        }
+        mods
         {
           multi: true
         }
@@ -429,6 +448,16 @@ class JobCollectionBase extends Mongo.Collection
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
+
+    mods =
+      $set:
+        status: "paused"
+        updated: time
+
+    if logObj = _logMessage.paused()
+      mods.$push =
+        log: logObj
+
     num = @update(
       {
         _id:
@@ -436,17 +465,7 @@ class JobCollectionBase extends Mongo.Collection
         status:
           $in: @jobStatusPausable
       }
-      {
-        $set:
-          status: "paused"
-          updated: time
-        $push:
-          log:
-            time: time
-            runId: null
-            level: 'info'
-            message: "Job Paused"
-      }
+      mods
       {
         multi: true
       }
@@ -465,6 +484,15 @@ class JobCollectionBase extends Mongo.Collection
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
+    mods =
+      $set:
+        status: "waiting"
+        updated: time
+
+    if logObj = _logMessage.resumed()
+      mods.$push =
+        log: logObj
+
     num = @update(
       {
         _id:
@@ -473,17 +501,7 @@ class JobCollectionBase extends Mongo.Collection
         updated:
           $ne: time
       }
-      {
-        $set:
-          status: "waiting"
-          updated: time
-        $push:
-          log:
-            time: time
-            runId: null
-            level: 'info'
-            message: "Job Resumed"
-      }
+      mods
       {
         multi: true
       }
@@ -507,6 +525,21 @@ class JobCollectionBase extends Mongo.Collection
       ids = [ids]
     return false if ids.length is 0
     time = new Date()
+
+    mods = 
+      $set:
+        status: "cancelled"
+        runId: null
+        progress:
+          completed: 0
+          total: 1
+          percent: 0
+        updated: time
+
+    if logObj = _logMessage.cancelled()
+      mods.$push =
+        log: logObj
+
     num = @update(
       {
         _id:
@@ -514,22 +547,7 @@ class JobCollectionBase extends Mongo.Collection
         status:
           $in: @jobStatusCancellable
       }
-      {
-        $set:
-          status: "cancelled"
-          runId: null
-          progress:
-            completed: 0
-            total: 1
-            percent: 0
-          updated: time
-        $push:
-          log:
-            time: time
-            runId: null
-            level: 'warning'
-            message: "Job cancelled"
-      }
+      mods
       {
         multi: true
       }
@@ -581,12 +599,10 @@ class JobCollectionBase extends Mongo.Collection
         updated: time
       $inc:
         retries: options.retries
-      $push:
-        log:
-          time: time
-          runId: null
-          level: 'info'
-          message: "Job Restarted"
+
+    if logObj = _logMessage.restarted()
+      mods.$push =
+        log: logObj
 
     if options.until?
       mods.$set.retryUntil = options.until
@@ -629,35 +645,36 @@ class JobCollectionBase extends Mongo.Collection
     doc.repeatUntil = time if doc.repeatUntil < time
 
     if doc._id
+
+      mods =
+        $set:
+          status: 'waiting'
+          data: doc.data
+          retries: doc.retries
+          retryUntil: doc.retryUntil
+          retryWait: doc.retryWait
+          retryBackoff: doc.retryBackoff
+          repeats: doc.repeats
+          repeatUntil: doc.repeatUntil
+          repeatWait: doc.repeatWait
+          depends: doc.depends
+          priority: doc.priority
+          after: doc.after
+          updated: time
+
+      if logObj = _logMessage.resubmitted()
+        mods.$push =
+          log: logObj
+
       num = @update(
         {
           _id: doc._id
           status: 'paused'
           runId: null
         }
-        {
-          $set:
-            status: 'waiting'
-            data: doc.data
-            retries: doc.retries
-            retryUntil: doc.retryUntil
-            retryWait: doc.retryWait
-            retryBackoff: doc.retryBackoff
-            repeats: doc.repeats
-            repeatUntil: doc.repeatUntil
-            repeatWait: doc.repeatWait
-            depends: doc.depends
-            priority: doc.priority
-            after: doc.after
-            updated: time
-          $push:
-            log:
-              time: time
-              runId: null
-              level: 'info'
-              message: 'Job Resubmitted'
-        }
+        mods
       )
+
       if num
         @_promote_jobs? [doc._id]
         return doc._id
@@ -677,12 +694,7 @@ class JobCollectionBase extends Mongo.Collection
           }
         ).forEach (d) => @_DDPMethod_jobCancel d._id, {}
       doc.created = time
-      doc.log.push
-        time: time
-        runId: null
-        level: 'info'
-        message: "Job Submitted"
-
+      doc.log.push _logMessage.submitted()
       newId = @insert doc
       @_promote_jobs? [newId]
       return newId
@@ -824,27 +836,28 @@ class JobCollectionBase extends Mongo.Collection
     unless doc?
       console.warn "Running job not found", id, runId
       return false
+
+    mods =
+      $set:
+        status: "completed"
+        result: result
+        progress:
+          completed: 1
+          total: 1
+          percent: 100
+        updated: time
+  
+    if logObj = _logMessage.completed runId
+      mods.$push =
+        log: logObj
+
     num = @update(
       {
         _id: id
         runId: runId
         status: "running"
       }
-      {
-        $set:
-          status: "completed"
-          result: result
-          progress:
-            completed: 1
-            total: 1
-            percent: 100
-          updated: time
-        $push:
-          log:
-            time: time
-            runId: runId
-            message: "Job Completed Successfully"
-      }
+      mods
     )
     if num is 1
       if doc.repeats > 0 and doc.repeatUntil - doc.repeatWait >= time
@@ -864,22 +877,22 @@ class JobCollectionBase extends Mongo.Collection
       ).fetch().map (d) => d._id
 
       if ids.length > 0
+
+        mods =
+          $pull:
+            depends: id
+          $push:
+            resolved: id
+
+        if logObj = _logMessage.resolved id, runId
+          mods.$push.log = logObj
+
         n = @update(
           {
             _id:
               $in: ids
           }
-          {
-            $pull:
-              depends: id
-            $push:
-              resolved: id
-              log:
-                time: time
-                runId: null
-                level: 'info'
-                message: "Dependency resolved for #{id} by #{runId}"
-          }
+          mods
           {
             multi: true
           }
@@ -938,31 +951,30 @@ class JobCollectionBase extends Mongo.Collection
 
     err.runId = runId  # Link each failure to the run that generated it.
 
+    mods =
+      $set:
+        status: newStatus
+        runId: null
+        after: after
+        progress:
+          completed: 0
+          total: 1
+          percent: 0
+        updated: time
+      $push:
+        failures:
+          err
+
+    if logObj = _logMessage.failed runId, options.fatal, err.value
+      mods.$push.log = logObj
+
     num = @update(
       {
         _id: id
         runId: runId
         status: "running"
       }
-      {
-        $set:
-          status: newStatus
-          runId: null
-          after: after
-          progress:
-            completed: 0
-            total: 1
-            percent: 0
-          updated: time
-        $push:
-          failures:
-            err
-          log:
-            time: time
-            runId: runId
-            level: if newStatus is 'failed' then 'danger' else 'warning'
-            message: "Job Failed with#{if options.fatal then " Fatal" else ""} Error#{if err.value? and typeof err.value is 'string' then " :"+ err.value else ""}."
-      }
+      mods
     )
     if newStatus is "failed" and num is 1
       # Cancel any dependent jobs too

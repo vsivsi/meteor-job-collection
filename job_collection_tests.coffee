@@ -74,12 +74,13 @@ Tinytest.addAsync 'Run startJobs on new job collection', (test, onComplete) ->
     onComplete()
 
 Tinytest.addAsync 'Create a job and see that it is added to the collection and runs', (test, onComplete) ->
-  job = testColl.createJob 'testJob', { some: 'data' }
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = testColl.createJob jobType, { some: 'data' }
   test.ok validJobDoc(job.doc)
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
-    q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
       test.equal job._doc._id, res
       job.done()
       cb()
@@ -87,8 +88,9 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
         onComplete()
 
 Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) ->
-  job = testColl.createJob 'testJob', { order: 1 }
-  job2 = testColl.createJob 'testJob', { order: 2 }
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = testColl.createJob jobType, { order: 1 }
+  job2 = testColl.createJob jobType, { order: 2 }
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
@@ -97,7 +99,7 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
       test.fail(err) if err
       test.ok validId(res), "job.save() failed in callback result"
       count = 0
-      q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+      q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
         count++
         test.equal count, job.data.order
         job.done()
@@ -108,10 +110,11 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
 
 Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
   counter = 0
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   jobs = []
-  jobs[0] = testColl.createJob('testJob', {count: 3}).priority('low')
-  jobs[1] = testColl.createJob('testJob', {count: 1}).priority('high')
-  jobs[2] = testColl.createJob('testJob', {count: 2})
+  jobs[0] = testColl.createJob(jobType, {count: 3}).priority('low')
+  jobs[1] = testColl.createJob(jobType, {count: 1}).priority('high')
+  jobs[2] = testColl.createJob(jobType, {count: 2})
 
   jobs[0].save (err, res) ->
     test.fail(err) if err
@@ -122,7 +125,7 @@ Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
       jobs[2].save (err, res) ->
         test.fail(err) if err
         test.ok validId(res), "jobs[2].save() failed in callback result"
-        q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+        q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
           counter++
           test.equal job.data.count, counter
           job.done()
@@ -133,11 +136,12 @@ Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
 
 Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onComplete) ->
   counter = 0
-  job = testColl.createJob('testJob', {some: 'data'}).retry({retries: testColl.forever, wait: 0})
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = testColl.createJob(jobType, {some: 'data'}).retry({retries: testColl.forever, wait: 0})
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
-    q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
       counter++
       test.equal job.doc._id, res
       if counter < 3
@@ -151,11 +155,12 @@ Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onCo
 
 Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
   counter = 0
-  job = testColl.createJob('testJob', {some: 'data'}).retry({retries: 2, wait: 200, backoff: 'exponential'})
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = testColl.createJob(jobType, {some: 'data'}).retry({retries: 2, wait: 200, backoff: 'exponential'})
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
-    q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
       counter++
       test.equal job.doc._id, res
       if counter < 3
@@ -169,11 +174,12 @@ Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
 
 Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
   counter = 0
-  job = testColl.createJob('testJob', {some: 'data'}).retry({until: new Date(new Date().valueOf() + 1500), wait: 500})
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = testColl.createJob(jobType, {some: 'data'}).retry({until: new Date(new Date().valueOf() + 1500), wait: 500})
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
-    q = testColl.processJobs 'testJob', { pollInterval: 250 }, (job, cb) ->
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
       counter++
       test.equal job.doc._id, res
       job.fail('Fail test')

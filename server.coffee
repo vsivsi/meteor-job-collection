@@ -46,7 +46,7 @@ if Meteor.isServer
       Job._localServerMethods ?= {}
       Job._localServerMethods[methodName] = methodFunction for methodName, methodFunction of localMethods
 
-      Job.setDDPApply (name, params, cb) ->
+      Job._setDDPApply (name, params, cb) ->
         if cb?
           Meteor.setTimeout (() -> cb null, Job._localServerMethods[name].apply(this, params)), 0
         else

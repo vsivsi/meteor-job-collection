@@ -91,6 +91,8 @@ class JobCollectionBase extends Mongo.Collection
     # calling Mongo.Collection constructor
     delete options.noCollectionSuffix
 
+    Job.setDDP()
+
     # Call super's constructor
     super collectionName, options
 
@@ -133,6 +135,8 @@ class JobCollectionBase extends Mongo.Collection
   resumeJobs: (params...) -> Job.resumeJobs @root, params...
   restartJobs: (params...) -> Job.restartJobs @root, params...
   removeJobs: (params...) -> Job.removeJobs @root, params...
+
+  setDDP: (params...) -> Job.setDDP params...
 
   jobDocPattern: _validJobDoc()
 

@@ -19,22 +19,10 @@ if Meteor.isClient
       super root, options
 
       @logConsole = false
+      @isSimulation = true
 
       Meteor.methods @_generateMethods()
 
-    _methodWrapper: (method, func) ->
-
-      toLog = (userId, message) =>
-        if @logConsole
-          console.log "#{new Date()}, #{userId}, #{method}, #{message}\n"
-
-      # Return the wrapper function that the Meteor method will actually invoke
-      return (params...) ->
-        user = this.userId ? "[UNAUTHENTICATED]"
-        toLog user, "params: " + JSON.stringify(params)
-        retval = func(params...)
-        toLog user, "returned: " + JSON.stringify(retval)
-        return retval
-
-
-
+    _toLog: (userId, method, message) =>
+      if @logConsole
+        console.log "#{new Date()}, #{userId}, #{method}, #{message}\n"

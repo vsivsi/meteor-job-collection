@@ -170,6 +170,16 @@ class JobCollectionBase extends Mongo.Collection
       level = if fatal then 'danger' else 'warning'
       _createLogEntry msg, runId, level
 
+  _methodWrapper: (method, func) ->
+    toLog = @_toLog
+    # Return the wrapper function that the Meteor method will actually invoke
+    return (params...) ->
+      user = this.userId ? "[UNAUTHENTICATED]"
+      toLog user, method, "params: " + JSON.stringify(params)
+      retval = func(params...)
+      toLog user, method, "returned: " + JSON.stringify(retval)
+      return retval
+
   _generateMethods: () ->
     methodsOut = {}
     methodPrefix = '_DDPMethod_'
@@ -838,7 +848,8 @@ class JobCollectionBase extends Mongo.Collection
       }
     )
     unless doc?
-      console.warn "Running job not found", id, runId
+      unless @isSimulation
+        console.warn "Running job not found", id, runId
       return false
 
     mods =
@@ -940,7 +951,8 @@ class JobCollectionBase extends Mongo.Collection
       }
     )
     unless doc?
-      console.warn "Running job not found", id, runId
+      unless @isSimulation
+        console.warn "Running job not found", id, runId
       return false
 
     after = switch doc.retryBackoff

@@ -91,7 +91,7 @@ class JobCollectionBase extends Mongo.Collection
     # calling Mongo.Collection constructor
     delete options.noCollectionSuffix
 
-    Job.setDDP()
+    Job.setDDP(options.ddp)
 
     # Call super's constructor
     super collectionName, options

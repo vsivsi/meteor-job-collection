@@ -249,6 +249,7 @@ Creating a new `JobCollection` is similar to creating a new Meteor Collection. Y
 `options`:
 
 * `noCollectionSuffix` -- If `true`, `'.jobs'` won't be appended to the collection name. Default: `false`
+* `ddp` -- The result of a successful call to [`DDP.connect()`](http://docs.meteor.com/#/full/ddp_connect). If provided, this collection will connect to the remote job collection. Calling `ddp.subscribe()` will also be necessary if you want the local collection to track the remote.
 * In addition, JobCollection supports the same options as Meteor [Mongo.Collection](http://docs.meteor.com/#/full/mongo_collection)
 
 For security and simplicity the traditional client allow/deny rules for Meteor collections are preset to deny all direct client `insert`, `update` and `remove` type operations on a `JobCollection`. This effectively channels all remote activity through the `JobCollection` DDP methods, which may be secured using allow/deny rules specific to `JobCollection`. See the documentation for `jc.allow()` and `jc.deny()` for more information.

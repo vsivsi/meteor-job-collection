@@ -41,18 +41,23 @@ if Meteor.isServer
         @allows[level] = []
         @denys[level] = []
 
-      localMethods = @_generateMethods()
+      # If a ddp option is given, then this JobCollection is actually hosted
+      # remotely, so don't establish local methods in that case
+      unless options.ddp?
 
-      Job._localServerMethods ?= {}
-      Job._localServerMethods[methodName] = methodFunction for methodName, methodFunction of localMethods
+        localMethods = @_generateMethods()
 
-      Job._setDDPApply (name, params, cb) ->
-        if cb?
-          Meteor.setTimeout (() -> cb null, Job._localServerMethods[name].apply(this, params)), 0
-        else
-          Job._localServerMethods[name].apply(this, params)
+        # Since these methods are local, skip the 
+        Job._localServerMethods ?= {}
+        Job._localServerMethods[methodName] = methodFunction for methodName, methodFunction of localMethods
 
-      Meteor.methods localMethods
+        Job._setDDPApply (name, params, cb) ->
+          if cb?
+            Meteor.setTimeout (() -> cb null, Job._localServerMethods[name].apply(this, params)), 0
+          else
+            Job._localServerMethods[name].apply(this, params)
+
+        Meteor.methods localMethods
 
     _toLog: (userId, method, message) =>
       @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"

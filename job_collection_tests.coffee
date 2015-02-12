@@ -73,6 +73,21 @@ Tinytest.addAsync 'Run startJobs on new job collection', (test, onComplete) ->
       test.equal testColl.stopped, false, "startJobs didn't start job collection"
     onComplete()
 
+if Meteor.isServer
+
+  Tinytest.addAsync 'Create a server-side job and see that it is added to the collection and runs', (test, onComplete) ->
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    job = testColl.createJob jobType, { some: 'data' }
+    test.ok validJobDoc(job.doc)
+    res = job.save()
+    test.ok validId(res), "job.save() failed in sync result"
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
+      test.equal job._doc._id, res
+      job.done()
+      cb()
+      q.shutdown { level: 'soft', quiet: true }, () ->
+        onComplete()
+
 Tinytest.addAsync 'Create a job and see that it is added to the collection and runs', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = testColl.createJob jobType, { some: 'data' }

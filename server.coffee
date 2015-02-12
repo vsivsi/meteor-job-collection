@@ -54,6 +54,9 @@ if Meteor.isServer
           else
             Job._localServerMethods[name].apply(this, params)
         Meteor.methods localMethods
+      else
+        @isSimulation = true
+        options.ddp.methods @_generateMethods()
 
     _toLog: (userId, method, message) =>
       @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"

@@ -120,8 +120,12 @@ if (Meteor.isClient) {
 
 **A:** Anywhere you want!
 
+ job-collection is extremely flexible in where the work can get done; from workers that only run on the Meteor server to hundreds of node.js workers running on a cluster or in the cloud. In some cases work can even be done within properly authenticated Meteor clients.
+
 Below is a pure node.js program that can obtain jobs from the server above and "get 'em done".
 Powerfully, this can be run ***anywhere*** that has node.js and can connect to the server. The secret sauce here is the [meteor-job npm package](https://www.npmjs.org/search?q=meteor-job), which is fully interoperable with job-collection.
+
+*NOTE!* Worker code very similar to what is shown below (without all of the DDP setup) can also run on the Meteor server or even in a Meteor client. Everything before the call to `Job.processJobs()` is just code to connect and authenticate a pure node.js script with a Meteor server.
 
 ```js
 ///////////////////
@@ -154,6 +158,8 @@ ddp.connect(function (err) {
     // Create a worker to get sendMail jobs from 'myJobQueue'
     // This will keep running indefinitely, obtaining new work
     // from the server whenever it is available.
+    // Note: If this worker was running within the Meteor environment, 
+    // Then only the call below is necessary to setup a worker!
     var workers = Job.processJobs('myJobQueue', 'sendEmail',
       function (job, cb) {
         // This will only be called if a
@@ -178,8 +184,6 @@ ddp.connect(function (err) {
   });
 });
 ```
-
-Worker code very similar to the above (without all of the DDP setup) can run on the Meteor server or even a Meteor client.
 
 ### Design
 

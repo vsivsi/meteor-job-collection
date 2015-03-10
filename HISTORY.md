@@ -2,6 +2,7 @@
 
 ### v.NEXT
 
+* jc.startJobs and jc.stopJobs have been renamed to jc.startJobServer and jc.shutdownJobServer respectively. The old versions will now generate deprecation warnings.
 * Fixed an issue similar to #51 on the client-side.
 * Fixed issue #55. All standard Mongo.Collection options should now work with JobCollections as well.
 * Updated versions of package dependencies
@@ -16,7 +17,7 @@
 * Added `jq.trigger()` method to provide a mechanism to trigger `getWork` using an alternative method to `pollInterval`
 * `job.log()` can now accept a `data` option, which must be an object.
 * `log.data` field is now permitted in the Job document model.
-* WHen `job.fail(err)` is used, the error object stored in the `failures` array will have the `runId` as an added field.
+* When `job.fail(err)` is used, the error object stored in the `failures` array will have the `runId`å as an added field.
 
 ### v.0.0.18
 

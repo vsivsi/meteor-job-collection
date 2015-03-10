@@ -65,12 +65,20 @@ if Meteor.isServer
 
 testColl = if Meteor.isClient then clientTestColl else serverTestColl
 
-Tinytest.addAsync 'Run startJobs on new job collection', (test, onComplete) ->
-  testColl.startJobs (err, res) ->
+# Tinytest.addAsync 'Run startJobs on new job collection', (test, onComplete) ->
+#   testColl.startJobs (err, res) ->
+#     test.fail(err) if err
+#     test.equal res, true, "startJobs failed in callback result"
+#     if Meteor.isServer
+#       test.equal testColl.stopped, false, "startJobs didn't start job collection"
+#     onComplete()
+
+Tinytest.addAsync 'Run startJobServer on new job collection', (test, onComplete) ->
+  testColl.startJobServer (err, res) ->
     test.fail(err) if err
-    test.equal res, true, "startJobs failed in callback result"
+    test.equal res, true, "startJobServer failed in callback result"
     if Meteor.isServer
-      test.equal testColl.stopped, false, "startJobs didn't start job collection"
+      test.equal testColl.stopped, false, "startJobServer didn't start job collection"
     onComplete()
 
 if Meteor.isServer
@@ -215,3 +223,11 @@ Tinytest.addAsync 'Run stopJobs on the job collection', (test, onComplete) ->
     if Meteor.isServer
       test.notEqual testColl.stopped, false, "stopJobs didn't stop job collection"
     onComplete()
+
+# Tinytest.addAsync 'Run shutdownJobServer on the job collection', (test, onComplete) ->
+#   testColl.shutdownJobServer { timeout: 1 }, (err, res) ->
+#     test.fail(err) if err
+#     test.equal res, true, "shutdownJobServer failed in callback result"
+#     if Meteor.isServer
+#       test.notEqual testColl.stopped, false, "shutdownJobServer didn't stop job collection"
+#     onComplete()

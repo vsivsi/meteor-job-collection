@@ -216,18 +216,18 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
       2000
     )
 
-Tinytest.addAsync 'Run stopJobs on the job collection', (test, onComplete) ->
-  testColl.stopJobs { timeout: 1 }, (err, res) ->
-    test.fail(err) if err
-    test.equal res, true, "stopJobs failed in callback result"
-    if Meteor.isServer
-      test.notEqual testColl.stopped, false, "stopJobs didn't stop job collection"
-    onComplete()
-
-# Tinytest.addAsync 'Run shutdownJobServer on the job collection', (test, onComplete) ->
-#   testColl.shutdownJobServer { timeout: 1 }, (err, res) ->
+# Tinytest.addAsync 'Run stopJobs on the job collection', (test, onComplete) ->
+#   testColl.stopJobs { timeout: 1 }, (err, res) ->
 #     test.fail(err) if err
-#     test.equal res, true, "shutdownJobServer failed in callback result"
+#     test.equal res, true, "stopJobs failed in callback result"
 #     if Meteor.isServer
-#       test.notEqual testColl.stopped, false, "shutdownJobServer didn't stop job collection"
+#       test.notEqual testColl.stopped, false, "stopJobs didn't stop job collection"
 #     onComplete()
+
+Tinytest.addAsync 'Run shutdownJobServer on the job collection', (test, onComplete) ->
+  testColl.shutdownJobServer { timeout: 1 }, (err, res) ->
+    test.fail(err) if err
+    test.equal res, true, "shutdownJobServer failed in callback result"
+    if Meteor.isServer
+      test.notEqual testColl.stopped, false, "shutdownJobServer didn't stop job collection"
+    onComplete()

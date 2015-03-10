@@ -278,12 +278,12 @@ class JobCollectionBase extends Mongo.Collection
     check options, Match.Optional {}
     options ?= {}
     # The client can't actually do this, so skip it
-    if @isSimulation
+    unless @isSimulation
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = false
     return true
 
-  _DDPMethod_startJobs: do () ->
+  _DDPMethod_startJobs: do () =>
     depFlag = false
     (options) ->
       unless depFlag
@@ -298,7 +298,7 @@ class JobCollectionBase extends Mongo.Collection
     options.timeout ?= 60*1000
 
     # The client can't actually do any of this, so skip it
-    if @isSimulation
+    unless @isSimulation
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = Meteor.setTimeout(
         () =>
@@ -310,8 +310,9 @@ class JobCollectionBase extends Mongo.Collection
               transform: null
             }
           )
-          console.warn "Failing #{cursor.count()} jobs on queue stop."
-          cursor.forEach (d) => @_DDPMethod_jobFail d._id, d.runId, "Running at queue stop."
+          failedJobs = cursor.count()
+          console.warn "Failing #{failedJobs} jobs on queue stop." if failedJobs isnt 0
+          cursor.forEach (d) => @_DDPMethod_jobFail d._id, d.runId, "Running at Job Server shutdown."
           if @logStream? # Shutting down closes the logStream!
             @logStream.end()
             @logStream = null
@@ -319,7 +320,7 @@ class JobCollectionBase extends Mongo.Collection
       )
     return true
 
-  _DDPMethod_stopJobs: do () ->
+  _DDPMethod_stopJobs: do () =>
     depFlag = false
     (options) ->
       unless depFlag

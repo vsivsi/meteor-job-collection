@@ -207,3 +207,11 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
     ,
       2000
     )
+
+Tinytest.addAsync 'Run stopJobs on the job collection', (test, onComplete) ->
+  testColl.stopJobs { timeout: 1 }, (err, res) ->
+    test.fail(err) if err
+    test.equal res, true, "stopJobs failed in callback result"
+    if Meteor.isServer
+      test.notEqual testColl.stopped, false, "stopJobs didn't stop job collection"
+    onComplete()

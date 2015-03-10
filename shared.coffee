@@ -127,8 +127,6 @@ class JobCollectionBase extends Mongo.Collection
   processJobs: (params...) -> new Job.processJobs @root, params...
   getJob: (params...) -> Job.getJob @root, params...
   getWork: (params...) -> Job.getWork @root, params...
-  startJobs: (params...) -> Job.startJobs @root, params...
-  stopJobs: (params...) -> Job.stopJobs @root, params...
   getJobs: (params...) -> Job.getJobs @root, params...
   cancelJobs: (params...) -> Job.cancelJobs @root, params...
   pauseJobs: (params...) -> Job.pauseJobs @root, params...
@@ -137,6 +135,13 @@ class JobCollectionBase extends Mongo.Collection
   removeJobs: (params...) -> Job.removeJobs @root, params...
 
   setDDP: (params...) -> Job.setDDP params...
+
+  startJobServer: (params...) -> Job.startJobServer @root, params...
+  shutdownJobServer: (params...) -> Job.shutdownJobServer @root, params...
+
+  # These are deprecated and will be removed
+  startJobs: (params...) -> Job.startJobs @root, params...
+  stopJobs: (params...) -> Job.stopJobs @root, params...
 
   jobDocPattern: _validJobDoc()
 
@@ -269,23 +274,31 @@ class JobCollectionBase extends Mongo.Collection
       console.warn "Job rerun/repeat failed to reschedule!", id, runId
     return null
 
-  _DDPMethod_startJobs: (options) ->
+  _DDPMethod_startJobServer: (options) ->
     check options, Match.Optional {}
     options ?= {}
     # The client can't actually do this, so skip it
-    if @stopped?
+    if @isSimulation
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = false
     return true
 
-  _DDPMethod_stopJobs: (options) ->
+  _DDPMethod_startJobs: do () ->
+    depFlag = false
+    (options) ->
+      unless depFlag
+        depFlag = true
+        console.warn "Deprecation Warning: jc.startJobs() has been renamed to jc.startJobServer()"
+      return @_DDPMethod_startJobServer options
+
+  _DDPMethod_shutdownJobServer: (options) ->
     check options, Match.Optional
       timeout: Match.Optional(Match.Where _validIntGTEOne)
     options ?= {}
     options.timeout ?= 60*1000
 
     # The client can't actually do any of this, so skip it
-    if @stopped?
+    if @isSimulation
       Meteor.clearTimeout(@stopped) if @stopped and @stopped isnt true
       @stopped = Meteor.setTimeout(
         () =>
@@ -305,6 +318,14 @@ class JobCollectionBase extends Mongo.Collection
         options.timeout
       )
     return true
+
+  _DDPMethod_stopJobs: do () ->
+    depFlag = false
+    (options) ->
+      unless depFlag
+        depFlag = true
+        console.warn "Deprecation Warning: jc.stopJobs() has been renamed to jc.shutdownJobServer()"
+      return @_DDPMethod_shutdownJobServer options
 
   _DDPMethod_getJob: (ids, options) ->
     check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])

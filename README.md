@@ -58,7 +58,7 @@ if (Meteor.isServer) {
     });
 
     // Start the myJobs queue running
-    return myJobs.startJobs();
+    return myJobs.startJobServer();
   });
 }
 ```
@@ -373,21 +373,21 @@ jc.deny({
 
 See the `allow` method above for more details.
 
-### jc.startJobs([options], [callback])
+### jc.startJobServer([options], [callback])
 #### Starts the server job Collection.
-#### Requires permission: Server, `admin`, or `startJobs`
+#### Requires permission: Server, `admin`, or `startJobServer`
 
 `options`: No options currently defined
 
 `callback(error, result)` -- Result is true if successful.
 
 ```js
-jc.startJobs();  // Callback is optional
+jc.startJobServer();  // Callback is optional
 ```
 
-### jc.stopJobs([options], [callback])
+### jc.shutdownJobServer([options], [callback])
 #### Stops the server job Collection.
-#### Requires permission: Server, `admin`, or `stopJobs`
+#### Requires permission: Server, `admin`, or `shutdownJobServer`
 
 `options`:
 
@@ -396,7 +396,7 @@ jc.startJobs();  // Callback is optional
 `callback(error, result)` -- Result is true if successful.
 
 ```js
-jc.stopJobs(
+jc.shutdownJobServer(
   {
     timeout: 60000
   }
@@ -687,10 +687,10 @@ jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 These are all of valid job-collection DDP method names. These are also the names of the coinciding method-specific allow/deny rules. For more information about the DDP method API see the documentaion on that topic near the end of this README.
 
 ```js
-jc.ddpMethods = [ 'startJobs', 'stopJobs', 'jobRemove', 'jobPause',
-                  'jobResume', 'jobCancel', 'jobRestart', 'jobSave',
-                  'jobRerun', 'getWork', 'getJob', 'jobLog',
-                  'jobProgress', 'jobDone', 'jobFail' ];
+jc.ddpMethods = [ 'startJobServer', 'shutdownJobServer', 'jobRemove',
+                  'jobPause', 'jobResume', 'jobCancel', 'jobRestart',
+                  'jobSave', 'jobRerun', 'getWork', 'getJob',
+                  'jobLog','jobProgress', 'jobDone', 'jobFail' ];
 ```
 
 ### jc.ddpPermissionLevels - Anywhere
@@ -709,8 +709,8 @@ This is the mapping between job-collection DDP methods and permission groups.
 
 ```js
 jc.ddpMethodPermissions = {
-    'startJobs': ['startJobs', 'admin'],
-    'stopJobs': ['stopJobs', 'admin'],
+    'startJobServer': ['startJobServer', 'admin'],
+    'shutdownJobServer': ['shutdownJobServer', 'admin'],
     'jobRemove': ['jobRemove', 'admin', 'manager'],
     'jobPause': ['jobPause', 'admin', 'manager'],
     'jobResume': ['jobResume', 'admin', 'manager'],
@@ -1326,8 +1326,8 @@ These are the underlying Meteor methods that are actually invoked when a method 
 
 Each job-collection you create on a server causes a number of Meteor methods to be defined. The method names are prefaced with the name of the job collection (e.g. "myJobs_getWork") so that multiple job-collections on a server will not interfere with one another. Below you will find the Method API reference.
 
-### `startJobs(options)`
-#### Start running the job collection
+### `startJobServer(options)`
+#### Start running the job collection server
 
 * `options` -- No options currently used
 
@@ -1335,8 +1335,8 @@ Each job-collection you create on a server causes a number of Meteor methods to 
 
 Returns: `Boolean` - Success or failure
 
-### `stopJobs(options)`
-#### Shut down the job collection
+### `shutdownJobServer(options)`
+#### Shut down the job collection server
 
 * `options` -- Supports the following options:
 

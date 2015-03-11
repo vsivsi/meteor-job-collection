@@ -161,7 +161,7 @@ ddp.connect(function (err) {
     // Create a worker to get sendMail jobs from 'myJobQueue'
     // This will keep running indefinitely, obtaining new work
     // from the server whenever it is available.
-    // Note: If this worker was running within the Meteor environment, 
+    // Note: If this worker was running within the Meteor environment,
     // Then only the call below is necessary to setup a worker!
     var workers = Job.processJobs('myJobQueue', 'sendEmail',
       function (job, cb) {

@@ -78,7 +78,7 @@ class JobCollectionBase extends Mongo.Collection
       return new JobCollectionBase(@root, options)
 
     unless @ instanceof Mongo.Collection
-      throw new Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'  
+      throw new Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
 
     options.noCollectionSuffix ?= false
 
@@ -168,9 +168,9 @@ class JobCollectionBase extends Mongo.Collection
     'restarted': () -> _createLogEntry "Job Restarted"
     'resubmitted': () -> _createLogEntry "Job Resubmitted"
     'submitted': () -> _createLogEntry "Job Submitted"
-    'completed': (runId) -> _createLogEntry "Job Completed Successfully", runId    
-    'resolved': (id, runId) -> _createLogEntry "Dependency resolved for #{id} by #{runId}", runId    
-    'failed': (runId, fatal, value) -> 
+    'completed': (runId) -> _createLogEntry "Job Completed Successfully", runId
+    'resolved': (id, runId) -> _createLogEntry "Dependency resolved for #{id} by #{runId}", runId
+    'failed': (runId, fatal, value) ->
       msg = "Job Failed with#{if fatal then ' Fatal' else ''} Error#{if value? and typeof value is 'string' then ': ' + value else ''}."
       level = if fatal then 'danger' else 'warning'
       _createLogEntry msg, runId, level
@@ -264,7 +264,7 @@ class JobCollectionBase extends Mongo.Collection
     if logObj = _logMessage.rerun id, runId
       doc.log = [logObj]
     else
-      doc.log = [] 
+      doc.log = []
 
     doc.after = new Date(time.valueOf() + wait)
     if jobId = @insert doc
@@ -562,7 +562,7 @@ class JobCollectionBase extends Mongo.Collection
     return false if ids.length is 0
     time = new Date()
 
-    mods = 
+    mods =
       $set:
         status: "cancelled"
         runId: null
@@ -883,7 +883,7 @@ class JobCollectionBase extends Mongo.Collection
           total: 1
           percent: 100
         updated: time
-  
+
     if logObj = _logMessage.completed runId
       mods.$push =
         log: logObj

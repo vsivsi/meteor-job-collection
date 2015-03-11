@@ -2,7 +2,7 @@
 
 ## Intro
 
-job-collection is a powerful and easy to use job manager designed and built for [Meteor.js](http://meteor.com).
+job-collection is a powerful and easy to use job manager designed and built for Meteor.js.
 
 It solves the following problems (and more):
 
@@ -12,11 +12,7 @@ It solves the following problems (and more):
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
-**Note:** This Package remains experimental until v0.1.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention. If you want to live dangerously, development is occuring on the `dev` branch.
-
-**Note:** job-collection was formerly called jobCollection, but changes in the packaging system since Meteor 0.9 do not permit uppercase letters in package names, so the name had to change.
-
-**Note:** If you are looking for a Meteor v0.8.x compatible version of this package, please see the `meteor-0.8-compat` branch. It has the same functionality as the `master` branch, but with old-skool Meteor v0.8.x package compatibility. Note, there will be no further development on this version of the package.
+**Note:** This Package remains experimental until v1.0.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention. If you want to live dangerously, development is occuring on the `dev` branch.
 
 ## Table of Contents
 
@@ -123,7 +119,7 @@ if (Meteor.isClient) {
 
 **A:** Anywhere you want!
 
- job-collection is extremely flexible in where the work can get done; from workers that only run on the Meteor server to hundreds of node.js workers running on a cluster or in the cloud. In some cases work can even be done within properly authenticated Meteor clients.
+job-collection is extremely flexible in where the work can get done; from workers that only run on a single Meteor server to hundreds of node.js workers running on a cluster or in the cloud. Work can also be done on other Meteor servers (different from the one hosting the Job collection), or in some cases it can be done within properly authenticated Meteor clients!
 
 Below is a pure node.js program that can obtain jobs from the server above and "get 'em done".
 Powerfully, this can be run ***anywhere*** that has node.js and can connect to the server. The secret sauce here is the [meteor-job npm package](https://www.npmjs.org/search?q=meteor-job), which is fully interoperable with job-collection.

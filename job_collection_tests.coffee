@@ -42,8 +42,18 @@ Tinytest.add 'JobCollection default constructor', (test) ->
 
 clientTestColl = new JobCollection 'ClientTest', { idGeneration: 'MONGO' }
 serverTestColl = new JobCollection 'ServerTest', { idGeneration: 'STRING' }
+
 # The line below is a regression test for issue #51
 dummyTestColl = new JobCollection 'DummyTest', { idGeneration: 'STRING' }
+
+if Meteor.isServer
+  remoteTestColl = new JobCollection 'RemoteTest', { idGeneration: 'STRING' }
+  remoteTestColl.allow
+    admin: () -> true
+  # remoteTestColl.startJobServer()
+else
+  remoteConnection = DDP.connect 'localhost:3000'
+  remoteServerTestColl = new JobCollection 'RemoteTest', { idGeneration: 'STRING', ddp: remoteConnection }
 
 testColl = null  # This will be defined differently for client / server
 
@@ -231,3 +241,34 @@ Tinytest.addAsync 'Run shutdownJobServer on the job collection', (test, onComple
     if Meteor.isServer
       test.notEqual testColl.stopped, false, "shutdownJobServer didn't stop job collection"
     onComplete()
+
+if Meteor.isClient
+
+  Tinytest.addAsync 'Run startJobServer on remote job collection', (test, onComplete) ->
+    remoteServerTestColl.startJobServer (err, res) ->
+      test.fail(err) if err
+      test.equal res, true, "startJobServer failed in callback result"
+      onComplete()
+
+  Tinytest.addAsync 'Create a job and see that it is added to a remote server collection and runs', (test, onComplete) ->
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    job = remoteServerTestColl.createJob jobType, { some: 'data' }
+    test.ok validJobDoc(job.doc)
+    console.log "Job is valid!"
+    job.save (err, res) ->
+      test.fail(err) if err
+      console.log "Job is saved!"
+      test.ok validId(res), "job.save() failed in callback result"
+      q = remoteServerTestColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
+        console.log "Job is running!"
+        test.equal job._doc._id, res
+        job.done()
+        cb()
+        q.shutdown { level: 'soft', quiet: true }, () ->
+          onComplete()
+
+  Tinytest.addAsync 'Run shutdownJobServer on remote job collection', (test, onComplete) ->
+    remoteServerTestColl.shutdownJobServer { timeout: 1 }, (err, res) ->
+      test.fail(err) if err
+      test.equal res, true, "shutdownJobServer failed in callback result"
+      onComplete()

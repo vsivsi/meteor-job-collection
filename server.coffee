@@ -41,9 +41,9 @@ if Meteor.isServer
         @allows[level] = []
         @denys[level] = []
 
-      # If a ddp option is given, then this JobCollection is actually hosted
+      # If a connection option is given, then this JobCollection is actually hosted
       # remotely, so don't establish local and remotely callable server methods in that case
-      unless options.ddp?
+      unless options.connection?
         @isSimulation = false
         localMethods = @_generateMethods()
         Job._localServerMethods ?= {}
@@ -56,7 +56,7 @@ if Meteor.isServer
         Meteor.methods localMethods
       else
         @isSimulation = true
-        options.ddp.methods @_generateMethods()
+        options.connection.methods @_generateMethods()
 
     _toLog: (userId, method, message) =>
       @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"

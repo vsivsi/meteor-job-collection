@@ -53,7 +53,7 @@ if Meteor.isServer
   # remoteTestColl.startJobServer()
 else
   remoteConnection = DDP.connect 'localhost:3000'
-  remoteServerTestColl = new JobCollection 'RemoteTest', { idGeneration: 'STRING', ddp: remoteConnection }
+  remoteServerTestColl = new JobCollection 'RemoteTest', { idGeneration: 'STRING', connection: remoteConnection }
 
 testColl = null  # This will be defined differently for client / server
 

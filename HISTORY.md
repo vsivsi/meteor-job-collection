@@ -18,7 +18,7 @@
 * `job.log()` can now accept a `data` option, which must be an object.
 * `log.data` field is now permitted in the Job document model.
 * When `job.fail(err)` is used, the error object stored in the `failures` array will have the `runId` as an added field.
-* Added `ddp` option to `new JobCollection()` to direct the job collection to use a alternate remote server's job collection rather than the default local one
+* `connection` option to `new JobCollection()` will not direct the job collection to use a alternate remote server's job collection rather than the default local one
 
 ### v.0.0.18
 

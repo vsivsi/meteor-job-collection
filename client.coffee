@@ -21,10 +21,10 @@ if Meteor.isClient
       @logConsole = false
       @isSimulation = true
 
-      unless options.ddp?
+      unless options.connection?
         Meteor.methods @_generateMethods()
       else
-        options.ddp.methods @_generateMethods()
+        options.connection.methods @_generateMethods()
 
     _toLog: (userId, method, message) =>
       if @logConsole

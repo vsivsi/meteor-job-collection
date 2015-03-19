@@ -26,9 +26,6 @@ if Meteor.isServer
         insert: () => true
         remove: () => true
 
-      # Default indexes
-      @._ensureIndex { type : 1, status : 1 }
-
       @promote()
 
       @logStream = null
@@ -44,6 +41,8 @@ if Meteor.isServer
       # If a connection option is given, then this JobCollection is actually hosted
       # remotely, so don't establish local and remotely callable server methods in that case
       unless options.connection?
+        # Default indexes, only when not remotely connected!
+        @._ensureIndex { type : 1, status : 1 }
         @isSimulation = false
         localMethods = @_generateMethods()
         Job._localServerMethods ?= {}

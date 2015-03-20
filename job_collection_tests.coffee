@@ -50,7 +50,6 @@ if Meteor.isServer
   remoteTestColl = new JobCollection 'RemoteTest', { idGeneration: 'STRING' }
   remoteTestColl.allow
     admin: () -> true
-  # remoteTestColl.startJobServer()
 else
   remoteConnection = DDP.connect 'localhost:3000'
   remoteServerTestColl = new JobCollection 'RemoteTest', { idGeneration: 'STRING', connection: remoteConnection }

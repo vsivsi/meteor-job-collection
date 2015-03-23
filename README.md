@@ -12,8 +12,6 @@ It solves the following problems (and more):
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
-**Note:** This Package remains experimental until v1.0.0 is released (which will be soon). The API methods described herein are maturing, but they may still change. If you have feature suggestions or other feedback, now is the time to bring it to my attention. If you want to live dangerously, development is occuring on the `dev` branch.
-
 ## Table of Contents
 
 - [Quick example](#user-content-quick-example)

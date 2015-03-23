@@ -94,7 +94,7 @@ if Meteor.isServer
 
   Tinytest.addAsync 'Create a server-side job and see that it is added to the collection and runs', (test, onComplete) ->
     jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-    job = testColl.createJob jobType, { some: 'data' }
+    job = new Job testColl, jobType, { some: 'data' }
     test.ok validJobDoc(job.doc)
     res = job.save()
     test.ok validId(res), "job.save() failed in sync result"
@@ -107,7 +107,7 @@ if Meteor.isServer
 
 Tinytest.addAsync 'Create a job and see that it is added to the collection and runs', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-  job = testColl.createJob jobType, { some: 'data' }
+  job = new Job testColl, jobType, { some: 'data' }
   test.ok validJobDoc(job.doc)
   job.save (err, res) ->
     test.fail(err) if err
@@ -121,8 +121,8 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
 
 Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-  job = testColl.createJob jobType, { order: 1 }
-  job2 = testColl.createJob jobType, { order: 2 }
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
@@ -144,9 +144,9 @@ Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
   counter = 0
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   jobs = []
-  jobs[0] = testColl.createJob(jobType, {count: 3}).priority('low')
-  jobs[1] = testColl.createJob(jobType, {count: 1}).priority('high')
-  jobs[2] = testColl.createJob(jobType, {count: 2})
+  jobs[0] = new Job(testColl, jobType, {count: 3}).priority('low')
+  jobs[1] = new Job(testColl, jobType, {count: 1}).priority('high')
+  jobs[2] = new Job(testColl, jobType, {count: 2})
 
   jobs[0].save (err, res) ->
     test.fail(err) if err
@@ -169,7 +169,7 @@ Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
 Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onComplete) ->
   counter = 0
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-  job = testColl.createJob(jobType, {some: 'data'}).retry({retries: testColl.forever, wait: 0})
+  job = new Job(testColl, jobType, {some: 'data'}).retry({retries: testColl.forever, wait: 0})
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
@@ -188,7 +188,7 @@ Tinytest.addAsync 'A forever retrying job can be scheduled and run', (test, onCo
 Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
   counter = 0
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-  job = testColl.createJob(jobType, {some: 'data'}).retry({retries: 2, wait: 200, backoff: 'exponential'})
+  job = new Job(testColl, jobType, {some: 'data'}).retry({retries: 2, wait: 200, backoff: 'exponential'})
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
@@ -207,7 +207,7 @@ Tinytest.addAsync 'Retrying job with exponential backoff', (test, onComplete) ->
 Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
   counter = 0
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-  job = testColl.createJob(jobType, {some: 'data'}).retry({until: new Date(new Date().valueOf() + 1500), wait: 500})
+  job = new Job(testColl, jobType, {some: 'data'}).retry({until: new Date(new Date().valueOf() + 1500), wait: 500})
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
@@ -251,7 +251,7 @@ if Meteor.isClient
 
   Tinytest.addAsync 'Create a job and see that it is added to a remote server collection and runs', (test, onComplete) ->
     jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-    job = remoteServerTestColl.createJob jobType, { some: 'data' }
+    job = new Job remoteServerTestColl, jobType, { some: 'data' }
     test.ok validJobDoc(job.doc)
     console.log "Job is valid!"
     job.save (err, res) ->

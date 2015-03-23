@@ -123,7 +123,6 @@ class JobCollectionBase extends Mongo.Collection
   ddpPermissionLevels: Job.ddpPermissionLevels
   ddpMethodPermissions: Job.ddpMethodPermissions
 
-  createJob: (params...) -> new Job @root, params...
   processJobs: (params...) -> new Job.processJobs @root, params...
   getJob: (params...) -> Job.getJob @root, params...
   getWork: (params...) -> Job.getWork @root, params...
@@ -151,7 +150,16 @@ class JobCollectionBase extends Mongo.Collection
     (params...) ->
       unless dep
         dep = true
-        console.warn "WARNING: jc.makeJob() has been deprecated. Use jc.createJob() instead."
+        console.warn "WARNING: jc.makeJob() has been deprecated. Use new Job(jc, doc) instead."
+      new Job @root, params...
+
+  # Deprecated. Remove in next major version
+  createJob: do () ->
+    dep = false
+    (params...) ->
+      unless dep
+        dep = true
+        console.warn "WARNING: jc.createJob() has been deprecated. Use new Job(jc, type, data) instead."
       new Job @root, params...
 
   _createLogEntry = (message = '', runId = null, level = 'info', time = new Date()) ->

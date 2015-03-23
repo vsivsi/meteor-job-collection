@@ -74,7 +74,7 @@ if (Meteor.isClient) {
     // On the server, all of it would run unconditionally.
 
     // Create a job:
-    var job = myJobs.createJob('sendEmail', // type of job
+    var job = new Job(myJobs, 'sendEmail', // type of job
       // Job data that you define, including anything the job
       // needs to complete. May contain links to files, etc...
       {
@@ -96,7 +96,7 @@ if (Meteor.isClient) {
     // its status changes, etc.
 
     // Any job document from myJobs can be turned into a Job object
-    job = myJobs.createJob(myJobs.findOne({}));
+    job = new Job(myJobs, myJobs.findOne({}));
 
     // Or a job can be fetched from the server by _id
     myJobs.getJob(_id, function (err, job) {
@@ -396,27 +396,6 @@ jc.shutdownJobServer(
 );  // Callback is optional
 ```
 
-### jc.createJob(type, data) or jc.createJob(jobDoc) - Anywhere
-#### Create a new `Job` object or make one from an existing job document
-
-Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
-
-Note that this call only creates a new job object locally, it does not add it to the job collection. See documentation below for `Job` object API, and specifically `job.save()` to see how to do that.
-
-Existing jobDocs must be valid job documents.
-
-```js
-job = jc.createJob(
-  'jobType',    // type of the job
-  { /* ... */ } // Data for the worker, any valid EJSON object
-);
-
-doc = jc.findOne({});
-if (doc) {
-  job = jc.createJob(doc);
-}
-```
-
 ### jc.getJob(id, [options], [callback]) - Anywhere
 #### Create a job object by id from the server job Collection
 #### Requires permission: Server, `admin`, `worker` or `getJob`
@@ -580,7 +559,7 @@ This is much more efficient than calling `job.resmove()` in a loop because it re
 #### Constant value used to indicate that something should repeat forever
 
 ```js
-job = jc.createJob('jobType', { work: "to", be: "done" })
+job = new Job(jc, 'jobType', { work: "to", be: "done" })
   .retry({ retries: jc.forever })    // Default for .retry()
   .repeat({ repeats: jc.forever });  // Default for .repeat()
 ```
@@ -589,7 +568,7 @@ job = jc.createJob('jobType', { work: "to", be: "done" })
 Constant value used to indicate a future Date that will never arrive
 
 ```js
-job = jc.createJob('jobQueue', 'jobType', { work: "to", be: "done" })
+job = new Job(jc, 'jobQueue', 'jobType', { work: "to", be: "done" })
    .retry({ until: Job.foreverDate })    // Default for .retry()
    .repeat({ until: Job.foreverDate });  // Default for .repeat()
 ```
@@ -733,11 +712,35 @@ if (! Match.test(job.doc, jc.jobDocPattern)) {
 
 ## Job API
 
-New `Job` objects are created using the following JobCollection API calls:
+### `job = new Job(jc, type, data)`
+#### Create a new `Job` object
+Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
 
-* `jc.createJob()` -- Creates a new `Job` object or makes one from a job document (as retrieved from MongoDB)
-* `jc.getJob()` -- Get a `Job` object from the job collection by Id
-* `jc.getJobs()` -- Get multiple `Job` objects from a job collection using an array of Ids
+```js
+job = new Job(  // new is optional
+  jc,           // JobCollection to use
+  'jobType',    // type of the job
+  { /* ... */ } // Data for the worker, any valid EJSON object
+);
+```
+
+### `j = new Job(jc, jobDoc)`
+#### Make a Job object from a Job Collection document.
+Creates a new `Job` object. This is used in cases where a valid Job document is obtained from another source, such as a database lookup.
+
+```js
+job = new Job(  // new is optional
+  jc,           // JobCollection to use
+  { /* ... */ } // any valid Job document
+);
+```
+
+New `Job` objects are also created using the following JobCollection API calls:
+
+* `jc.getJob()` -- Look-up a `Job` object from the job collection by Id
+* `jc.getJobs()` -- Look-up multiple `Job` objects from a job collection using an array of Ids
+* `jc.getWork()` -- Get a `Job` to work on. This changes the job status from `waiting` to `running`
+* `jc.processJobs()` -- Call a worker callback function with a `Job` to work on when work is available
 
 The methods below may be performed on `Job` objects regardless of their source. All `Job` methods may be run on the client or server.
 

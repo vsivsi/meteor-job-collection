@@ -2,7 +2,8 @@
 
 ### v.NEXT
 
-* jc.startJobs and jc.stopJobs have been renamed to jc.startJobServer and jc.shutdownJobServer respectively. The old versions will now generate deprecation warnings.
+* `jc.startJobs` and `jc.stopJobs` have been renamed to `jc.startJobServer` and `jc.shutdownJobServer` respectively. The old versions will now generate deprecation warnings.
+* `jc.makeJob()` and `jc.createJob()` have been deprecated in favor of just calling `new Job(...)`
 * Fixed an issue similar to #51 on the client-side.
 * Fixed issue #55. All standard Mongo.Collection options should now work with JobCollections as well.
 * Updated versions of package dependencies
@@ -11,7 +12,6 @@
 * Fixed issue #55, all valid Mongo.Collection options are now supported. However, transformed documents may fail to validate unless "scrubbed". More work needs to go into documenting this.
 * Fixed #28. Eliminated all "success" console logs.
 * job objects now have `job.doc` readable attribute
-* `jc.makeJob()` has been deprecated, use `jc.createJob(jobDoc)` instead.
 * `jc.jobDocPattern` can now be used to validate Job documents.
 * `j.refresh()` is now chainable
 * Added `jq.trigger()` method to provide a mechanism to trigger `getWork` using an alternative method to `pollInterval`

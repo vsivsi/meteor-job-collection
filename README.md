@@ -21,7 +21,7 @@ Here are the highlights:
 * `jc.jobDocPattern` can now be used to validate Job documents.
 * Added `jq.trigger()` method to provide a mechanism to trigger `getWork` using an alternative method to `pollInterval`
 * `job.log()` can now accept a `data` option, which must be an object.
-* `connection` option to `new JobCollection()` on server will now direct the job collection to use a alternate remote server's Job Collection rather than a local one.
+* `connection` option to `new JobCollection()` on client or server will now direct the local Job Collection to connect to an alternate remote server's Job Collection rather than using the default connection (client) or hosting a collection locally (server).
 
 A complete list of changes can be found in the HISTORY file.
 

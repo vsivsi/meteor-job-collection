@@ -227,12 +227,14 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
 
 if Meteor.isServer
 
-  Tinytest.addAsync 'A forever repeating job with "later" and "until"', (test, onComplete) ->
+  Tinytest.addAsync 'A forever repeating job with "schedule" and "until"', (test, onComplete) ->
     counter = 0
     jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-    job = new Job(testColl, jobType, {some: 'data'}).repeat({
-      until: new Date(new Date().valueOf() + 2500),
-      later: testColl.later.parse.text("every 1 second")})
+    job = new Job(testColl, jobType, {some: 'data'})
+      .repeat({
+        until: new Date(new Date().valueOf() + 2500),
+        schedule: testColl.later.parse.text("every 1 second")})
+      .delay(1000)
     console.log job
     job.save (err, res) ->
       test.fail(err) if err
@@ -249,7 +251,7 @@ if Meteor.isServer
         job.refresh () ->
           console.log "Counter", counter
           test.equal job._doc.status, 'completed'
-          test.equal counter, 3
+          test.equal counter, 2
           q.shutdown { level: 'soft', quiet: true }, () ->
             onComplete()
       ,

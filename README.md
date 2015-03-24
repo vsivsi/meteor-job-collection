@@ -817,7 +817,7 @@ Each time it is re-run, a new job is created in the job collection. This is equi
 * `repeats` -- Number of times to rerun the job. Default: `Job.forever`
 * `until` -- Keep repeating until this `Date`, or until the number of repeats is exhausted, whichever comes first. Default: `Job.foreverDate`
 * `wait`  -- How long to wait between re-runs, in ms. Default: `300000` (5 minutes)
-* `schedule` -- Repeat using a valid [later.js](https://github.com/bunkat/later) schedule. The first run of this job will occur at the first valid scheduled time unless `.after()` has been called, in which case it will run at the first scheduled time thereafter. Note: `schedule` and `wait` are mutually exclusive.
+* `schedule` -- Repeat using a valid [later.js](https://github.com/bunkat/later) schedule. The first run of this job will occur at the first valid scheduled time unless `.after()` or `.delay()` have been called, in which case it will run at the first scheduled time thereafter. Note: `schedule` and `wait` are mutually exclusive.
 
 `[options]` may also be a non-negative integer, which is interpreted as `{ repeats: [options] }`
 

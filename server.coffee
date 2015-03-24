@@ -6,6 +6,8 @@
 
 if Meteor.isServer
 
+  later = Npm.require 'later'
+
   ################################################################
   ## job-collection server class
 
@@ -32,6 +34,8 @@ if Meteor.isServer
 
       @allows = {}
       @denys = {}
+
+      @later = later  # later object, for convenience
 
       # Initialize allow/deny lists for permission levels and ddp methods
       for level in @ddpPermissionLevels.concat @ddpMethods

@@ -45,6 +45,10 @@ _validProgress = () ->
   total: Match.Where(_validNumGTEZero)
   percent: Match.Where(_validNumGTEZero)
 
+_validLaterJSObj = () ->
+  schedules: [ Object ]
+  exceptions: Match.Optional [ Object ]
+
 _validJobDoc = () ->
   _id: Match.Optional Match.OneOf(Match.Where(_validId), null)
   runId: Match.OneOf(Match.Where(_validId), null)
@@ -68,7 +72,7 @@ _validJobDoc = () ->
   repeats: Match.Where _validIntGTEZero
   repeated: Match.Where _validIntGTEZero
   repeatUntil: Date
-  repeatWait: Match.Where _validIntGTEZero
+  repeatWait: Match.OneOf(Match.Where(_validIntGTEZero), Match.Where(_validLaterJSObj))
   created: Date
 
 class JobCollectionBase extends Mongo.Collection
@@ -905,8 +909,17 @@ class JobCollectionBase extends Mongo.Collection
       mods
     )
     if num is 1
-      if doc.repeats > 0 and doc.repeatUntil - doc.repeatWait >= time
-        jobId = @_rerun_job doc
+      if doc.repeats > 0
+        if typeof doc.repeatWait is 'number'
+          if doc.repeatUntil - doc.repeatWait >= time
+            jobId = @_rerun_job doc
+        else if next = @later?.schedule(doc.repeatWait).next()
+          d = new Date(next)
+          wait = d - time
+          wait = 1000 if wait < 1000 # without this, fast jobs that fire every
+                                     # second may run multiple times
+          if doc.repeatUntil - wait >= time
+            jobId = @_rerun_job doc, doc.repeats - 1, wait
 
       # Resolve depends
       ids = @find(

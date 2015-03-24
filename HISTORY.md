@@ -1,5 +1,9 @@
 ## Revision history
 
+### v.NEXT
+
+* Experimental support for using later.js schedules to configure repeating jobs.
+
 ### 1.0.0
 
 * `jc.startJobs` and `jc.stopJobs` have been renamed to `jc.startJobServer` and `jc.shutdownJobServer` respectively. The old versions will now generate deprecation warnings.

@@ -218,12 +218,43 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
       cb()
     Meteor.setTimeout(() ->
       job.refresh () ->
-        test.ok job.status is 'failed', "Until didn't cause job to stop retrying"
+        test.equal job._doc.status, 'failed', "Until didn't cause job to stop retrying"
         q.shutdown { level: 'soft', quiet: true }, () ->
           onComplete()
     ,
       2000
     )
+
+if Meteor.isServer
+
+  Tinytest.addAsync 'A forever repeating job with "later" and "until"', (test, onComplete) ->
+    counter = 0
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    job = new Job(testColl, jobType, {some: 'data'}).repeat({
+      until: new Date(new Date().valueOf() + 2500),
+      later: testColl.later.parse.text("every 1 second")})
+    console.log job
+    job.save (err, res) ->
+      test.fail(err) if err
+      test.ok validId(res), "job.save() failed in callback result"
+      q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
+        counter++
+        if counter is 1
+          test.equal job.doc._id, res
+        else
+          test.notEqual job.doc._id, res
+        job.done()
+        cb()
+      Meteor.setTimeout(() ->
+        job.refresh () ->
+          console.log "Counter", counter
+          test.equal job._doc.status, 'completed'
+          test.equal counter, 3
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
+      ,
+        3000
+      )
 
 # Tinytest.addAsync 'Run stopJobs on the job collection', (test, onComplete) ->
 #   testColl.stopJobs { timeout: 1 }, (err, res) ->

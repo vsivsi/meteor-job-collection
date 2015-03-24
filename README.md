@@ -831,7 +831,7 @@ job.repeat({
 
 // Using later.js
 job.repeat({
-  later: later.parse.text('every 5 mins');   // Rerun this job every 5 minutes
+  schedule: later.parse.text('every 5 mins');   // Rerun this job every 5 minutes
 });
 ```
 

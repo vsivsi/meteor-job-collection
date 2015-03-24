@@ -1,6 +1,6 @@
 ## Revision history
 
-### v.NEXT
+### v.1.0.0
 
 * `jc.startJobs` and `jc.stopJobs` have been renamed to `jc.startJobServer` and `jc.shutdownJobServer` respectively. The old versions will now generate deprecation warnings.
 * `jc.makeJob()` and `jc.createJob()` have been deprecated in favor of just calling `new Job(...)`
@@ -18,7 +18,7 @@
 * `job.log()` can now accept a `data` option, which must be an object.
 * `log.data` field is now permitted in the Job document model.
 * When `job.fail(err)` is used, the error object stored in the `failures` array will have the `runId` as an added field.
-* `connection` option to `new JobCollection()` will not direct the job collection to use a alternate remote server's job collection rather than the default local one
+* `connection` option to `new JobCollection()` on server will now direct the job collection to use a alternate remote server's Job Collection rather than a local one.
 
 ### v.0.0.18
 

@@ -12,6 +12,19 @@ It solves the following problems (and more):
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
+## What's new in v1.0.0?
+
+Here are the highlights:
+* `jc.startJobs()` and `jc.stopJobs()` have been renamed to `jc.startJobServer()` and `jc.shutdownJobServer()` respectively. The old versions will now generate deprecation warnings.
+* `jc.makeJob()` and `jc.createJob()` have been deprecated in favor of just calling `new Job(...)`
+* job objects now have `job.doc` readable attribute
+* `jc.jobDocPattern` can now be used to validate Job documents.
+* Added `jq.trigger()` method to provide a mechanism to trigger `getWork` using an alternative method to `pollInterval`
+* `job.log()` can now accept a `data` option, which must be an object.
+* `connection` option to `new JobCollection()` on server will now direct the job collection to use a alternate remote server's Job Collection rather than a local one.
+
+A complete list of changes can be found in the HISTORY file.
+
 ## Table of Contents
 
 - [Quick example](#user-content-quick-example)

@@ -980,7 +980,7 @@ job.done("Done!");
 #### Change the state of a running job to `'failed'`.
 #### Requires permission: Server, `admin`, `worker` or `jobFail`
 
-The job's next state depends on how the its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `error` is any EJSON object and will be saved as an object. If passed error is not an object, it will be wrapped in one.
+The job's next state depends on how its `job.retry()` settings are configured. It will either become `'failed'` or go to `'waiting'` for the next retry. `error` is any EJSON object and will be saved as an object. If passed error is not an object, it will be wrapped in one.
 
 `options:`
 

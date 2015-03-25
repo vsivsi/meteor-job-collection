@@ -119,6 +119,24 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
       q.shutdown { level: 'soft', quiet: true }, () ->
         onComplete()
 
+Tinytest.addAsync 'Create a job and then make a new doc with its document', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job2 = new Job testColl, jobType, { some: 'data' }
+  if Meteor.isServer
+    job = new Job 'ServerTest', job2.doc
+  else
+    job = new Job 'ClientTest', job2.doc
+  test.ok validJobDoc(job.doc)
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
+      test.equal job._doc._id, res
+      job.done()
+      cb()
+      q.shutdown { level: 'soft', quiet: true }, () ->
+        onComplete()
+
 Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }

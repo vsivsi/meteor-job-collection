@@ -692,9 +692,9 @@ class JobCollectionBase extends Mongo.Collection
     doc.retryUntil = time if doc.retryUntil < time
     doc.repeatUntil = time if doc.repeatUntil < time
 
-    # If doc.repeatWait is a later.js object, then don't run before 
+    # If doc.repeatWait is a later.js object, then don't run before
     # the first valid scheduled time that occurs after doc.after
-    unless typeof doc.repeatWait is 'number'
+    if @later? and typeof doc.repeatWait isnt 'number'
       unless next = @later?.schedule(doc.repeatWait).next(1, doc.after)
         console.warn "No valid available later.js times in schedule after #{doc.after}"
         return null
@@ -703,6 +703,10 @@ class JobCollectionBase extends Mongo.Collection
         console.warn "No valid available later.js times in schedule before #{doc.repeatUntil}"
         return null
       doc.after = nextDate
+      console.log "Just set doc.after to:", doc.after
+    else if not @later? and doc.repeatWait isnt 'number'
+      console.warn "Later.js not loaded..."
+      return null
 
     if doc._id
 
@@ -925,13 +929,21 @@ class JobCollectionBase extends Mongo.Collection
         if typeof doc.repeatWait is 'number'
           if doc.repeatUntil - doc.repeatWait >= time
             jobId = @_rerun_job doc
-        else if next = @later?.schedule(doc.repeatWait).next()
-          d = new Date(next)
-          wait = d - time
-          wait = 1000 if wait < 1000 # without this, fast jobs that fire every
-                                     # second may run multiple times
-          if doc.repeatUntil - wait >= time
-            jobId = @_rerun_job doc, doc.repeats - 1, wait
+        else
+          next = @later?.schedule(doc.repeatWait).next(2)
+          if next and next.length > 0
+            d = new Date(next[0])
+            console.log "time", time, "Next!", d - time, next
+            if (d - time > 500) or (next.length > 1)
+              if d - time <= 500
+                d = new Date(next[1])
+                console.log "B"
+              else
+                console.log "A"
+              wait = d - time
+              console.log "Wait time!", wait
+              if doc.repeatUntil - wait >= time
+                jobId = @_rerun_job doc, doc.repeats - 1, wait
 
       # Resolve depends
       ids = @find(

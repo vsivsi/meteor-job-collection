@@ -253,7 +253,6 @@ if Meteor.isServer
         until: new Date(new Date().valueOf() + 2500),
         schedule: testColl.later.parse.text("every 1 second")})
       .delay(1000)
-    console.log job
     job.save (err, res) ->
       test.fail(err) if err
       test.ok validId(res), "job.save() failed in callback result"
@@ -267,7 +266,6 @@ if Meteor.isServer
         cb()
       Meteor.setTimeout(() ->
         job.refresh () ->
-          console.log "Counter", counter
           test.equal job._doc.status, 'completed'
           test.equal counter, 2
           q.shutdown { level: 'soft', quiet: true }, () ->

@@ -801,7 +801,7 @@ Returns `job`, so it is chainable.
 `options:`
 
 * `retries` -- Number of times to retry a failing job. Default: `Job.forever`
-* `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever comes first. Default: `Job.foreverDate`. Note that if you specify a value for `until` on a repeating job, it will only apply to the first run of the job. Any repeated runs of the job will use the repeat `until` value for all retries.
+* `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever comes first. Default: `Job.foreverDate`. Note that if you specify a value for `until` on a repeating job, it will only apply to the first run of the job. Any repeated runs of the job will use the **repeat's** `until` value for all retries.
 * `wait` -- Initial value for how long to wait between attempts, in ms. Default: `300000` (5 minutes)
 * `backoff` -- Method to use in determining how to calculate wait value for each retry:
     * `'constant'`:  Always delay retrying by `wait` ms.  Default value.

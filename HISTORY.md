@@ -1,8 +1,9 @@
 ## Revision history
 
-### v.NEXT
+### 1.1.0
 
-* Experimental support for using later.js schedules to configure repeating jobs.
+* Support for using later.js schedules to configure repeating jobs.
+* Removed unnecessary server-side console output.
 
 ### 1.0.0
 

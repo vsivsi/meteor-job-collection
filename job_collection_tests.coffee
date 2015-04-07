@@ -302,13 +302,10 @@ if Meteor.isClient
     jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
     job = new Job remoteServerTestColl, jobType, { some: 'data' }
     test.ok validJobDoc(job.doc)
-    console.log "Job is valid!"
     job.save (err, res) ->
       test.fail(err) if err
-      console.log "Job is saved!"
       test.ok validId(res), "job.save() failed in callback result"
       q = remoteServerTestColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
-        console.log "Job is running!"
         test.equal job._doc._id, res
         job.done()
         cb()

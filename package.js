@@ -11,11 +11,8 @@ Package.describe({
   git: 'https://github.com/vsivsi/meteor-job-collection.git'
 });
 
-Npm.depends({
-  later: '1.1.6'
-});
-
 Package.onUse(function(api) {
+  api.use('mrt:later@1.6.1', ['server','client'])
   api.use('coffeescript@1.0.6', ['server','client']);
   api.use('mongo@1.1.0', ['server','client']);
   api.use('check@1.0.5', ['server','client']);
@@ -28,7 +25,12 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function (api) {
-  api.use(['vsivsi:job-collection', 'coffeescript', 'tinytest', 'test-helpers', 'check', 'ddp'], ['server','client']);
+  api.use('vsivsi:job-collection', ['server','client']);
+  api.use('mrt:later@1.6.1', ['server','client'])
+  api.use('coffeescript@1.0.6', ['server','client']);
+  api.use('check@1.0.5', ['server','client']);
+  api.use('tinytest@1.0.5', ['server','client']);
+  api.use('test-helpers@1.0.4', ['server','client']);
   api.use('ddp@1.1.0', 'client');
   api.addFiles('job_collection_tests.coffee', ['server', 'client']);
 });

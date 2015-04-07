@@ -84,6 +84,8 @@ class JobCollectionBase extends Mongo.Collection
     unless @ instanceof Mongo.Collection
       throw new Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
 
+    @later = later  # later object, for convenience
+
     options.noCollectionSuffix ?= false
 
     collectionName = @root
@@ -930,18 +932,16 @@ class JobCollectionBase extends Mongo.Collection
           if doc.repeatUntil - doc.repeatWait >= time
             jobId = @_rerun_job doc
         else
+          # This code prevents a job that just ran and finished
+          # instantly from being immediately rerun on the same occurance
           next = @later?.schedule(doc.repeatWait).next(2)
           if next and next.length > 0
             d = new Date(next[0])
-            console.log "time", time, "Next!", d - time, next
             if (d - time > 500) or (next.length > 1)
               if d - time <= 500
                 d = new Date(next[1])
-                console.log "B"
               else
-                console.log "A"
               wait = d - time
-              console.log "Wait time!", wait
               if doc.repeatUntil - wait >= time
                 jobId = @_rerun_job doc, doc.repeats - 1, wait
 

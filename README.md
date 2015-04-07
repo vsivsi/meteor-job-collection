@@ -7,10 +7,15 @@ job-collection is a powerful and easy to use job manager designed and built for 
 It solves the following problems (and more):
 
 * Schedule jobs to run (and repeat) in the future, persisting across server restarts
+* Create repeating jobs with complex schedules using [Later.js](https://bunkat.github.io/later/index.html)
 * Move work out of Meteor's single threaded event-loop
 * Enable work on computationally expensive jobs to run anywhere, on any number of machines
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
+
+## What's new in v1.1.0?
+
+* Support has been added for scheduling repeating jobs using the [later.js](https://bunkat.github.io/later/index.html) library. See the new `schedule` option for `job.repeat()` for more information.
 
 ## What's new in v1.0.0?
 
@@ -723,6 +728,12 @@ if (! Match.test(job.doc, jc.jobDocPattern)) {
 
 ```
 
+### jc.later - Anywhere
+#### Later.js object that can be used to create schedule objects
+
+See `job.repeat()` for more information and a usage example.
+
+
 ## Job API
 
 ### `job = new Job(jc, type, data)`
@@ -816,8 +827,10 @@ Each time it is re-run, a new job is created in the job collection. This is equi
 
 * `repeats` -- Number of times to rerun the job. Default: `Job.forever`
 * `until` -- Keep repeating until this `Date`, or until the number of repeats is exhausted, whichever comes first. Default: `Job.foreverDate`
-* `wait`  -- How long to wait between re-runs, in ms. Default: `300000` (5 minutes)
-* `schedule` -- Repeat using a valid [later.js](https://github.com/bunkat/later) schedule. The first run of this job will occur at the first valid scheduled time unless `.after()` or `.delay()` have been called, in which case it will run at the first scheduled time thereafter. Note: `schedule` and `wait` are mutually exclusive.
+* `wait`  -- How long to wait between re-runs, in ms. Default: `300000` (5 minutes).
+* `schedule` -- Repeat using a valid [later.js](https://github.com/bunkat/later) schedule. The first run of this job will occur at the first valid scheduled time unless `.after()` or `.delay()` have been called, in which case it will run at the first scheduled time thereafter. For convenience on both client and server `jc.later` is initialized with a later.js object.
+
+Note: the `schedule` and `wait` options above are mutually exclusive.
 
 `[options]` may also be a non-negative integer, which is interpreted as `{ repeats: [options] }`
 
@@ -831,7 +844,7 @@ job.repeat({
 
 // Using later.js
 job.repeat({
-  schedule: later.parse.text('every 5 mins');   // Rerun this job every 5 minutes
+  schedule: jc.later.parse.text('every 5 mins');   // Rerun this job every 5 minutes
 });
 ```
 

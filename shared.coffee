@@ -630,7 +630,6 @@ class JobCollectionBase extends Mongo.Collection
     if _validId(ids)
       ids = [ids]
     return false if ids.length is 0
-    console.log "Restarting: #{ids}"
     time = new Date()
 
     query =
@@ -787,7 +786,7 @@ class JobCollectionBase extends Mongo.Collection
       v.total >= v.completed and 0 <= v.percent <= 100
 
     time = new Date()
-    # console.log "Updating progress", id, runId, progress
+
     num = @update(
       {
         _id: id

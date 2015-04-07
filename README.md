@@ -1232,7 +1232,7 @@ q = jc.processJobs(
 jc.find({ type: 'jobType', status: 'ready' })
   .observe({
      added: function () { q.trigger(); }
-  })'
+  });
 ```
 
 ### q.shutdown([options], [callback]) - Anywhere

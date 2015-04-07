@@ -16,7 +16,7 @@ It solves the following problems (and more):
 ## What's new in v1.1.0?
 
 * Support has been added for scheduling repeating jobs using the [later.js](https://bunkat.github.io/later/index.html) library. See the new `schedule` option for `job.repeat()` for more information.
-* If you'd like a quick demo of this functionality checkout the [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground) app. A live version is also running at []().
+* If you'd like a quick demo of this functionality, checkout the [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground) app on github. A live version is also running at [http://jcplayground.meteor.com](http://jcplayground.meteor.com).
 
 ## What's new in v1.0.0?
 

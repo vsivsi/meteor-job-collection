@@ -705,7 +705,6 @@ class JobCollectionBase extends Mongo.Collection
         console.warn "No valid available later.js times in schedule before #{doc.repeatUntil}"
         return null
       doc.after = nextDate
-      console.log "Just set doc.after to:", doc.after
     else if not @later? and doc.repeatWait isnt 'number'
       console.warn "Later.js not loaded..."
       return null

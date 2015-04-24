@@ -1,5 +1,9 @@
 ## Revision history
 
+### 1.1.1
+
+* Updated meteor-job package to 1.1.1, fixing a bug that could cause JobQueues to get more work than configured when using `q.trigger()` or very short pollIntervals.
+
 ### 1.1.0
 
 * Support for using later.js schedules to configure repeating jobs.

@@ -121,8 +121,7 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
 
 Tinytest.addAsync 'Create an invalid job and see that errors correctly propagate', (test, onComplete) ->
   if Meteor.isServer
-    console.warn "The following exception is a Normal and Expected part of error handling until tests:"
-    console.warn "'Exception while invoking method 'ClientTest_jobSave' Error: Match error: Missing key 'status''"
+    console.log "***** The following exception dump is a Normal and Expected part of error handling unit tests: *****"
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { some: 'data' }
   delete job.doc.status

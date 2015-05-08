@@ -51,7 +51,7 @@ if Meteor.isServer
   remoteTestColl.allow
     admin: () -> true
 else
-  remoteConnection = DDP.connect 'localhost:3000'
+  remoteConnection = DDP.connect 'localhost:3050'
   remoteServerTestColl = new JobCollection 'RemoteTest', { idGeneration: 'STRING', connection: remoteConnection }
 
 testColl = null  # This will be defined differently for client / server
@@ -118,6 +118,26 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
       cb()
       q.shutdown { level: 'soft', quiet: true }, () ->
         onComplete()
+
+Tinytest.addAsync 'Create an invalid job and see that errors correctly propagate', (test, onComplete) ->
+  if Meteor.isServer
+    console.warn "The following exception is a Normal and Expected part of error handling until tests:"
+    console.warn "'Exception while invoking method 'ClientTest_jobSave' Error: Match error: Missing key 'status''"
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { some: 'data' }
+  delete job.doc.status
+  test.equal validJobDoc(job.doc), false
+  if Meteor.isServer
+    err = null
+    try
+      job.save()
+    catch e
+      err = e
+    finally
+      test.fail(new Error "Exception wasn't thrown") unless err
+  job.save (err, res) ->
+    test.fail(new Error "Error did not propagate") unless err
+    onComplete()
 
 Tinytest.addAsync 'Create a job and then make a new doc with its document', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

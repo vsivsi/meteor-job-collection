@@ -1,5 +1,9 @@
 ## Revision history
 
+### 1.1.2
+
+* Fixed a bug that caused server-side calls to job collection using callbacks to throw rather than properly propagating errors via the provided callback.
+
 ### 1.1.1
 
 * Updated meteor-job package to 1.1.1, fixing a bug that could cause JobQueues to get more work than configured when using `q.trigger()` or very short pollIntervals.

@@ -49,9 +49,17 @@ if Meteor.isServer
         Job._localServerMethods[methodName] = methodFunction for methodName, methodFunction of localMethods
         Job._setDDPApply (name, params, cb) ->
           if cb?
-            Meteor.setTimeout (() -> cb null, Job._localServerMethods[name].apply(this, params)), 0
+            Meteor.setTimeout (() =>
+              err = null
+              res = null
+              try
+                res = Job._localServerMethods[name].apply(this, params)
+              catch e
+                err = e
+              cb err, res), 0
           else
             Job._localServerMethods[name].apply(this, params)
+
         Meteor.methods localMethods
       # else
       #   @isSimulation = true

@@ -93,7 +93,7 @@ if (Meteor.isClient) {
     // On the server, all of it would run unconditionally.
 
     // Create a job:
-    var job = new Job(myJobs, 'sendEmail', // type of job
+    var job = new Job('myJobQueue', 'sendEmail', // type of job
       // Job data that you define, including anything the job
       // needs to complete. May contain links to files, etc...
       {
@@ -115,7 +115,7 @@ if (Meteor.isClient) {
     // its status changes, etc.
 
     // Any job document from myJobs can be turned into a Job object
-    job = new Job(myJobs, myJobs.findOne({}));
+    job = new Job('myJobQueue', myJobs.findOne({}));
 
     // Or a job can be fetched from the server by _id
     myJobs.getJob(_id, function (err, job) {
@@ -737,26 +737,26 @@ See `job.repeat()` for more information and a usage example.
 
 ## Job API
 
-### `job = new Job(jc, type, data)`
+### `job = new Job(jobCollName, type, data)`
 #### Create a new `Job` object
 Data should be reasonably small, if worker requires a lot of data (e.g. video, image or sound files), they should be included by reference (e.g. with a URL pointing to the data, and another to where the result should be saved).
 
 ```js
-job = new Job(  // new is optional
-  jc,           // JobCollection to use
-  'jobType',    // type of the job
-  { /* ... */ } // Data for the worker, any valid EJSON object
+job = new Job(   // new is optional
+  'jobCollName', // name of the JobCollection to use
+  'jobType',     // type of the job
+  { /* ... */ }  // Data for the worker, any valid EJSON object
 );
 ```
 
-### `j = new Job(jc, jobDoc)`
+### `j = new Job(jobCollName, jobDoc)`
 #### Make a Job object from a Job Collection document.
 Creates a new `Job` object. This is used in cases where a valid Job document is obtained from another source, such as a database lookup.
 
 ```js
-job = new Job(  // new is optional
-  jc,           // JobCollection to use
-  { /* ... */ } // any valid Job document
+job = new Job(   // new is optional
+  'jobCollName', // name of the JobCollection to use
+  { /* ... */ }  // any valid Job document
 );
 ```
 

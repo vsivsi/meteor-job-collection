@@ -1,5 +1,9 @@
 ## Revision history
 
+### V.NEXT
+
+* Documentation improvements. Thanks @kahmali! 
+
 ### 1.1.2
 
 * Fixed a bug that caused server-side calls to job collection using callbacks to throw rather than properly propagating errors via the provided callback.

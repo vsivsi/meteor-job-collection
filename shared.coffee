@@ -178,7 +178,7 @@ class JobCollectionBase extends Mongo.Collection
     'running': (runId) -> _createLogEntry "Job Running", runId
     'paused': () -> _createLogEntry "Job Paused"
     'resumed': () -> _createLogEntry "Job Resumed"
-    'cancelled': () -> _createLogEntry "Job Cancelled", null, 'warn'
+    'cancelled': () -> _createLogEntry "Job Cancelled", null, 'warning'
     'restarted': () -> _createLogEntry "Job Restarted"
     'resubmitted': () -> _createLogEntry "Job Resubmitted"
     'submitted': () -> _createLogEntry "Job Submitted"
@@ -355,16 +355,16 @@ class JobCollectionBase extends Mongo.Collection
       ids = [ids]
       single = true
     return null if ids.length is 0
+    fields = {_private:0}
+    fields.log = 0 if !options.getLog
+    fields.failures = 0 if !options.getFailures
     docs = @find(
       {
         _id:
           $in: ids
       }
       {
-        fields:
-          log: if options.getLog then 1 else 0
-          failures: if options.getFailures then 1 else 0
-          _private: 0
+        fields: fields
         transform: null
       }
     ).fetch()

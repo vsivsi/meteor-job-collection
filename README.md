@@ -1,5 +1,7 @@
 # job-collection
 
+[![Build Status](https://travis-ci.org/vsivsi/meteor-job-collection.svg)](https://travis-ci.org/vsivsi/meteor-job-collection)
+
 ## Intro
 
 job-collection is a powerful and easy to use job manager designed and built for Meteor.js.

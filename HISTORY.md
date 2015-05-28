@@ -7,6 +7,7 @@
 * Fixes issue when `getJob()` called with `getLog` or `getFailures` options.
 * Fixes incorrect log level of `'warn'` for job cancellation (correct is `'warning'`).
 * Thanks to @kingkevin for PR fixing the above two issues.
+* Added a client polyfill for Function.bind() which is missing from phantomJS
 
 ### 1.1.2
 

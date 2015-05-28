@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - "0.10.36"
+
+before_install:
+  - "curl https://install.meteor.com | /bin/sh"
+  - "npm install -g spacejam"
+
+script: "spacejam test-packages ./"
+

@@ -4,10 +4,12 @@
 ###     See included LICENSE file for details.
 ***************************************************************************/
 
+var currentVersion = '1.1.3';
+
 Package.describe({
   summary: "A persistent and reactive job queue for Meteor, supporting distributed workers that can run anywhere",
   name: 'vsivsi:job-collection',
-  version: '1.1.2',
+  version: currentVersion,
   git: 'https://github.com/vsivsi/meteor-job-collection.git'
 });
 
@@ -25,7 +27,7 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function (api) {
-  api.use('vsivsi:job-collection', ['server','client']);
+  api.use('vsivsi:job-collection@' + currentVersion, ['server','client']);
   api.use('mrt:later@1.6.1', ['server','client'])
   api.use('coffeescript@1.0.6', ['server','client']);
   api.use('check@1.0.5', ['server','client']);

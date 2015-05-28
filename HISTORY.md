@@ -1,8 +1,12 @@
 ## Revision history
 
-### V.NEXT
+### 1.1.3
 
-* Documentation improvements. Thanks @kahmali! 
+* Documentation improvements. Thanks @kahmali!
+* Added explicit package version to `onTest()` call to work around a Meteor issue when running `meteor test-packages` within an app.
+* Fixes issue when `getJob()` called with `getLog` or `getFailures` options.
+* Fixes incorrect log level of `'warn'` for job cancellation (correct is `'warning'`).
+* Thanks to @kingkevin for PR fixing the above two issues.
 
 ### 1.1.2
 

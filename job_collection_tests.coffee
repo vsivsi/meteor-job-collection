@@ -259,7 +259,7 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
         q.shutdown { level: 'soft', quiet: true }, () ->
           onComplete()
     ,
-      2000
+      2500
     )
 
 if Meteor.isServer

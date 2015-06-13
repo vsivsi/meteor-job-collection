@@ -64,7 +64,7 @@ The code snippets below show a Meteor server that creates a `JobCollection`, Met
 subscribes to it and creates a new job, and a pure node.js program that can run *anywhere* and work
 on such jobs.
 
-```js
+```javascript
 ///////////////////
 // Server
 if (Meteor.isServer) {
@@ -92,7 +92,7 @@ if (Meteor.isServer) {
 
 Alright, the server is set-up and running, now let's add some client code to create/manage a job.
 
-```js
+```javascript
 ///////////////////
 // Client
 if (Meteor.isClient) {
@@ -164,7 +164,7 @@ is fully interoperable with job-collection.
 on the Meteor server or even in a Meteor client. Everything before the call to `Job.processJobs()`
 is just code to connect and authenticate a pure node.js script with a Meteor server.
 
-```js
+```javascript
 ///////////////////
 // node.js Worker
 var DDP = require('ddp');
@@ -304,7 +304,7 @@ project, each remote method can also be individually secured with custom allow/d
 
 The performance of job-collection will be almost entirely dependant on the speed of the MongoDB
 server it is hosted on. By default job-collection creates these indexes in the underlying database:
-```js
+```javascript
 jc._ensureIndex({ type : 1, status : 1 });
 ```
 If you anticipate having large job collections (ie. with over 1000 jobs at a time) and you will be
@@ -338,7 +338,7 @@ preset to deny all direct client `insert`, `update` and `remove` type operations
 methods, which may be secured using allow/deny rules specific to `JobCollection`. See the
 documentation for `jc.allow()` and `jc.deny()` for more information.
 
-```js
+```javascript
 // the "new" is optional
 jc = JobCollection('defaultJobCollection');
 ```
@@ -350,7 +350,7 @@ You can log everything that happens to a job collection on the server by providi
 writable stream. You may only call this once, unless you first call `jc.shutdown()`, which will
 automatically close the existing `logStream`.
 
-```js
+```javascript
 // Log everything to stdout
 jc.setLogStream(process.stdout);
 ```
@@ -358,7 +358,7 @@ jc.setLogStream(process.stdout);
 ### jc.logConsole - Client only
 #### Member variable that turns on DDP method call logging to the console
 
-```js
+```javascript
 jc.logConsole = false  // Default. Do not log method calls to the client console
 ```
 
@@ -369,7 +369,7 @@ jc.logConsole = false  // Default. Do not log method calls to the client console
 this operation because it is time that is changing, not the contents of the database, so there are
 no database updates to listen for.
 
-```js
+```javascript
 jc.promote(15*1000);  // Default: 15 seconds
 ```
 
@@ -387,7 +387,7 @@ server-side Meteor code.
 The opposite extreme is to allow any remote client to perform any action. Obviously this is totally
 insecure, but is perhaps valuable for early development stages on a local firewalled network.
 
-```js
+```javascript
 // Allow any remote client (Meteor client or
 // node.js application) to perform any action
 jc.allow({
@@ -402,7 +402,7 @@ jc.allow({
 If this seems a little reckless (and it should), then here is how you can grant admin rights
 specifically to an single authenticated Meteor userId:
 
-```js
+```javascript
 // Allow only the authenticated "admin user" to perform any action
 jc.allow({
   // Assume "adminUserId" contains the Meteor
@@ -438,7 +438,7 @@ generally lower-level than the methods available on `Job` and they do not necess
 one-to-one relationship. Here's an example of how to grant permission to create new "email" jobs to
 a single userId:
 
-```js
+```javascript
 // Assumes emailCreator contains a Meteor userId
 jc.allow({
   jobSave: function (userId, method, params) {
@@ -461,7 +461,7 @@ of any other allow/deny rules. This is powerful and far reaching. For example, t
 will turn off all remote access to a job collection (regardless of any other rules that may be in
 force):
 
-```js
+```javascript
 jc.deny({
   // The "admin" below represents the
   // grouping of all remote methods
@@ -481,7 +481,7 @@ See the `allow` method above for more details.
 
 `callback(error, result)` -- Result is true if successful.
 
-```js
+```javascript
 jc.startJobServer();  // Callback is optional
 ```
 
@@ -496,7 +496,7 @@ jc.startJobServer();  // Callback is optional
 
 `callback(error, result)` -- Result is true if successful.
 
-```js
+```javascript
 jc.shutdownJobServer(
   {
     timeout: 60000
@@ -522,7 +522,7 @@ Returns `undefined` if no such job exists.
 `callback(error, result)` -- Optional only on Meteor Server with Fibers. `result` is a job object or
 `undefined`
 
-```js
+```javascript
 if (Meteor.isServer) {
   // Note, the server could also use the callback pattern in the
   // else clause below, but because of Fibers, it doesn't have to.
@@ -572,7 +572,7 @@ model for automatically obtaining jobs to work on.
 `callback(error, result)` -- Optional only on Meteor Server with Fibers. Result will be an array or
 single value depending on `options.maxJobs`.
 
-```js
+```javascript
 if (Meteor.isServer) {
   // Note, the server could also use the callback pattern in the
   // else clause below, but because of Fibers, it doesn't have to.
@@ -628,7 +628,7 @@ the `JobQueue` object API for methods on the returned `jq` object.
 * `callback` -- must be eventually called exactly once when `job.done()` or `job.fail()` has been
   called on all jobs in result.
 
-```js
+```javascript
 queue = jc.processJobs(
   // Type of job to request
   // Can also be an array of job types
@@ -691,7 +691,7 @@ batches on the server.
 ### jc.forever - Anywhere
 #### Constant value used to indicate that something should repeat forever
 
-```js
+```javascript
 job = new Job(jc, 'jobType', { work: "to", be: "done" })
   .retry({ retries: jc.forever })    // Default for .retry()
   .repeat({ repeats: jc.forever });  // Default for .repeat()
@@ -700,7 +700,7 @@ job = new Job(jc, 'jobType', { work: "to", be: "done" })
 ### jc.foreverDate - Anywhere
 Constant value used to indicate a future Date that will never arrive
 
-```js
+```javascript
 job = new Job(jc, 'jobQueue', 'jobType', { work: "to", be: "done" })
    .retry({ until: Job.foreverDate })    // Default for .retry()
    .repeat({ until: Job.foreverDate });  // Default for .repeat()
@@ -712,7 +712,7 @@ job = new Job(jc, 'jobQueue', 'jobType', { work: "to", be: "done" })
 This is the mapping between the valid string priorities accepted by `job.priority()` and the numeric
 priority values it also uses.
 
-```js
+```javascript
 jc.jobPriorities = { "low": 10, "normal": 0, "medium": -5,
                      "high": -10, "critical": -15 };
 ```
@@ -731,7 +731,7 @@ this looks crazy, don't despair; the relationships added by `.pause()` and `.can
 straightforward when viewed on their own. See `jc.jobStatusCancellable` and `jc.jobStatusPausable`
 below for more info.
 
-```js
+```javascript
 jc.jobStatuses = [ 'waiting', 'paused', 'ready', 'running',
                    'failed', 'cancelled', 'completed' ];
 ```
@@ -739,7 +739,7 @@ jc.jobStatuses = [ 'waiting', 'paused', 'ready', 'running',
 ### jc.jobRetryBackoffMethods
 #### Valid retry backoff methods
 
-```js
+```javascript
 jc.jobRetryBackoffMethods = [ 'constant', 'exponential' ];
 ```
 
@@ -750,7 +750,7 @@ If these look familiar, it's because they correspond to some of the Bootstrap [c
 (http://getbootstrap.com/css/#helper-classes) and [alert](http://getbootstrap.com/components/#alerts)
 classes.
 
-```js
+```javascript
 jc.jobLogLevels = [ 'info', 'success', 'warning', 'danger' ];
 ```
 
@@ -762,7 +762,7 @@ relationships of the "cancelled" state:
 
 ![canceled state relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/cancel-states.dot.cairo.png)
 
-```js
+```javascript
 jc.jobStatusCancellable = [ 'running', 'ready', 'waiting', 'paused' ];
 ```
 
@@ -774,7 +774,7 @@ These are the only states that may be paused. Below is a state diagram of the re
 
 ![paused state relationships](https://raw.githubusercontent.com/vsivsi/meteor-job/master/doc/pause-states.dot.cairo.png).
 
-```js
+```javascript
 jc.jobStatusPausable = [ 'ready', 'waiting' ];
 ```
 
@@ -783,7 +783,7 @@ jc.jobStatusPausable = [ 'ready', 'waiting' ];
 
 Only jobs in one of these states may be removed. To remove any other job, simply cancel it first.
 
-```js
+```javascript
 jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
 ```
 
@@ -793,7 +793,7 @@ jc.jobStatusRemovable = [ 'cancelled', 'completed', 'failed' ];
 Only jobs in one of these terminal states may be restarted. Successfully completed jobs may be
 re-run using a different command (job.rerun()).
 
-```js
+```javascript
 jc.jobStatusRestartable = [ 'cancelled', 'failed' ];
 ```
 
@@ -804,7 +804,7 @@ These are all of valid job-collection DDP method names. These are also the names
 method-specific allow/deny rules. For more information about the DDP method API see the
 documentation on that topic near the end of this README.
 
-```js
+```javascript
 jc.ddpMethods = [ 'startJobServer', 'shutdownJobServer', 'jobRemove',
                   'jobPause', 'jobResume', 'jobCancel', 'jobRestart',
                   'jobSave', 'jobRerun', 'getWork', 'getJob',
@@ -816,7 +816,7 @@ jc.ddpMethods = [ 'startJobServer', 'shutdownJobServer', 'jobRemove',
 
 These are the currently defined allow/deny method permission groups.
 
-```js
+```javascript
 jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
 ```
 
@@ -825,7 +825,7 @@ jc.ddpPermissionLevels = [ 'admin', 'manager', 'creator', 'worker' ];
 
 This is the mapping between job-collection DDP methods and permission groups.
 
-```js
+```javascript
 jc.ddpMethodPermissions = {
     'startJobServer': ['startJobServer', 'admin'],
     'shutdownJobServer': ['shutdownJobServer', 'admin'],
@@ -848,7 +848,7 @@ jc.ddpMethodPermissions = {
 ### jc.jobDocPattern - Anywhere
 #### Object that can be used with the [Meteor check](http://docs.meteor.com/#/full/check_package) package to validate job documents
 
-```js
+```javascript
 
 if (! Match.test(job.doc, jc.jobDocPattern)) {
   // Something is wrong with this job's document!
@@ -870,7 +870,7 @@ Data should be reasonably small, if worker requires a lot of data (e.g. video, i
 files), they should be included by reference (e.g. with a URL pointing to the data, and another to
 where the result should be saved).
 
-```js
+```javascript
 job = new Job(  // new is optional
   jc,           // JobCollection to use
   'jobType',    // type of the job
@@ -883,7 +883,7 @@ job = new Job(  // new is optional
 Creates a new `Job` object. This is used in cases where a valid Job document is obtained from
 another source, such as a database lookup.
 
-```js
+```javascript
 job = new Job(  // new is optional
   jc,           // JobCollection to use
   { /* ... */ } // any valid Job document
@@ -910,7 +910,7 @@ Added jobs must have already had `.save()` run on them, so they will have the `_
 is used to form the dependency. Calling `job.depends()` with a falsy value will clear any existing
 dependencies for this job.
 
-```js
+```javascript
 // job1 and job2 are Job objects,
 // and must successfully complete before job will run
 job.depends([job1, job2]);
@@ -924,7 +924,7 @@ job.depends();
 Can be integer numeric or one of `Job.jobPriorities`. Defaults to `'normal'` priority, which is
 priority `0`. Returns `job`, so it is chainable.
 
-```js
+```javascript
 job.priority('high');  // Maps to -10
 job.priority(-10);     // Same as above
 ```
@@ -953,7 +953,7 @@ Returns `job`, so it is chainable.
 Note that the above stated defaults are those when `.retry()` is explicitly called. When a new job
 is created, the default number of `retries` is `0`.
 
-```js
+```javascript
 job.retry({
   retries: 5,   // Retry 5 times,
   wait: 20000,  // waiting 20 seconds between attempts
@@ -988,7 +988,7 @@ Note: the `schedule` and `wait` options above are mutually exclusive.
 Note that the above stated defaults are those when `.repeat()` is explicitly called. When a new job
 is created, the default number of `repeats` is `0`.
 
-```js
+```javascript
 job.repeat({
   repeats: 5,   // Rerun this job 5 times,
   wait: 20000   // wait 20 seconds between each re-run.
@@ -1006,7 +1006,7 @@ job.repeat({
 Counts from when it is initially saved to the job Collection.
 Returns `job`, so it is chainable.
 
-```js
+```javascript
 job.delay(0);   // Do not wait. This is the default.
 ```
 
@@ -1016,7 +1016,7 @@ job.delay(0);   // Do not wait. This is the default.
 `time` is a date object. It is not guaranteed to run "at" this time because there may be no workers
 available when it is reached. Returns `job`, so it is chainable.
 
-```js
+```javascript
 // Run the job anytime after right now
 // This is the default.
 job.after(new Date());
@@ -1042,7 +1042,7 @@ May be called before a new job is saved. `message` must be a string.
 `Meteor.isServer` with fibers, for a saved object the callback may be omitted and the return value
 is the result. If called on an unsaved object, the result is `job` and can be chained.
 
-```js
+```javascript
 job.log(
   "This is a message",
   {
@@ -1077,7 +1077,7 @@ number `> 0` with `total >= completed`.
 `Meteor.isServer` with fibers, for a saved object the callback may be omitted and the return value
 is the result. If called on an unsaved object, the result is `job` and can be chained.
 
-```js
+```javascript
 job.progress(
   50,
   100,    // Half done!
@@ -1108,7 +1108,7 @@ is already saved and paused, then most properties of the job may change (but not
 `callback(error, result)` -- Result is true if save was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.save(
   {
     // Cancel any jobs of the same type,
@@ -1135,7 +1135,7 @@ server automatically via Meteor reactivity.
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result, so in
 this case this method is chainable.
 
-```js
+```javascript
 job.refresh(function (err, result) {
   if (result) {
     // Refreshed
@@ -1156,7 +1156,7 @@ object, it will be wrapped in one.
 `callback(error, result)` -- Result is true if completion was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.done(function (err, result) {
   if (result) {
     // Status updated
@@ -1185,7 +1185,7 @@ an object. If passed error is not an object, it will be wrapped in one.
 `callback(error, result)` -- Result is true if failure was successful (heh). When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.fail(
   {
     reason: 'This job has failed again!',
@@ -1219,7 +1219,7 @@ jobs. To stop a running job, you must use `job.cancel()`.
 `callback(error, result)` -- Result is true if pausing was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.pause(function (err, result) {
   if (result) {
     // Status updated
@@ -1236,7 +1236,7 @@ job.pause(function (err, result) {
 `callback(error, result)` -- Result is true if resuming was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.resume(function (err, result) {
   if (result) {
     // Status updated
@@ -1259,7 +1259,7 @@ jobs retain any remaining retries and/or repeats if they are later restarted.
 `callback(error, result)` -- Result is true if cancellation was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.cancel(
   {
     antecedents: false,
@@ -1296,7 +1296,7 @@ A restarted job will retain any repeat count state it had when it failed or was 
 `callback(error, result)` -- Result is true if restart was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.restart(
   {
     antecedents: true,  // Also restart all jobs that must
@@ -1327,7 +1327,7 @@ job.restart(
 `callback(error, result)` -- Result is true if rerun was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.rerun(
   {
     repeats: 0,   // Only repeat this once
@@ -1354,7 +1354,7 @@ The job must be `'completed'`, `'failed'`, or `'cancelled'` to be removed.
 `callback(error, result)` -- Result is true if removal was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
-```js
+```javascript
 job.remove(function (err, result) {
   if (result) {
     // Job removed from server.
@@ -1397,14 +1397,14 @@ called with jobs that already exist in this local queue. Jobs that are already r
 run to completion. Note that a JobQueue may be created in the paused state by running `q.pause()`
 immediately on the returned new jobQueue.
 
-```js
+```javascript
 q.pause()
 ```
 
 ### q.resume() - Anywhere
 #### Undoes a `q.pause()`, returning the queue to the normal running state
 
-```js
+```javascript
 q.resume()
 ```
 
@@ -1415,7 +1415,7 @@ This method manually causes the same action that expiration of the `pollInterval
 within JobQueue. This is useful for creating responsive JobQueues that are triggered by a Meteor
 [observe](http://docs.meteor.com/#/full/observe) based mechanism, rather than time based polling.
 
-```js
+```javascript
 // Simple observe based queue
 q = jc.processJobs(
   // Type of job to request
@@ -1459,7 +1459,7 @@ Shutdown levels:
   immediately may require `process.exit()` depending on how often asynchronous workers invoke
   `'job.progress()'` and whether they die when it fails.
 
-```js
+```javascript
 q.shutdown({ quiet: true, level: 'soft' }, function () {
   // shutdown complete
 });
@@ -1490,7 +1490,7 @@ from any of the jobCollection method calls. **IMPORTANT CAVEAT!:** If you use th
 *must* be careful to exclude `_private` from any query cursors returned from within a `publish`
 function, or you will leak this data to potentially untrusted clients.
 
-```js
+```javascript
 validId = (
   Match.test(v, Match.OneOf(String, Meteor.Collection.ObjectID))
 );

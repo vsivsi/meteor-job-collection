@@ -1,5 +1,9 @@
 ## Revision history
 
+### 1.1.4
+
+* Fixed issue when using multiple job-collections with different DDP connections in use.
+
 ### 1.1.3
 
 * Documentation improvements. Thanks @kahmali!

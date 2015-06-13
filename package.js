@@ -19,9 +19,9 @@ Package.onUse(function(api) {
   api.use('mongo@1.1.0', ['server','client']);
   api.use('check@1.0.5', ['server','client']);
   api.addFiles('job/src/job_class.coffee', ['server','client']);
-  api.addFiles('shared.coffee', ['server','client']);
-  api.addFiles('server.coffee', 'server');
-  api.addFiles('client.coffee', 'client');
+  api.addFiles('src/shared.coffee', ['server','client']);
+  api.addFiles('src/server.coffee', 'server');
+  api.addFiles('src/client.coffee', 'client');
   api.export('Job');
   api.export('JobCollection');
 });
@@ -34,5 +34,5 @@ Package.onTest(function (api) {
   api.use('tinytest@1.0.5', ['server','client']);
   api.use('test-helpers@1.0.4', ['server','client']);
   api.use('ddp@1.1.0', 'client');
-  api.addFiles('job_collection_tests.coffee', ['server', 'client']);
+  api.addFiles('test/job_collection_tests.coffee', ['server', 'client']);
 });

@@ -2,7 +2,7 @@
 
 ### 1.1.4
 
-* Fixed issue when using multiple job-collections with different DDP connections in use.
+* Fixed issue when using multiple job-collections with different DDP connections in use. Thanks to @mart-jansink for reporting [this issue](https://github.com/vsivsi/meteor-job-collection/issues/84).
 
 ### 1.1.3
 

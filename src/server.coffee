@@ -60,7 +60,7 @@ if Meteor.isServer
               cb err, res), 0
           else
             @_localServerMethods[name].apply(this, params)
-        
+
         Job._setDDPApply @_ddp_apply, root
 
         Meteor.methods localMethods
@@ -145,9 +145,20 @@ if Meteor.isServer
       else
         console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"
 
+    _demote_jobs: () ->
+
+      if @stopped
+        return
+
+      @find({status: 'running', expiresAfter: { $lt: new Date() }})
+        .forEach (job) =>
+          new Job(@root, job).fail("Failed for exceeding worker set workTimeout");
+
     _promote_jobs: (ids = []) ->
       if @stopped
         return
+
+      @_demote_jobs()
 
       time = new Date()
 

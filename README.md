@@ -568,6 +568,11 @@ model for automatically obtaining jobs to work on.
 * `maxJobs` -- Maximum number of jobs to get. Default `1`  If `maxJobs > 1` the result will be an
   array of job objects, otherwise it is a single job object, or `undefined` if no jobs were
   available
+* `workTimeout` -- When requesting work, tells the server to automatically fail the requested job(s)
+  if more than `workTimeout` milliseconds elapses between updates (`job.progress()`, `job.log()`)
+  from the worker, before processing on the job is completed. This is optional, and allows the
+  server to automatically fail running jobs that may never finish because a worker went down or lost
+  connectivity. Default: `undefined`
 
 `callback(error, result)` -- Optional only on Meteor Server with Fibers. Result will be an array or
 single value depending on `options.maxJobs`.
@@ -621,6 +626,11 @@ the `JobQueue` object API for methods on the returned `jq` object.
   (5 seconds)
 * `prefetch` -- How many extra jobs to request beyond the capacity of all workers
   (`concurrency * payload`) to compensate for latency getting more work.
+* `workTimeout` -- When requesting work, tells the server to automatically fail the requested job(s)
+  if more than `workTimeout` milliseconds elapses between updates (`job.progress()`, `job.log()`)
+  from the worker, before processing on the job is completed. This is optional, and allows the
+  server to automatically fail running jobs that may never finish because a worker went down or lost
+  connectivity. Default: `undefined`
 
 `worker(result, callback)`
 
@@ -1554,6 +1564,8 @@ validJobDoc = {
   resolved:     [ Match.Where(validId) ],
   after:        Date,
   updated:      Date,
+  workTimeout:  Match.Optional Match.Where(validIntGTEOne)
+  expiresAfter: Match.Optional Date
   log:          Match.Optional(validLog()),
   progress:     validProgress(),
   retries:      Match.Where(validIntGTEZero),
@@ -1636,8 +1648,13 @@ Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if `ids` is a singl
          maxJobs: Match.Optional(Match.Where(validIntGTEOne))
     })`
 
-Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if maxJobs > 1.
+    * `workTimeout` -- Number milliseconds until a running job may be automatically failed if not updated.
 
+    `Match.Optional({
+         workTimeout: Match.Optional(Match.Where(validIntGTEOne))
+    })`
+
+Returns: `validJobDoc()` or `[ validJobDoc() ]` depending on if maxJobs > 1.
 
 ### `jobRemove(ids, options)`
 #### Permanently remove jobs from the job collection

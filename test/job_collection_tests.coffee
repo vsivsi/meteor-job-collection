@@ -262,6 +262,30 @@ Tinytest.addAsync 'A forever retrying job with "until"', (test, onComplete) ->
       2500
     )
 
+Tinytest.addAsync 'Autofail and retry a job', (test, onComplete) ->
+  counter = 0
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job(testColl, jobType, {some: 'data'}).retry({retries: 2, wait: 0})
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    q = testColl.processJobs jobType, { pollInterval: 250, workTimeout: 500 }, (job, cb) ->
+      counter++
+      test.equal job.doc._id, res
+      if counter is 2
+        job.done('Success')
+      # Will be called without done/fail on first attempt
+      cb()
+
+    Meteor.setTimeout(() ->
+      job.refresh () ->
+        test.equal job._doc.status, 'completed', "Job didn't successfully autofail and retry"
+        q.shutdown { level: 'soft', quiet: true }, () ->
+          onComplete()
+    ,
+      2500
+    )
+
 if Meteor.isServer
 
   Tinytest.addAsync 'A forever repeating job with "schedule" and "until"', (test, onComplete) ->

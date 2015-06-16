@@ -1,5 +1,9 @@
 ## Revision history
 
+### 1.2.0
+
+* Added ability for workers to specify a timeout for running jobs, so that if they crash or lose connectivity the job can fail and be restarted.
+
 ### 1.1.4
 
 * Fixed issue when using multiple job-collections with different DDP connections in use. Thanks to @mart-jansink for reporting [this issue](https://github.com/vsivsi/meteor-job-collection/issues/84).

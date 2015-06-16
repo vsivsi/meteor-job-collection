@@ -62,6 +62,8 @@ _validJobDoc = () ->
   resolved: [ Match.Where(_validId) ]
   after: Date
   updated: Date
+  workTimeout: Match.Optional Match.Where(_validIntGTEOne)
+  expiresAfter: Match.Optional Date
   log: Match.Optional _validLog()
   progress: _validProgress()
   retries: Match.Where _validIntGTEZero
@@ -382,6 +384,8 @@ class JobCollectionBase extends Mongo.Collection
     check type, Match.OneOf String, [ String ]
     check options, Match.Optional
       maxJobs: Match.Optional(Match.Where _validIntGTEOne)
+      workTimeout: Match.Optional(Match.Where _validIntGTEOne)
+
     options ?= {}
     options.maxJobs ?= 1
     # Don't put out any more jobs while shutting down
@@ -430,6 +434,10 @@ class JobCollectionBase extends Mongo.Collection
       if logObj = _logMessage.running runId
         mods.$push =
           log: logObj
+
+      if options.workTimeout?
+        mods.$set.workTimeout = options.workTimeout
+        mods.$set.expiresAfter = new Date(time + options.workTimeout)
 
       num = @update(
         {
@@ -787,18 +795,25 @@ class JobCollectionBase extends Mongo.Collection
 
     time = new Date()
 
+    job = @findOne { _id: id }, { fields: { workTimeout: 1 } }
+
+    mods =
+      $set:
+        progress: progress
+        updated: time
+
+    if job?.workTimeout?
+      mods.$set.expiresAfter = new Date(time + job.workTimeout)
+
     num = @update(
       {
         _id: id
         runId: runId
         status: "running"
       }
-      {
-        $set:
-          progress: progress
-          updated: time
-      }
+      mods
     )
+
     if num is 1
       return true
     else
@@ -821,16 +836,22 @@ class JobCollectionBase extends Mongo.Collection
         message: message
     logObj.data = options.data if options.data?
 
+    job = @findOne { _id: id }, { fields: { status: 1, workTimeout: 1 } }
+
+    mods =
+      $push:
+        log: logObj
+      $set:
+        updated: time
+
+    if job?.workTimeout? and job.status is 'running'
+      mods.$set.expiresAfter = new Date(time + job.workTimeout)
+
     num = @update(
       {
         _id: id
       }
-      {
-        $push:
-          log: logObj
-        $set:
-          updated: time
-      }
+      mods
     )
     if num is 1
       return true

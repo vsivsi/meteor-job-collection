@@ -864,7 +864,7 @@ class JobCollectionBase extends Mongo.Collection
     check options, Match.Optional
       repeats: Match.Optional(Match.Where _validIntGTEZero)
       until: Match.Optional Date
-      wait: Match.Optional(Match.Where _validIntGTEZero)
+      wait: Match.OneOf(Match.Where(_validIntGTEZero), Match.Where(_validLaterJSObj))
 
     doc = @findOne(
       {

@@ -120,8 +120,9 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
         onComplete()
 
 Tinytest.addAsync 'Create an invalid job and see that errors correctly propagate', (test, onComplete) ->
-  if Meteor.isServer
-    console.log "***** The following exception dump is a Normal and Expected part of error handling unit tests: *****"
+  console.warn "****************************************************************************************************"
+  console.warn "***** The following exception dump is a Normal and Expected part of error handling unit tests: *****"
+  console.warn "****************************************************************************************************"
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { some: 'data' }
   delete job.doc.status
@@ -133,9 +134,9 @@ Tinytest.addAsync 'Create an invalid job and see that errors correctly propagate
     catch e
       err = e
     finally
-      test.fail(new Error "Exception wasn't thrown") unless err
+      test.fail(new Error "Server exception wasn't thrown") unless err
   job.save (err, res) ->
-    test.fail(new Error "Error did not propagate") unless err
+    test.fail(new Error "Error did not propagate to Client") unless err
     onComplete()
 
 Tinytest.addAsync 'Create a job and then make a new doc with its document', (test, onComplete) ->

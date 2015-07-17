@@ -656,6 +656,7 @@ class JobCollectionBase extends Mongo.Collection
         updated: time
       $inc:
         retries: options.retries
+        retried: -options.retries  # Keep in balance
 
     if logObj = _logMessage.restarted()
       mods.$push =

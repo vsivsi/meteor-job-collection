@@ -6,6 +6,8 @@
 * `getWork()` and `processJobs()` now each have a new option `workTimeout` that sets the number of milliseconds until a job can be automatically failed on the server. If not specified, the default behavior is as before (running jobs with no active worker need to be handled by the developer.)
 * Thanks to @aldeed for the idea of making this a worker setting.
 * Fixed a bug in `job.rerun()` that caused it to fail if called with a later.js object for the wait parameter.
+* Providing a falsy value of option `pollInterval` when calling `Job.processJobs()` will now disable polling in favor of using `q.trigger` exclusively.
+* Fixed bug where `q.trigger()` caused a `getWork()` call, even when the queue is paused.
 
 ### 1.1.4
 

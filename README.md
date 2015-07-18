@@ -406,7 +406,7 @@ jc.allow({
   // Assume "adminUserId" contains the Meteor
   // userId string of an admin super-user.
   admin: function (userId, method, params) {
-    return (userId in adminUsers);
+    return (adminUsers.indexOf(userId) !== -1);
   }
 });
 ```

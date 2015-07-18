@@ -438,7 +438,7 @@ class JobCollectionBase extends Mongo.Collection
 
       if options.workTimeout?
         mods.$set.workTimeout = options.workTimeout
-        mods.$set.expiresAfter = new Date(time + options.workTimeout)
+        mods.$set.expiresAfter = new Date(time.valueOf() + options.workTimeout)
 
       num = @update(
         {
@@ -805,7 +805,7 @@ class JobCollectionBase extends Mongo.Collection
         updated: time
 
     if job?.workTimeout?
-      mods.$set.expiresAfter = new Date(time + job.workTimeout)
+      mods.$set.expiresAfter = new Date(time.valueOf() + job.workTimeout)
 
     num = @update(
       {
@@ -847,7 +847,7 @@ class JobCollectionBase extends Mongo.Collection
         updated: time
 
     if job?.workTimeout? and job.status is 'running'
-      mods.$set.expiresAfter = new Date(time + job.workTimeout)
+      mods.$set.expiresAfter = new Date(time.valueOf() + job.workTimeout)
 
     num = @update(
       {

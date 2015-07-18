@@ -146,7 +146,6 @@ if Meteor.isServer
         console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"
 
     _demote_jobs: () ->
-
       if @stopped
         return
 
@@ -174,7 +173,7 @@ if Meteor.isServer
         query._id =
           $in: ids
 
-      log = JobCollection.__super__._logMessage.promoted.bind(@)()
+      log = @_logMessage.promoted()
 
       num = @update(
         query

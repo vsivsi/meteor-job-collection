@@ -77,6 +77,11 @@ _validJobDoc = () ->
   repeatWait: Match.OneOf(Match.Where(_validIntGTEZero), Match.Where(_validLaterJSObj))
   created: Date
 
+_createLogEntry = (message = '', runId = null, level = 'info', time = new Date(), data = null) ->
+  l = { time: time, runId: runId, message: message, level: level }
+  # console.warn "LOG! ", l
+  return l
+
 class JobCollectionBase extends Mongo.Collection
 
   constructor: (@root = 'queue', options = {}) ->
@@ -170,12 +175,7 @@ class JobCollectionBase extends Mongo.Collection
         console.warn "WARNING: jc.createJob() has been deprecated. Use new Job(jc, type, data) instead."
       new Job @root, params...
 
-  _createLogEntry = (message = '', runId = null, level = 'info', time = new Date(), data = null) ->
-    l = { time: time, runId: runId, message: message, level: level }
-    # console.warn "LOG! ", l
-    return l
-
-  _logMessage =
+  _logMessage:
     'promoted': () -> _createLogEntry "Promoted to ready"
     'rerun': (id, runId) -> _createLogEntry "Rerunning job", null, 'info', new Date(), {previousJob:{id:id,runId:runId}}
     'running': (runId) -> _createLogEntry "Job Running", runId
@@ -278,7 +278,7 @@ class JobCollectionBase extends Mongo.Collection
       completed: 0
       total: 1
       percent: 0
-    if logObj = _logMessage.rerun id, runId
+    if logObj = @_logMessage.rerun id, runId
       doc.log = [logObj]
     else
       doc.log = []
@@ -432,7 +432,7 @@ class JobCollectionBase extends Mongo.Collection
           retries: -1
           retried: 1
 
-      if logObj = _logMessage.running runId
+      if logObj = @_logMessage.running runId
         mods.$push =
           log: logObj
 
@@ -513,7 +513,7 @@ class JobCollectionBase extends Mongo.Collection
         status: "paused"
         updated: time
 
-    if logObj = _logMessage.paused()
+    if logObj = @_logMessage.paused()
       mods.$push =
         log: logObj
 
@@ -548,7 +548,7 @@ class JobCollectionBase extends Mongo.Collection
         status: "waiting"
         updated: time
 
-    if logObj = _logMessage.resumed()
+    if logObj = @_logMessage.resumed()
       mods.$push =
         log: logObj
 
@@ -595,7 +595,7 @@ class JobCollectionBase extends Mongo.Collection
           percent: 0
         updated: time
 
-    if logObj = _logMessage.cancelled()
+    if logObj = @_logMessage.cancelled()
       mods.$push =
         log: logObj
 
@@ -659,7 +659,7 @@ class JobCollectionBase extends Mongo.Collection
         retries: options.retries
         retried: -options.retries  # Keep in balance
 
-    if logObj = _logMessage.restarted()
+    if logObj = @_logMessage.restarted()
       mods.$push =
         log: logObj
 
@@ -736,7 +736,7 @@ class JobCollectionBase extends Mongo.Collection
           after: doc.after
           updated: time
 
-      if logObj = _logMessage.resubmitted()
+      if logObj = @_logMessage.resubmitted()
         mods.$push =
           log: logObj
 
@@ -768,7 +768,7 @@ class JobCollectionBase extends Mongo.Collection
           }
         ).forEach (d) => @_DDPMethod_jobCancel d._id, {}
       doc.created = time
-      doc.log.push _logMessage.submitted()
+      doc.log.push @_logMessage.submitted()
       newId = @insert doc
       @_promote_jobs? [newId]
       return newId
@@ -935,7 +935,7 @@ class JobCollectionBase extends Mongo.Collection
           percent: 100
         updated: time
 
-    if logObj = _logMessage.completed runId
+    if logObj = @_logMessage.completed runId
       mods.$push =
         log: logObj
 
@@ -987,7 +987,7 @@ class JobCollectionBase extends Mongo.Collection
           $push:
             resolved: id
 
-        if logObj = _logMessage.resolved id, runId
+        if logObj = @_logMessage.resolved id, runId
           mods.$push.log = logObj
 
         n = @update(
@@ -1069,7 +1069,7 @@ class JobCollectionBase extends Mongo.Collection
         failures:
           err
 
-    if logObj = _logMessage.failed runId, newStatus is 'failed', err.value
+    if logObj = @_logMessage.failed runId, newStatus is 'failed', err.value
       mods.$push.log = logObj
 
     num = @update(

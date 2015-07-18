@@ -174,7 +174,7 @@ if Meteor.isServer
         query._id =
           $in: ids
 
-      log = _logMessage.promoted()
+      log = @_logMessage.promoted()
 
       num = @update(
         query

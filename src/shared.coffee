@@ -176,7 +176,7 @@ class JobCollectionBase extends Mongo.Collection
     return l
 
   _logMessage =
-    'promote': () -> _createLogEntry "Promoted to ready"
+    'promoted': () -> _createLogEntry "Promoted to ready"
     'rerun': (id, runId) -> _createLogEntry "Rerunning job", null, 'info', new Date(), {previousJob:{id:id,runId:runId}}
     'running': (runId) -> _createLogEntry "Job Running", runId
     'paused': () -> _createLogEntry "Job Paused"

@@ -174,6 +174,8 @@ if Meteor.isServer
         query._id =
           $in: ids
 
+      log = _logMessage.promoted()
+
       num = @update(
         query
         {
@@ -181,11 +183,7 @@ if Meteor.isServer
             status: "ready"
             updated: time
           $push:
-            log:
-              time: time
-              runId: null
-              level: 'success'
-              message: "Promoted to ready"
+            log: log
         }
         {
           multi: true

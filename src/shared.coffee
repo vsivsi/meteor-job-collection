@@ -170,13 +170,14 @@ class JobCollectionBase extends Mongo.Collection
         console.warn "WARNING: jc.createJob() has been deprecated. Use new Job(jc, type, data) instead."
       new Job @root, params...
 
-  _createLogEntry = (message = '', runId = null, level = 'info', time = new Date()) ->
+  _createLogEntry = (message = '', runId = null, level = 'info', time = new Date(), data = null) ->
     l = { time: time, runId: runId, message: message, level: level }
     # console.warn "LOG! ", l
     return l
 
   _logMessage =
-    'rerun': (id, runId) -> _createLogEntry "Rerunning job #{id} from run #{runId}"
+    'promote': () -> _createLogEntry "Promoted to ready"
+    'rerun': (id, runId) -> _createLogEntry "Rerunning job", null, 'info', new Date(), {previousJob:{id:id,runId:runId}}
     'running': (runId) -> _createLogEntry "Job Running", runId
     'paused': () -> _createLogEntry "Job Paused"
     'resumed': () -> _createLogEntry "Job Resumed"
@@ -184,8 +185,8 @@ class JobCollectionBase extends Mongo.Collection
     'restarted': () -> _createLogEntry "Job Restarted"
     'resubmitted': () -> _createLogEntry "Job Resubmitted"
     'submitted': () -> _createLogEntry "Job Submitted"
-    'completed': (runId) -> _createLogEntry "Job Completed Successfully", runId
-    'resolved': (id, runId) -> _createLogEntry "Dependency resolved for #{id} by #{runId}", runId
+    'completed': (runId) -> _createLogEntry "Job Completed", runId, 'success'
+    'resolved': (id, runId) -> _createLogEntry "Dependency resolved", null, 'info', new Date(), {dependency:{id:id,runId:runId}}
     'failed': (runId, fatal, value) ->
       msg = "Job Failed with#{if fatal then ' Fatal' else ''} Error#{if value? and typeof value is 'string' then ': ' + value else ''}."
       level = if fatal then 'danger' else 'warning'
@@ -1068,7 +1069,7 @@ class JobCollectionBase extends Mongo.Collection
         failures:
           err
 
-    if logObj = _logMessage.failed runId, options.fatal, err.value
+    if logObj = _logMessage.failed runId, newStatus is 'failed', err.value
       mods.$push.log = logObj
 
     num = @update(

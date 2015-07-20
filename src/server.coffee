@@ -21,18 +21,16 @@ if Meteor.isServer
       super root, options
 
       @events = new eventEmitter()
-      # eventEmitter.call @events
-      console.log "EE:, #{@events}"
 
       userHelper = (user, connection) ->
-        retVal = user ? "[UNAUTHENTICATED]"
+        ret = user ? "[UNAUTHENTICATED]"
         unless connection
-          retval = "[SERVER]"
-        retval
+          ret = "[SERVER]"
+        ret
 
       @_errorListener = @events.on 'error', (msg) =>
         user = userHelper msg.userId, msg.connection
-        @_toLog user, msg.method, "UNAUTHORIZED."
+        @_toLog user, msg.method, "#{msg.error}"
 
       @_callListener = @events.on 'call', (msg) =>
         user = userHelper msg.userId, msg.connection
@@ -88,6 +86,7 @@ if Meteor.isServer
 
     _toLog: (userId, method, message) =>
       @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"
+      # process.stdout.write "#{new Date()}, #{userId}, #{method}, #{message}\n"
 
     _emit: (method, connection, userId, err, ret, params...) =>
       if err

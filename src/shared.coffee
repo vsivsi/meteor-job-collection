@@ -900,8 +900,10 @@ class JobCollectionBase extends Mongo.Collection
     check id, Match.Where(_validId)
     check runId, Match.Where(_validId)
     check result, Object
-    check options, Match.Optional {}
-    options ?= {}
+    check options, Match.Optional
+      repeatId: Match.Optional Boolean
+
+    options ?= { repeatId: false }
     time = new Date()
     doc = @findOne(
       {
@@ -1004,7 +1006,10 @@ class JobCollectionBase extends Mongo.Collection
           console.warn "Not all dependent jobs were resolved #{ids.length} > #{n}"
         # Try to promote any jobs that just had a dependency resolved
         @_promote_jobs? ids
-      return true
+      if options.repeatId and jobId?
+        return jobId
+      else
+        return true
     else
       console.warn "jobDone failed"
     return false

@@ -157,6 +157,34 @@ Tinytest.addAsync 'Create a job and then make a new doc with its document', (tes
       q.shutdown { level: 'soft', quiet: true }, () ->
         onComplete()
 
+Tinytest.addAsync 'A repeating job that returns the _id of the next job', (test, onComplete) ->
+  counter = 0
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job(testColl, jobType, {some: 'data'}).repeat({ repeats: 1, wait: 250 })
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
+      counter++
+      if counter is 1
+        test.equal job.doc._id, res
+        job.done "Result1", { repeatId: true }, (err, res) ->
+          test.fail(err) if err
+          test.ok res?
+          test.notEqual res, true
+          testColl.getJob res, (err, j) ->
+            test.fail(err) if err
+            test.equal j._doc._id, res
+            cb()
+      else
+        test.notEqual job.doc._id, res
+        job.done "Result2", { repeatId: true }, (err, res) ->
+          test.fail(err) if err
+          test.equal res, true
+          cb()
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
+
 Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }

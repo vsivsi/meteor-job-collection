@@ -1149,15 +1149,17 @@ job.refresh(function (err, result) {
 cloned to rerun in the future. Result will be saved as an object. If passed result is not an
 object, it will be wrapped in one.
 
-`options:` -- None currently.
+`options:`
+
+* `repeatId` -- If true, changes the return value of successful call from `true` to be the `_id` of the newly scheduled job, or just `true` if no new job was scheduled. Default: `false`
 
 `callback(error, result)` -- Result is true if completion was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
 ```javascript
-job.done(function (err, result) {
-  if (result) {
-    // Status updated
+job.done(someResult, { repeatId: true }, function (err, newId) {
+  if (newId && newId !== true) {
+    // Next repeat job scheduled with _id = newId
   }
 });
 

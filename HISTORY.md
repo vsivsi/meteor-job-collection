@@ -8,6 +8,7 @@
 * Fixed a bug in `job.rerun()` that caused it to fail if called with a later.js object for the wait parameter.
 * Providing a falsy value of option `pollInterval` when calling `Job.processJobs()` will now disable polling in favor of using `q.trigger` exclusively.
 * Fixed bug where `q.trigger()` caused a `getWork()` call, even when the queue is paused.
+* Added `repeatId` option to `job.done()` which when `true` will cause the successful return value of a repeating job to be the `_id` of the newly scheduled job. Thanks to @tcastelli for this idea.
 
 ### 1.1.4
 

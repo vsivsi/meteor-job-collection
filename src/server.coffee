@@ -6,6 +6,8 @@
 
 if Meteor.isServer
 
+  eventEmitter = Npm.require('events').EventEmitter
+
   ################################################################
   ## job-collection server class
 
@@ -17,6 +19,25 @@ if Meteor.isServer
 
       # Call super's constructor
       super root, options
+
+      @events = new eventEmitter()
+      # eventEmitter.call @events
+      console.log "EE:, #{@events}"
+
+      userHelper = (user, connection) ->
+        retVal = user ? "[UNAUTHENTICATED]"
+        unless connection
+          retval = "[SERVER]"
+        retval
+
+      @_errorListener = @events.on 'error', (msg) =>
+        user = userHelper msg.userId, msg.connection
+        @_toLog user, msg.method, "UNAUTHORIZED."
+
+      @_callListener = @events.on 'call', (msg) =>
+        user = userHelper msg.userId, msg.connection
+        @_toLog user, msg.method, "params: " + JSON.stringify(msg.params)
+        @_toLog user, msg.method, "returned: " + JSON.stringify(msg.returnVal)
 
       @stopped = true
 
@@ -64,16 +85,28 @@ if Meteor.isServer
         Job._setDDPApply @_ddp_apply, root
 
         Meteor.methods localMethods
-      # else
-      #   @isSimulation = true
-      #   options.connection.methods @_generateMethods()
 
     _toLog: (userId, method, message) =>
       @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"
 
+    _emit: (method, connection, userId, err, ret, params...) =>
+      if err
+        @events.emit 'error',
+          error: err
+          method: method
+          connection: connection
+          userId: userId
+      else
+        @events.emit 'call',
+          method: method
+          connection: connection
+          userId: userId
+          params: params
+          returnVal: ret
+
     _methodWrapper: (method, func) ->
 
-      toLog = @_toLog
+      emit = @_emit
 
       myTypeof = (val) ->
         type = typeof val
@@ -101,17 +134,20 @@ if Meteor.isServer
 
       # Return the wrapper function that the Meteor method will actually invoke
       return (params...) ->
-        user = this.userId ? "[UNAUTHENTICATED]"
-        unless this.connection
-          user = "[SERVER]"
-        toLog user, method, "params: " + JSON.stringify(params)
+        # user = this.userId ? "[UNAUTHENTICATED]"
+        # unless this.connection
+        #   user = "[SERVER]"
+        # toLog user, method, "params: " + JSON.stringify(params)
         unless this.connection and not permitted(this.userId, params)
           retval = func(params...)
-          toLog user, method, "returned: " + JSON.stringify(retval)
+          # toLog user, method, "returned: " + JSON.stringify(retval)
+          emit method, this.connection, this.userId, null, retval, params...
           return retval
         else
-          toLog this.userId, method, "UNAUTHORIZED."
-          throw new Meteor.Error 403, "Method not authorized", "Authenticated user is not permitted to invoke this method."
+          # toLog this.userId, method, "UNAUTHORIZED."
+          err = new Meteor.Error 403, "Method not authorized", "Authenticated user is not permitted to invoke this method."
+          emit method, this.connection, this.userId, err
+          throw err
 
     setLogStream: (writeStream = null) ->
       if @logStream

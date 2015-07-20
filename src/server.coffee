@@ -134,20 +134,18 @@ if Meteor.isServer
 
       # Return the wrapper function that the Meteor method will actually invoke
       return (params...) ->
-        # user = this.userId ? "[UNAUTHENTICATED]"
-        # unless this.connection
-        #   user = "[SERVER]"
-        # toLog user, method, "params: " + JSON.stringify(params)
-        unless this.connection and not permitted(this.userId, params)
-          retval = func(params...)
-          # toLog user, method, "returned: " + JSON.stringify(retval)
-          emit method, this.connection, this.userId, null, retval, params...
-          return retval
-        else
-          # toLog this.userId, method, "UNAUTHORIZED."
-          err = new Meteor.Error 403, "Method not authorized", "Authenticated user is not permitted to invoke this method."
+        try
+          unless this.connection and not permitted(this.userId, params)
+            retval = func(params...)
+          else
+            err = new Meteor.Error 403, "Method not authorized", "Authenticated user is not permitted to invoke this method."
+            throw err
+        catch err
           emit method, this.connection, this.userId, err
           throw err
+
+        emit method, this.connection, this.userId, null, retval, params...
+        return retval
 
     setLogStream: (writeStream = null) ->
       if @logStream

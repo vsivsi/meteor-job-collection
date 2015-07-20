@@ -1151,7 +1151,7 @@ object, it will be wrapped in one.
 
 `options:`
 
-* `repeatId` -- If true, changes the return value of successful call from `true` to be the `_id` of the newly scheduled job, or just `true` if no new job was scheduled. Default: `false`
+* `repeatId` -- If true, changes the return value of successful call from `true` to be the `_id` of a newly scheduled job if this is a repeating job. Default: `false`
 
 `callback(error, result)` -- Result is true if completion was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.

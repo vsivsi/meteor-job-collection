@@ -668,10 +668,10 @@ on the server.
 This is much more efficient than calling `job.resume()` in a loop because it resumes jobs in batches
 on the server.
 
-### jc.cancelJobs(ids, [options], [callback]) - Anywhere
-#### Like `job.cancel()` except it cancels a list of jobs by id
-#### Requires permission: Server, `admin`, `manager` or `jobCancel`
-This is much more efficient than calling `job.cancel()` in a loop because it cancels jobs in batches
+### jc.readyJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.ready()` except it readies a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobReady`
+This is much more efficient than calling `job.ready()` in a loop because it readies jobs in batches
 on the server.
 
 ### jc.restartJobs(ids, [options], [callback]) - Anywhere
@@ -804,8 +804,8 @@ documentation on that topic near the end of this README.
 
 ```javascript
 jc.ddpMethods = [ 'startJobServer', 'shutdownJobServer', 'jobRemove',
-                  'jobPause', 'jobResume', 'jobCancel', 'jobRestart',
-                  'jobSave', 'jobRerun', 'getWork', 'getJob',
+                  'jobPause', 'jobResume', 'jobReady', 'jobCancel',
+                  'jobRestart', 'jobSave', 'jobRerun', 'getWork', 'getJob',
                   'jobLog','jobProgress', 'jobDone', 'jobFail' ];
 ```
 
@@ -830,6 +830,7 @@ jc.ddpMethodPermissions = {
     'jobRemove': ['jobRemove', 'admin', 'manager'],
     'jobPause': ['jobPause', 'admin', 'manager'],
     'jobResume': ['jobResume', 'admin', 'manager'],
+    'jobReady': ['jobReady', 'admin', 'manager'],
     'jobCancel': ['jobCancel', 'admin', 'manager'],
     'jobRestart': ['jobRestart', 'admin', 'manager'],
     'jobSave': ['jobSave', 'admin', 'creator'],
@@ -1242,6 +1243,30 @@ job.resume(function (err, result) {
     // Status updated
   }
 });
+```
+
+### j.ready([options], [callback]) - Anywhere
+#### Change the state of a job to `'ready'`.
+#### Requires permission: Server, `admin`, `manager` or `jobReady`
+Any job that is `'waiting'` may be readied. Jobs with unsatisfied dependencies will not be changed to `'ready'` unless the `force` option is used.
+
+`options:`
+
+* `force` -- Force all dependencies to be satisfied. Default: `false`
+
+`callback(error, result)` -- Result is true if state was changed to ready. When running on Meteor Server or with Fibers, the callback may be omitted, and then errors will throw and the return value is the result.
+
+```javascript
+job.ready(
+  {
+    force: false
+  },
+  function (err, result) {
+    if (result) {
+      // Status updated
+    }
+  }
+);
 ```
 
 ### job.cancel([options], [callback]) - Anywhere
@@ -1662,7 +1687,7 @@ Returns: `Boolean` - Success or failure
 ### `jobPause(ids, options)`
 #### Pauses a job in the job collection, changes status to `paused` which prevents it from running
 
-* `ids` -- an Id or array of Ids to remove from server
+* `ids` -- an Id or array of Ids to pause on server
 
     `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
@@ -1675,7 +1700,7 @@ Returns: `Boolean` - Success or failure
 ### `jobResume(ids, options)`
 #### Resumes (unpauses) a job in the job collection, returns it to the `waiting` state
 
-* `ids` -- an Id or array of Ids to remove from server
+* `ids` -- an Id or array of Ids to resume on server
 
     `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
@@ -1685,10 +1710,26 @@ Returns: `Boolean` - Success or failure
 
 Returns: `Boolean` - Success or failure
 
+### `jobReady(ids, options)`
+#### Readies a waiting job in the job collection. Jobs with dependencies will not be readied unless the force option is used.
+
+* `ids` -- an Id or array of Ids to make ready on server
+
+    `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
+
+* `options` -- Supports the following options:
+    * `force` -- If true, all dependencies will be removed. Default: `false`
+
+    `Match.Optional({
+        force: Match.Optional(Boolean)
+    })`
+
+Returns: `Boolean` - Success or failure
+
 ### `jobCancel(ids, options)`
 #### Cancels a job in the job collection. Cancelled jobs will not run and will stop running if already running.
 
-* `ids` -- an Id or array of Ids to remove from server
+* `ids` -- an Id or array of Ids to cancel on server
 
     `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
@@ -1708,7 +1749,7 @@ Returns: `Boolean` - Success or failure
 ### `jobRestart(ids, options)`
 #### Restarts a cancelled or failed job.
 
-* `ids` -- an Id or array of Ids to remove from server
+* `ids` -- an Id or array of Ids to restart from server
 
     `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
@@ -1838,10 +1879,13 @@ Returns: `Boolean` - Success or failure
     `Object`
 
 * `options` -- No options currently used
+    * `repeatId` -- If true, a successful return value for a repeating job will be the `_id` of the new   job. Default: `false`.
 
-    `Match.Optional({})`
+    `Match.Optional({
+       repeatId:  Match.Optional(Boolean)
+    })`
 
-Returns: `Boolean` - Success or failure
+Returns: `Boolean` - Success or failure unless `repeatId` option is true, when it may return the `_id` value of a created repeating job.
 
 ### `jobFail(id, runId, err, options)`
 #### Change a job's status to `failed`

@@ -9,9 +9,9 @@
 * Providing a falsy value of option `pollInterval` when calling `Job.processJobs()` will now disable polling in favor of using `q.trigger` exclusively.
 * Fixed bug where `q.trigger()` caused a `getWork()` call, even when the queue is paused.
 * Added `repeatId` option to `job.done()` which when `true` will cause the successful return value of a repeating job to be the `_id` of the newly scheduled job. Thanks to @tcastelli for this idea.
-* Added `jc.events`, which is a node.js Event Emitter allowing server code to register callbacks to log or generate statistics based upon all job-collection DDP methods. There are two events currently implemented: `'call'` for successful DDP method calls, and `'error'` for any errors thrown in such calls. 
+* Added `jc.events`, which is a node.js Event Emitter allowing server code to register callbacks to log or generate statistics based upon all job-collection DDP methods.
+* There are two events currently implemented: `'call'` for successful DDP method calls, and `'error'` for any errors thrown in such calls.
 * The built-in default server logging mechanism (through `setLogStream()`) has been refactored to be built on top of the new Event Emitter mechanism. It otherwise works exactly as before.
-
 
 ### 1.1.4
 

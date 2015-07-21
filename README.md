@@ -674,6 +674,12 @@ on the server.
 This is much more efficient than calling `job.ready()` in a loop because it readies jobs in batches
 on the server.
 
+### jc.cancelJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.cancel()` except it cancels a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobCancel`
+This is much more efficient than calling `job.cancel()` in a loop because it cancels jobs in batches
+on the server.
+
 ### jc.restartJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.restart()` except it restarts a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobRestart`

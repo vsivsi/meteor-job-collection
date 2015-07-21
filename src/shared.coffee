@@ -91,6 +91,9 @@ class JobCollectionBase extends Mongo.Collection
     unless @ instanceof Mongo.Collection
       throw new Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
 
+    unless Mongo.Collection is Mongo.Collection.prototype.constructor
+      throw new Meteor.Error 'The global definition of Mongo.Collection has been patched by another package, and the prototype constructor has been left in an inconsistent state. Please see this link for a workaround: https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592'
+
     @later = later  # later object, for convenience
 
     options.noCollectionSuffix ?= false

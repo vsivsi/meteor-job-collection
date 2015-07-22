@@ -656,6 +656,11 @@ queue.shutdown();
 This is much more efficient than calling `jc.getJob()` in a loop because it gets Jobs from the
 server in batches.
 
+### jc.readyJobs(ids, [options], [callback]) - Anywhere
+#### Like `job.ready()` except it readies a list of jobs by id
+#### Requires permission: Server, `admin`, `manager` or `jobReady`
+It is valid to call `jc.readyJobs()` without `ids` (or with an empty array), in which case all `'waiting'` jobs that are ready to run (any waiting period has passed) and have no dependencies will have their status changed to `'ready'`. This call uses the `force` and `time` options just the same as `job.ready()`. This is much more efficient than calling `job.ready()` in a loop because it readies jobs in batches on the server.
+
 ### jc.pauseJobs(ids, [options], [callback]) - Anywhere
 #### Like `job.pause()` except it pauses a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobPause`
@@ -666,12 +671,6 @@ on the server.
 #### Like `job.resume()` except it resumes a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobResume`
 This is much more efficient than calling `job.resume()` in a loop because it resumes jobs in batches
-on the server.
-
-### jc.readyJobs(ids, [options], [callback]) - Anywhere
-#### Like `job.ready()` except it readies a list of jobs by id
-#### Requires permission: Server, `admin`, `manager` or `jobReady`
-This is much more efficient than calling `job.ready()` in a loop because it readies jobs in batches
 on the server.
 
 ### jc.cancelJobs(ids, [options], [callback]) - Anywhere
@@ -854,11 +853,9 @@ jc.ddpMethodPermissions = {
 #### Object that can be used with the [Meteor check](http://docs.meteor.com/#/full/check_package) package to validate job documents
 
 ```javascript
-
 if (! Match.test(job.doc, jc.jobDocPattern)) {
   // Something is wrong with this job's document!
 }
-
 ```
 
 ### jc.later - Anywhere
@@ -1258,6 +1255,7 @@ Any job that is `'waiting'` may be readied. Jobs with unsatisfied dependencies w
 
 `options:`
 
+* `time` -- A `Date` object. If the job was set to run before the specified time, it will be set to `'ready'` now. Default: the current time
 * `force` -- Force all dependencies to be satisfied. Default: `false`
 
 `callback(error, result)` -- Result is true if state was changed to ready. When running on Meteor Server or with Fibers, the callback may be omitted, and then errors will throw and the return value is the result.
@@ -1265,6 +1263,7 @@ Any job that is `'waiting'` may be readied. Jobs with unsatisfied dependencies w
 ```javascript
 job.ready(
   {
+    time: new Date(),  // Job.foreverDate would make this unconditional
     force: false
   },
   function (err, result) {
@@ -1719,14 +1718,16 @@ Returns: `Boolean` - Success or failure
 ### `jobReady(ids, options)`
 #### Readies a waiting job in the job collection. Jobs with dependencies will not be readied unless the force option is used.
 
-* `ids` -- an Id or array of Ids to make ready on server
+* `ids` -- an Id or array of Ids to make ready on server. May be an empty Array, in which case all waiting jobs that are ready to run (given the options below) will be set to `'ready'`. 
 
     `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 
 * `options` -- Supports the following options:
+    * `time` -- A `Date` object. If the job was set to run before the specified time, it will be set to `'ready'` now. Default: the current time
     * `force` -- If true, all dependencies will be removed. Default: `false`
 
     `Match.Optional({
+        time: Match.Optional(Date),
         force: Match.Optional(Boolean)
     })`
 

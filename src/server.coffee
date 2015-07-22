@@ -178,17 +178,15 @@ if Meteor.isServer
       else
         console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"
 
-    _demote_jobs: () ->
-      if @stopped
-        return
-
-      @find({status: 'running', expiresAfter: { $lt: new Date() }})
-        .forEach (job) =>
-          new Job(@root, job).fail("Failed for exceeding worker set workTimeout");
-
     _promote_jobs: (ids = []) ->
       if @stopped
         return
 
-      @_demote_jobs()
+      # This looks for zombie running jobs and autofails them
+      @find({status: 'running', expiresAfter: { $lt: new Date() }})
+        .forEach (job) =>
+          new Job(@root, job).fail("Failed for exceeding worker set workTimeout");
+
+      # Change jobs from waiting to ready when their time has come
+      # and dependencies have been satisfied
       @readyJobs()

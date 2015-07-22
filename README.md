@@ -16,19 +16,16 @@ It solves the following problems (and more):
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
+A live demo of job-collection is at [http://jcplayground.meteor.com](http://jcplayground.meteor.com).
+
+Source code for this demo app is at [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground)
+
 ## What's new in v1.2.0?
 
-* Added ability for workers to specify an optional `workTimeout` value to `processjobs()` or `getWork()`, so that if the worker running a job crashes or loses connectivity it can automatically fail and be rerun by another worker.
-
-## What's new in v1.1.0?
-
-* Support has been added for scheduling repeating jobs using the [later.js]
-  (https://bunkat.github.io/later/index.html) library. See the new `schedule` option for
-  `job.repeat()` for more information.
-* If you'd like a quick demo of job-collection using this functionality, there is a live demo at
-  [http://jcplayground.meteor.com](http://jcplayground.meteor.com). Source code for the demo app is
-  at [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground)
-  on github.
+* Workers may now specify a timeout for running jobs to automatically manage "zombie" jobs (workers that crash or lose connectivity.) `getWork()` and `processJobs()` now each have a new option `workTimeout` that sets the number of milliseconds until a job can be automatically failed on the server.
+* Added `repeatId` option to `job.done()` which when `true` will cause the successful return value of a repeating job to be the `_id` of the newly scheduled job.
+* Added `jc.events`, which is a node.js Event Emitter allowing server code to register callbacks to log or generate statistics based upon all job-collection DDP methods. There are two main events: `'call'` for successful DDP method calls, and `'error'` for any errors thrown in such calls. There are also events defined for each of the 18 DDP methods (e.g. `jobDone` or `getWork`).
+* Added new methods `job.ready()` and `jc.readyJobs()` to provide a standard way to promote jobs from `'waiting'` to `'ready'`.
 
 A complete list of changes can be found in the HISTORY file.
 
@@ -690,6 +687,40 @@ batches on the server.
 #### Requires permission: Server, `admin`, `manager` or `jobRemove`
 This is much more efficient than calling `job.resmove()` in a loop because it removes jobs in
 batches on the server.
+
+### jc.events - Server
+#### Server Event Emitter
+
+`jc.events` is a node.js [Event Emitter](https://nodejs.org/api/events.html) interface that can be used for custom logging, statistics generation or any other server management purpose. The server implements two primary event types:
+
+* `'call'` -- Emitted for any successful job-collection DDP call
+* `'error'` -- Emitted for any job-collection DDP call that throws an error
+
+In addition to the above two primary events, there are more specific events defined for each individual DDP call (e.g. `jobDone` or `getWork`). These call specific events are emitted regardless of if the call was successful or not.
+
+All event handlers are called with a message object using this schema:
+
+```javascript
+{
+  error: // An error object, or null if no error
+  methor: // The DDP method name
+  connection: // The Meteor connection object for the call, or undefined on server
+  userId: userId // The Meteor userID for the connection, null if unauthenticated, undefined on server
+  params: params, // Array of parameters passed to the DDP method
+  returnVal: ret // Return value from the DDP method, undefined if error != null
+}
+```
+
+Here is an example usage:
+
+```javascript
+  // Set up a simple console.log for successfully completed jobs
+  js.events.on('call', function (msg) {
+    if (msg.method === 'jobDone') {
+      console.log("Job" + msg.params[0] + "finished!");
+    }
+  });
+```
 
 ### jc.forever - Anywhere
 #### Constant value used to indicate that something should repeat forever
@@ -1718,7 +1749,7 @@ Returns: `Boolean` - Success or failure
 ### `jobReady(ids, options)`
 #### Readies a waiting job in the job collection. Jobs with dependencies will not be readied unless the force option is used.
 
-* `ids` -- an Id or array of Ids to make ready on server. May be an empty Array, in which case all waiting jobs that are ready to run (given the options below) will be set to `'ready'`. 
+* `ids` -- an Id or array of Ids to make ready on server. May be an empty Array, in which case all waiting jobs that are ready to run (given the options below) will be set to `'ready'`.
 
     `ids: Match.OneOf(Match.Where(validId), [ Match.Where(validId) ])`
 

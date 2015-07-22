@@ -696,7 +696,7 @@ batches on the server.
 * `'call'` -- Emitted for any successful job-collection DDP call
 * `'error'` -- Emitted for any job-collection DDP call that throws an error
 
-In addition to the above two primary events, there are specific events defined for each individual DDP call (e.g. `jobDone` or `getWork`). These call specific events are emitted regardless of if the call was successful or if it threw an error.
+In addition to the above two primary events, there are specific events defined for each individual DDP call (e.g. `'jobDone'` or `'getWork'`). These call specific events are emitted regardless of if the call was successful or if it threw an error.
 
 All event handlers are called with a message object using this schema:
 
@@ -717,6 +717,13 @@ Here is an example usage:
   // Set up a simple console.log for successfully completed jobs
   js.events.on('call', function (msg) {
     if (msg.method === 'jobDone') {
+      console.log("Job" + msg.params[0] + "finished!");
+    }
+  });
+
+  // The above is equivalent to:
+  js.events.on('jobDone', function (msg) {
+    if (!msg.error) {
       console.log("Job" + msg.params[0] + "finished!");
     }
   });

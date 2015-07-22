@@ -102,8 +102,12 @@ if Meteor.isServer
       test.equal job._doc._id, res
       job.done()
       cb()
-      q.shutdown { level: 'soft', quiet: true }, () ->
-        onComplete()
+    ev = testColl.events.once 'jobDone', (msg) ->
+      console.log 'In event', res, msg
+      test.equal msg.method, 'jobDone'
+      if msg.params[0] is res
+        q.shutdown { level: 'soft', quiet: true }, () ->
+          onComplete()
 
 Tinytest.addAsync 'Create a job and see that it is added to the collection and runs', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

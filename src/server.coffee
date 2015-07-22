@@ -191,33 +191,4 @@ if Meteor.isServer
         return
 
       @_demote_jobs()
-
-      time = new Date()
-
-      query =
-        status: "waiting"
-        after:
-          $lte: time
-        depends:
-          $size: 0
-
-      # Support updating a single document
-      if ids.length > 0
-        query._id =
-          $in: ids
-
-      log = @_logMessage.readied()
-
-      num = @update(
-        query
-        {
-          $set:
-            status: "ready"
-            updated: time
-          $push:
-            log: log
-        }
-        {
-          multi: true
-        }
-      )
+      @readyJobs()

@@ -290,7 +290,8 @@ class JobCollectionBase extends Mongo.Collection
 
     doc.after = new Date(time.valueOf() + wait)
     if jobId = @insert doc
-      @_promote_jobs? [jobId]
+      @_DDPMethod_jobReady jobId
+      # @_promote_jobs? [jobId]
       return jobId
     else
       console.warn "Job rerun/repeat failed to reschedule!", id, runId
@@ -571,7 +572,8 @@ class JobCollectionBase extends Mongo.Collection
       }
     )
     if num > 0
-      @_promote_jobs? ids
+      @_DDPMethod_jobReady ids
+      # @_promote_jobs? ids
       return true
     else
       console.warn "jobResume failed"
@@ -581,18 +583,30 @@ class JobCollectionBase extends Mongo.Collection
     check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional
       force: Match.Optional Boolean
+      time: Match.Optional Date
+
+    now = new Date()
 
     options ?= {}
     options.force ?= false
+    options.time ?= now
+
     if _validId(ids)
       ids = [ids]
-    return false if ids.length is 0
-    time = new Date()
+
+    query =
+      status: "waiting"
+      after:
+        $lte: options.time
 
     mods =
       $set:
         status: "ready"
-        updated: time
+        updated: now
+
+    if ids.length > 0
+      query._id =
+        $in: ids
 
     logObj = []
 
@@ -600,6 +614,9 @@ class JobCollectionBase extends Mongo.Collection
       mods.$set.depends = []  # Don't move to resolved, because they weren't!
       l = @_logMessage.forced()
       logObj.push l if l
+    else
+      query.depends =
+        $size: 0
 
     l = @_logMessage.readied()
     logObj.push l if l
@@ -610,11 +627,7 @@ class JobCollectionBase extends Mongo.Collection
           $each: logObj
 
     num = @update(
-      {
-        _id:
-          $in: ids
-        status: 'waiting'
-      }
+      query
       mods
       {
         multi: true
@@ -624,8 +637,7 @@ class JobCollectionBase extends Mongo.Collection
     if num > 0
       return true
     else
-      console.warn "jobReady failed"
-    return false
+      return false
 
   _DDPMethod_jobCancel: (ids, options) ->
     check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
@@ -731,7 +743,8 @@ class JobCollectionBase extends Mongo.Collection
       depsRestarted = @_DDPMethod_jobRestart restartIds, options
 
     if num > 0 or depsRestarted
-      @_promote_jobs? ids
+      @_DDPMethod_jobReady ids
+      # @_promote_jobs? ids
       return true
     else
       console.warn "jobRestart failed"
@@ -805,7 +818,8 @@ class JobCollectionBase extends Mongo.Collection
       )
 
       if num
-        @_promote_jobs? [doc._id]
+        @_DDPMethod_jobReady doc._id
+        # @_promote_jobs? [doc._id]
         return doc._id
       else
         return null
@@ -825,7 +839,8 @@ class JobCollectionBase extends Mongo.Collection
       doc.created = time
       doc.log.push @_logMessage.submitted()
       newId = @insert doc
-      @_promote_jobs? [newId]
+      @_DDPMethod_jobReady newId
+      # @_promote_jobs? [newId]
       return newId
 
   # Worker methods
@@ -1060,7 +1075,8 @@ class JobCollectionBase extends Mongo.Collection
         if n isnt ids.length
           console.warn "Not all dependent jobs were resolved #{ids.length} > #{n}"
         # Try to promote any jobs that just had a dependency resolved
-        @_promote_jobs? ids
+        @_DDPMethod_jobReady ids
+        # @_promote_jobs? ids
       if options.repeatId and jobId?
         return jobId
       else

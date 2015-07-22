@@ -32,10 +32,18 @@ if Meteor.isServer
         user = userHelper msg.userId, msg.connection
         @_toLog user, msg.method, "#{msg.error}"
 
+      # Add events for all individual successful DDP methods
+      @_methodErrorDispatch = @events.on 'error', (msg) =>
+        @events.emit msg.method, msg
+
       @_callListener = @events.on 'call', (msg) =>
         user = userHelper msg.userId, msg.connection
         @_toLog user, msg.method, "params: " + JSON.stringify(msg.params)
         @_toLog user, msg.method, "returned: " + JSON.stringify(msg.returnVal)
+
+      # Add events for all individual successful DDP methods
+      @_methodEventDispatch = @events.on 'call', (msg) =>
+        @events.emit msg.method, msg
 
       @stopped = true
 
@@ -95,8 +103,11 @@ if Meteor.isServer
           method: method
           connection: connection
           userId: userId
+          params: params
+          returnVal: null
       else
         @events.emit 'call',
+          error: null
           method: method
           connection: connection
           userId: userId
@@ -104,16 +115,12 @@ if Meteor.isServer
           returnVal: ret
 
     _methodWrapper: (method, func) ->
-
-      emit = @_emit
-
+      self = this
       myTypeof = (val) ->
         type = typeof val
         type = 'array' if type is 'object' and type instanceof Array
         return type
-
       permitted = (userId, params) =>
-
         performTest = (tests) =>
           result = false
           for test in tests when result is false
@@ -122,15 +129,12 @@ if Meteor.isServer
               when 'function' then test(userId, method, params)
               else false
           return result
-
         performAllTests = (allTests) =>
           result = false
           for t in @ddpMethodPermissions[method] when result is false
             result = result or performTest(allTests[t])
           return result
-
         return not performAllTests(@denys) and performAllTests(@allows)
-
       # Return the wrapper function that the Meteor method will actually invoke
       return (params...) ->
         try
@@ -140,16 +144,14 @@ if Meteor.isServer
             err = new Meteor.Error 403, "Method not authorized", "Authenticated user is not permitted to invoke this method."
             throw err
         catch err
-          emit method, this.connection, this.userId, err
+          self._emit method, this.connection, this.userId, err
           throw err
-
-        emit method, this.connection, this.userId, null, retval, params...
+        self._emit method, this.connection, this.userId, null, retval, params...
         return retval
 
     setLogStream: (writeStream = null) ->
       if @logStream
         throw new Error "logStream may only be set once per job-collection startup/shutdown cycle"
-
       @logStream = writeStream
       unless not @logStream? or
              @logStream.write? and
@@ -181,12 +183,10 @@ if Meteor.isServer
     _promote_jobs: (ids = []) ->
       if @stopped
         return
-
       # This looks for zombie running jobs and autofails them
       @find({status: 'running', expiresAfter: { $lt: new Date() }})
         .forEach (job) =>
           new Job(@root, job).fail("Failed for exceeding worker set workTimeout");
-
       # Change jobs from waiting to ready when their time has come
       # and dependencies have been satisfied
       @readyJobs()

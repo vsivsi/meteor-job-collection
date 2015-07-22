@@ -199,6 +199,7 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }
   job2 = new Job testColl, jobType, { order: 2 }
+  job.delay 1000 # Ensure that job2 has the opportunity to run first
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"

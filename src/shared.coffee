@@ -143,6 +143,7 @@ class JobCollectionBase extends Mongo.Collection
   getJob: (params...) -> Job.getJob @root, params...
   getWork: (params...) -> Job.getWork @root, params...
   getJobs: (params...) -> Job.getJobs @root, params...
+  readyJobs: (params...) -> Job.readyJobs @root, params...
   cancelJobs: (params...) -> Job.cancelJobs @root, params...
   pauseJobs: (params...) -> Job.pauseJobs @root, params...
   resumeJobs: (params...) -> Job.resumeJobs @root, params...
@@ -179,7 +180,8 @@ class JobCollectionBase extends Mongo.Collection
       new Job @root, params...
 
   _logMessage:
-    'promoted': () -> _createLogEntry "Promoted to ready"
+    'readied': () -> _createLogEntry "Promoted to ready"
+    'forced': (id) -> _createLogEntry "Dependencies force resolved", null, 'warning'
     'rerun': (id, runId) -> _createLogEntry "Rerunning job", null, 'info', new Date(), {previousJob:{id:id,runId:runId}}
     'running': (runId) -> _createLogEntry "Job Running", runId
     'paused': () -> _createLogEntry "Job Paused"
@@ -573,6 +575,56 @@ class JobCollectionBase extends Mongo.Collection
       return true
     else
       console.warn "jobResume failed"
+    return false
+
+  _DDPMethod_jobReady: (ids, options) ->
+    check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
+    check options, Match.Optional
+      force: Match.Optional Boolean
+
+    options ?= {}
+    options.force ?= false
+    if _validId(ids)
+      ids = [ids]
+    return false if ids.length is 0
+    time = new Date()
+
+    mods =
+      $set:
+        status: "ready"
+        updated: time
+
+    logObj = []
+
+    if options.force
+      mods.$set.depends = []  # Don't move to resolved, because they weren't!
+      l = @_logMessage.forced()
+      logObj.push l if l
+
+    l = @_logMessage.readied()
+    logObj.push l if l
+
+    if logObj.length > 0
+      mods.$push =
+        log:
+          $each: logObj
+
+    num = @update(
+      {
+        _id:
+          $in: ids
+        status: 'waiting'
+      }
+      mods
+      {
+        multi: true
+      }
+    )
+
+    if num > 0
+      return true
+    else
+      console.warn "jobReady failed"
     return false
 
   _DDPMethod_jobCancel: (ids, options) ->

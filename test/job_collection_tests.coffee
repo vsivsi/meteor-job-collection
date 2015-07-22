@@ -34,9 +34,9 @@ Tinytest.add 'JobCollection default constructor', (test) ->
     test.equal defaultColl.stopped, true, "isn't initially stopped"
     test.equal defaultColl.logStream, null, "Doesn't have a logStream"
     test.instanceOf defaultColl.allows, Object, "allows isn't an object"
-    test.equal Object.keys(defaultColl.allows).length, 21, "allows not properly initialized"
+    test.equal Object.keys(defaultColl.allows).length, 22, "allows not properly initialized"
     test.instanceOf defaultColl.denys, Object, "denys isn't an object"
-    test.equal Object.keys(defaultColl.denys).length, 21, "denys not properly initialized"
+    test.equal Object.keys(defaultColl.denys).length, 22, "denys not properly initialized"
   else
     test.equal defaultColl.logConsole, false, "Doesn't have a logConsole"
 

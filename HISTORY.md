@@ -13,6 +13,7 @@
 * There are two events currently implemented: `'call'` for successful DDP method calls, and `'error'` for any errors thrown in such calls.
 * The built-in default server logging mechanism (through `setLogStream()`) has been refactored to be built on top of the new Event Emitter mechanism. It otherwise works exactly as before.
 * Throw an error when a buggy monkey patch has been applied to `Mongo.collection` (usually by some other package). See [this discussion](https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592) for details.
+* Added new DDP method methods `job.ready()` and `jc.readyJobs()` to move jobs from waiting to ready.
 
 ### 1.1.4
 

@@ -696,14 +696,14 @@ batches on the server.
 * `'call'` -- Emitted for any successful job-collection DDP call
 * `'error'` -- Emitted for any job-collection DDP call that throws an error
 
-In addition to the above two primary events, there are more specific events defined for each individual DDP call (e.g. `jobDone` or `getWork`). These call specific events are emitted regardless of if the call was successful or not.
+In addition to the above two primary events, there are specific events defined for each individual DDP call (e.g. `jobDone` or `getWork`). These call specific events are emitted regardless of if the call was successful or if it threw an error.
 
 All event handlers are called with a message object using this schema:
 
 ```javascript
 {
   error: // An error object, or null if no error
-  methor: // The DDP method name
+  method: // The DDP method name
   connection: // The Meteor connection object for the call, or undefined on server
   userId: userId // The Meteor userID for the connection, null if unauthenticated, undefined on server
   params: params, // Array of parameters passed to the DDP method

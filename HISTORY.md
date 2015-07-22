@@ -2,18 +2,15 @@
 
 ### 1.2.0
 
-* Added ability for workers to specify a timeout for running jobs, so that if they crash or lose connectivity the job can automatically fail and be restarted.
-* `getWork()` and `processJobs()` now each have a new option `workTimeout` that sets the number of milliseconds until a job can be automatically failed on the server. If not specified, the default behavior is as before (running jobs with no active worker need to be handled by the developer.) Thanks to @aldeed for the idea of making this a worker setting.
-* Fixed a bug in `job.rerun()` that caused it to fail if called with a later.js object for the wait parameter.
+* Added ability for workers to specify a timeout for running jobs, so that if they crash or lose connectivity the job can automatically fail and be restarted. `getWork()` and `processJobs()` now each have a new option `workTimeout` that sets the number of milliseconds until a job can be automatically failed on the server. If not specified, the default behavior is as before (running jobs with no active worker need to be handled by the developer.) Thanks to @aldeed for the idea of making this a worker setting.
+* Added `repeatId` option to `job.done()` which when `true` will cause the successful return value of a repeating job to be the `_id` of the newly scheduled job. Thanks to @tcastelli for this idea.
+* Added `jc.events`, which is a node.js Event Emitter allowing server code to register callbacks to log or generate statistics based upon all job-collection DDP methods. There are two main events currently implemented: `'call'` for successful DDP method calls, and `'error'` for any errors thrown in such calls. There are also events defined for each of the 18 DDP methods (e.g. `jobDone` or `getWork`). These events emit for every such call, whether successful for not.
+* Added new DDP method methods `job.ready()` and `jc.readyJobs()` to provide a standard way to promote jobs from `'waiting'` to `'ready'`.
+* Throw an error when a buggy monkey patch has been applied to `Mongo.collection` (usually by some other package). See [this discussion](https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592) for details.
+* The built-in default server logging mechanism (through `setLogStream()`) has been refactored to be built on top of the new Event Emitter mechanism. It otherwise works exactly as before.
 * Providing a falsy value of option `pollInterval` when calling `Job.processJobs()` will now disable polling in favor of using `q.trigger` exclusively.
 * Fixed bug where `q.trigger()` caused a `getWork()` call, even when the queue is paused.
-* Added `repeatId` option to `job.done()` which when `true` will cause the successful return value of a repeating job to be the `_id` of the newly scheduled job. Thanks to @tcastelli for this idea.
-* Added `jc.events`, which is a node.js Event Emitter allowing server code to register callbacks to log or generate statistics based upon all job-collection DDP methods.
-* There are two main events currently implemented: `'call'` for successful DDP method calls, and `'error'` for any errors thrown in such calls.
-* There are also events defined for each of the 18 DDP methods (e.g. `jobDone` or `getWork`). These events emit for every such call, whether successful for not.
-* The built-in default server logging mechanism (through `setLogStream()`) has been refactored to be built on top of the new Event Emitter mechanism. It otherwise works exactly as before.
-* Throw an error when a buggy monkey patch has been applied to `Mongo.collection` (usually by some other package). See [this discussion](https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592) for details.
-* Added new DDP method methods `job.ready()` and `jc.readyJobs()` to provide a standard way to promote jobs from `'waiting'` to `'ready'`.
+* Fixed a bug in `job.rerun()` that caused it to fail if called with a later.js object for the wait parameter.
 
 ### 1.1.4
 

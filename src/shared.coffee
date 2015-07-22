@@ -291,7 +291,6 @@ class JobCollectionBase extends Mongo.Collection
     doc.after = new Date(time.valueOf() + wait)
     if jobId = @insert doc
       @_DDPMethod_jobReady jobId
-      # @_promote_jobs? [jobId]
       return jobId
     else
       console.warn "Job rerun/repeat failed to reschedule!", id, runId
@@ -573,7 +572,6 @@ class JobCollectionBase extends Mongo.Collection
     )
     if num > 0
       @_DDPMethod_jobReady ids
-      # @_promote_jobs? ids
       return true
     else
       console.warn "jobResume failed"
@@ -744,7 +742,6 @@ class JobCollectionBase extends Mongo.Collection
 
     if num > 0 or depsRestarted
       @_DDPMethod_jobReady ids
-      # @_promote_jobs? ids
       return true
     else
       console.warn "jobRestart failed"
@@ -819,7 +816,6 @@ class JobCollectionBase extends Mongo.Collection
 
       if num
         @_DDPMethod_jobReady doc._id
-        # @_promote_jobs? [doc._id]
         return doc._id
       else
         return null
@@ -840,7 +836,6 @@ class JobCollectionBase extends Mongo.Collection
       doc.log.push @_logMessage.submitted()
       newId = @insert doc
       @_DDPMethod_jobReady newId
-      # @_promote_jobs? [newId]
       return newId
 
   # Worker methods
@@ -1076,7 +1071,6 @@ class JobCollectionBase extends Mongo.Collection
           console.warn "Not all dependent jobs were resolved #{ids.length} > #{n}"
         # Try to promote any jobs that just had a dependency resolved
         @_DDPMethod_jobReady ids
-        # @_promote_jobs? ids
       if options.repeatId and jobId?
         return jobId
       else

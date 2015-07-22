@@ -103,7 +103,6 @@ if Meteor.isServer
       job.done()
       cb()
     ev = testColl.events.once 'jobDone', (msg) ->
-      console.log 'In event', res, msg
       test.equal msg.method, 'jobDone'
       if msg.params[0] is res
         q.shutdown { level: 'soft', quiet: true }, () ->
@@ -132,16 +131,23 @@ Tinytest.addAsync 'Create an invalid job and see that errors correctly propagate
   delete job.doc.status
   test.equal validJobDoc(job.doc), false
   if Meteor.isServer
+    eventFlag = false
     err = null
+    ev = testColl.events.once 'jobSave', (msg) ->
+      eventFlag = true
+      test.fail(new Error "Server error event didn't dispatch") unless msg.error
     try
       job.save()
     catch e
       err = e
     finally
+      test.ok eventFlag
       test.fail(new Error "Server exception wasn't thrown") unless err
-  job.save (err, res) ->
-    test.fail(new Error "Error did not propagate to Client") unless err
-    onComplete()
+      onComplete()
+  else
+    job.save (err, res) ->
+      test.fail(new Error "Error did not propagate to Client") unless err
+      onComplete()
 
 Tinytest.addAsync 'Create a job and then make a new doc with its document', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
@@ -338,17 +344,16 @@ if Meteor.isServer
           test.equal job.doc._id, res
         else
           test.notEqual job.doc._id, res
-        job.done()
+        job.done({}, { repeatId: true })
         cb()
-      Meteor.setTimeout(() ->
-        job.refresh () ->
-          test.equal job._doc.status, 'completed'
-          test.equal counter, 2
-          q.shutdown { level: 'soft', quiet: true }, () ->
-            onComplete()
-      ,
-        3000
-      )
+      listener = (msg) ->
+        if counter is 2
+          job.refresh () ->
+            test.equal job._doc.status, 'completed'
+            q.shutdown { level: 'soft', quiet: true }, () ->
+              ev.removeListener 'jobDone', listener
+              onComplete()
+      ev = testColl.events.on 'jobDone', listener
 
 # Tinytest.addAsync 'Run stopJobs on the job collection', (test, onComplete) ->
 #   testColl.stopJobs { timeout: 1 }, (err, res) ->

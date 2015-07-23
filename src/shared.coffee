@@ -615,6 +615,7 @@ class JobCollectionBase extends Mongo.Collection
     if ids.length > 0
       query._id =
         $in: ids
+      mods.$set.after = now
 
     logObj = []
 

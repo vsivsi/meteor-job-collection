@@ -393,7 +393,7 @@ class JobCollectionBase extends Mongo.Collection
       workTimeout: Match.Optional(Match.Where _validIntGTEOne)
 
     # Don't simulate getWork!
-    if Meteor.isSimulation
+    if @isSimulation
       return
 
     options ?= {}
@@ -590,7 +590,7 @@ class JobCollectionBase extends Mongo.Collection
     # Don't simulate jobReady. It has a strong chance of causing issues with
     # Meteor on the client, particularly if an observeChanges() is triggering
     # a processJobs queue (which in turn sets timers.)
-    if Meteor.isSimulation
+    if @isSimulation
       return
 
     now = new Date()

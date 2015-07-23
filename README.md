@@ -905,9 +905,7 @@ may be run on the client or server.
 #### Adds jobs that this job depends upon (antecedents)
 
 This job will not run until these jobs have successfully completed. Defaults to an empty array (no
-dependencies). Returns `job`, so it is chainable.
-Added jobs must have already had `.save()` run on them, so they will have the `_id` attribute that
-is used to form the dependency. Calling `job.depends()` with a falsy value will clear any existing
+dependencies). Returns `job`, so it is chainable. Calling `job.depends()` with a falsy value will clear any existing
 dependencies for this job.
 
 ```javascript
@@ -917,6 +915,30 @@ job.depends([job1, job2]);
 // Clear any dependencies previously added on this job
 job.depends();
 ```
+Added antecendent jobs must have already had `.save()` run on them, so they will have the `_id` attribute that
+is used to form the dependency. In practice, that often means that the dependent job will be created within the `save()` callback of its antecedent:
+
+```javascript
+// Create a job:
+var sendJob = new Job(myJobs, 'sendEmail', {
+  address: 'bozo@clowns.com',
+  subject: 'Critical rainbow hair shortage',
+  message: 'LOL; JK, KThxBye.'
+})
+.save(function(err, jobId) {
+  if (err) {
+    console.log("Couldn't create sendEmail job!");
+    return false;
+  }
+  var archiveJob = new Job(myJobs, 'archiveEmail', {
+    emailData: sendJob.data
+  }).depends([sendJob]).save();
+});
+```
+Note, however, that you *cannot* use `depends()` to reliably pass the `result` from an antecedent `job1` to a dependent `job2` as data. That is because `job2`, including its data object, will be created (though not run!) right away when the `new` keyword is encountered. At that point, `job1` may not yet be done, and its `result` nonexistent. It is therefore best to combine multiple jobs into one if they rely on one another's result. If that is not possible, because the jobs are to be separated in time (i.e. delayed) or space (i.e. run on separate machines), then two options are:
+
+1. to write the `_id` of the `job1` into the data object for `job2`, and write `job2`'s worker to look up the required `result` via `find()` when it runs. At that point it is guaranteed to exist (assuming `job1.remove()` hasn't been called); or
+2. not to use `.depends([job1])`, but to instead make the `job1` itself create `job2` and save it to the server, along with the `result` in the data object, once it's done.
 
 ### job.priority([priority]) - Anywhere
 #### Sets the priority of this job
@@ -1436,6 +1458,15 @@ jc.find({ type: 'jobType', status: 'ready' })
      added: function () { q.trigger(); }
   });
 ```
+
+Non-Meteor worker scripts cannot use the `jc.find(...).observe(...)` portion of the above example, but they can achieve the same effect via the [DDP](https://www.npmjs.com/package/ddp) package's `observe` functionality. Using an established DDP connection named, for instance, `ddp`, we can replace the snippet with
+
+```javascript
+ddp.observe("myJobs").added = function() {
+  q.trigger();
+};
+```
+where `myJobs` is the name of the `JobCollection`.
 
 ### q.shutdown([options], [callback]) - Anywhere
 #### Shuts down the queue, with several possible levels of urgency

@@ -11,6 +11,7 @@
 * Providing a falsy value of option `pollInterval` when calling `Job.processJobs()` will now disable polling in favor of using `q.trigger` exclusively.
 * Fixed bug where `q.trigger()` caused a `getWork()` call, even when the queue is paused.
 * Fixed a bug in `job.rerun()` that caused it to fail if called with a later.js object for the wait parameter.
+* Documentation updates and other improvements, with thanks to @skosch for a documentation PR.
 
 ### 1.1.4
 

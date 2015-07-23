@@ -945,9 +945,7 @@ may be run on the client or server.
 #### Adds jobs that this job depends upon (antecedents)
 
 This job will not run until these jobs have successfully completed. Defaults to an empty array (no
-dependencies). Returns `job`, so it is chainable.
-Added jobs must have already had `.save()` run on them, so they will have the `_id` attribute that
-is used to form the dependency. Calling `job.depends()` with a falsy value will clear any existing
+dependencies). Returns `job`, so it is chainable. Calling `job.depends()` with a falsy value will clear any existing
 dependencies for this job.
 
 ```javascript
@@ -957,6 +955,26 @@ job.depends([job1, job2]);
 // Clear any dependencies previously added on this job
 job.depends();
 ```
+Added antecendent jobs must have already had `.save()` run on them, so they will have the `_id` attribute that
+is used to form the dependency.
+
+```javascript
+// Create a job:
+var sendJob = new Job(myJobs, 'sendEmail', {
+  address: 'bozo@clowns.com',
+  subject: 'Critical rainbow hair shortage',
+  message: 'LOL; JK, KThxBye.'
+}).save();
+
+// Assuming synchronous style with Fibers...
+// archiveJob will not run until sendJob has
+// successfully completed.
+var archiveJob = new Job(myJobs, 'archiveEmail', {
+ emailRef: sendJob.data
+}).depends([sendJob]).save();
+```
+
+**Note!** Using `depends()` does not automatically pass any data from an antecedent `job1` to a dependent `job2`. This is typically handled by including a reference in the `data` object for `job2` that can be used by its worker to look up any results from `job1` that may be required.
 
 ### job.priority([priority]) - Anywhere
 #### Sets the priority of this job
@@ -1504,6 +1522,8 @@ jc.find({ type: 'jobType', status: 'ready' })
      added: function () { q.trigger(); }
   });
 ```
+
+Non-Meteor node.js worker scripts cannot use the `jc.find(...).observe(...)` portion of the above example. Please see the [documetnation for the meteor-job npm package](https://www.npmjs.com/package/meteor-job#q-trigger) for an alternative approach that works outside of the Meteor environment.
 
 ### q.shutdown([options], [callback]) - Anywhere
 #### Shuts down the queue, with several possible levels of urgency

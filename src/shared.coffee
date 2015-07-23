@@ -392,6 +392,10 @@ class JobCollectionBase extends Mongo.Collection
       maxJobs: Match.Optional(Match.Where _validIntGTEOne)
       workTimeout: Match.Optional(Match.Where _validIntGTEOne)
 
+    # Don't simulate getWork!
+    if Meteor.isSimulation
+      return
+
     options ?= {}
     options.maxJobs ?= 1
     # Don't put out any more jobs while shutting down
@@ -582,6 +586,12 @@ class JobCollectionBase extends Mongo.Collection
     check options, Match.Optional
       force: Match.Optional Boolean
       time: Match.Optional Date
+
+    # Don't simulate jobReady. It has a strong chance of causing issues with
+    # Meteor on the client, particularly if an observeChanges() is triggering
+    # a processJobs queue (which in turn sets timers.)
+    if Meteor.isSimulation
+      return
 
     now = new Date()
 

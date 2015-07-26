@@ -1,5 +1,9 @@
 ## Revision history
 
+### 1.2.1
+
+* Fixed `log()` on jobs without `runId` by loosening check in `jobLog()`. Thanks @sprohaska for the PR!
+
 ### 1.2.0
 
 * Added ability for workers to specify a timeout for running jobs, so that if they crash or lose connectivity the job can automatically fail and be restarted. `getWork()` and `processJobs()` now each have a new option `workTimeout` that sets the number of milliseconds until a job can be automatically failed on the server. If not specified, the default behavior is as before (running jobs with no active worker need to be handled by the developer.) Thanks to @aldeed for the idea of making this a worker setting.

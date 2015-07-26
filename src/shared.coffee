@@ -900,7 +900,7 @@ class JobCollectionBase extends Mongo.Collection
 
   _DDPMethod_jobLog: (id, runId, message, options) ->
     check id, Match.Where(_validId)
-    check runId, Match.Where(_validId)
+    check runId, Match.OneOf(Match.Where(_validId), null)
     check message, String
     check options, Match.Optional
       level: Match.Optional(Match.Where _validLogLevel)

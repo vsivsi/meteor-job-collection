@@ -16,9 +16,10 @@ It solves the following problems (and more):
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
-A live demo of job-collection is at [http://jcplayground.meteor.com](http://jcplayground.meteor.com).
+A live demo of job-collection is at [https://jcplayground.meteor.com](https://jcplayground.meteor.com).
 
 Source code for this demo app is at [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground)
+Source code for a plain node.js worker for the demo app is at [meteor-job-collection-playground-worker](https://github.com/vsivsi/meteor-job-collection-playground-worker)
 
 ## What's new in v1.2.0?
 

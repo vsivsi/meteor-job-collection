@@ -19,6 +19,7 @@ It solves the following problems (and more):
 A live demo of job-collection is at [https://jcplayground.meteor.com](https://jcplayground.meteor.com).
 
 Source code for this demo app is at [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground)
+
 Source code for a plain node.js worker for the demo app is at [meteor-job-collection-playground-worker](https://github.com/vsivsi/meteor-job-collection-playground-worker)
 
 ## What's new in v1.2.0?

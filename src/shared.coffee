@@ -267,6 +267,8 @@ class JobCollectionBase extends Mongo.Collection
     delete doc._id
     delete doc.result
     delete doc.failures
+    delete doc.expiresAfter
+    delete doc.workTimeout
     doc.runId = null
     doc.status = "waiting"
     doc.retries = doc.retries + doc.retried
@@ -448,6 +450,10 @@ class JobCollectionBase extends Mongo.Collection
       if options.workTimeout?
         mods.$set.workTimeout = options.workTimeout
         mods.$set.expiresAfter = new Date(time.valueOf() + options.workTimeout)
+      else
+        mods.$unset ?= {}
+        mods.$unset.workTimeout = ""
+        mods.$set.expiresAfter = ""
 
       num = @update(
         {

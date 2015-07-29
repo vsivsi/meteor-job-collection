@@ -1,5 +1,9 @@
 ## Revision history
 
+### v.NEXT
+
+* Fixed bug in the `jc.getWork()` `workTimeout` functionality that could cause a running job to immediately auto-expire on the server if it was previously run with a `workTimeout` value, and was then subsequently run without a `workTimeout` value after the original job was rerun, restarted, retried or repeated.
+
 ### 1.2.1
 
 * Fixed `log()` on jobs without `runId` by loosening check in `jobLog()`. Thanks @sprohaska for the PR!

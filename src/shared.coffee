@@ -453,7 +453,7 @@ class JobCollectionBase extends Mongo.Collection
       else
         mods.$unset ?= {}
         mods.$unset.workTimeout = ""
-        mods.$set.expiresAfter = ""
+        mods.$unset.expiresAfter = ""
 
       num = @update(
         {

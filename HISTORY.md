@@ -1,5 +1,9 @@
 ## Revision history
 
+### 1.2.3
+
+* Fix issue when very long `promote()` cycles are used, causing waiting jobs that are ready to run at a server restart to be delayed one full promotion cycle. Thanks to @KrishnaPG for reporting this.
+
 ### 1.2.2
 
 * Fixed bug in the `jc.getWork()` `workTimeout` functionality that could cause a running job to immediately auto-expire on the server if it was previously run with a `workTimeout` value, and was then subsequently run without a `workTimeout` value after the original job was rerun, restarted, retried or repeated.

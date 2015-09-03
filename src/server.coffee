@@ -176,6 +176,7 @@ if Meteor.isServer
       if typeof milliseconds is 'number' and milliseconds > 0
         if @interval
           Meteor.clearInterval @interval
+        @_promote_jobs()
         @interval = Meteor.setInterval @_promote_jobs.bind(@), milliseconds
       else
         console.warn "jobCollection.promote: invalid timeout: #{@root}, #{milliseconds}"

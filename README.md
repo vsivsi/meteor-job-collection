@@ -39,6 +39,7 @@ A complete list of changes can be found in the HISTORY file.
 - [Use](#user-content-use)
   - [Security](#user-content-security)
   - [Performance](#user-content-performance)
+  - [Removing Old Jobs](#user-content-removing-old-jobs)
   - [Logging](#user-content-logging)
 - [JobCollection API](#user-content-jobcollection-api)
 - [Job API](#user-content-job-api)
@@ -298,6 +299,14 @@ jc._ensureIndex({ type : 1, status : 1 });
 If you anticipate having large job collections (ie. with over 1000 jobs at a time) and you will be
 doing custom queires on the database, you will want to create appropriate additional indexes to
 ensure that your application performs well.
+
+### Removing Old Jobs
+
+Unless you do something to prevent it, completed and removed jobs will accumulate in your database. In some scenarios this may be desirable, but if it's not, there are a few options to clean out old jobs from the database:
+
+* Add a job cleaning job. This will take care of the most common use cases. It will allow you customize the logic to fit your specific needs. There's an example of a cleaning job in the "playground" [sample app](https://github.com/vsivsi/meteor-job-collection-playground/blob/576f46225d3dc3be81b1f89d6f7f57ad37789b12/play.coffee#L443-L464).
+* Use [events](#jcevents---server) to remove jobs once they complete or are removed.
+* Cap your job collection. This is a quick and dirty solution. Meteor [provides access](https://github.com/meteor/meteor/issues/1478) to MongoDB capped collections. Use this with caution as the API isn't officially supported and it's possible to set the cap lower than the number of possible running jobs which could cause running jobs to disappear from the database.
 
 ### Logging
 

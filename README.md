@@ -1306,7 +1306,7 @@ job.resume(function (err, result) {
 });
 ```
 
-### j.ready([options], [callback]) - Anywhere
+### job.ready([options], [callback]) - Anywhere
 #### Change the state of a job to `'ready'`.
 #### Requires permission: Server, `admin`, `manager` or `jobReady`
 Any job that is `'waiting'` may be readied. Jobs with unsatisfied dependencies will not be changed to `'ready'` unless the `force` option is used.

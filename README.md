@@ -547,15 +547,13 @@ unreliable workers are an issue, it is straightforward to write a recurring serv
 identifies stale running jobs (whose workers have presumably died) and "autofail" them so that they
 may be retried by another worker.
 
-`getWork` implements a "pull" model, where each call will return zero or more jobs depending on
-availability of work and the value of `maxJobs`. See `jc.processJobs()` below for a "push"-like
-model for automatically obtaining jobs to work on.
+`getWork` implements a "pull" model, where each call will return an array of zero or more jobs
+depending on availability of work and the value of `maxJobs`. See `jc.processJobs()` below for
+a "push"-like model for automatically obtaining jobs to work on.
 
 `options`:
 
-* `maxJobs` -- Maximum number of jobs to get. Default `1`  If `maxJobs > 1` the result will be an
-  array of job objects, otherwise it is a single job object, or `undefined` if no jobs were
-  available
+* `maxJobs` -- Maximum number of jobs to get. Default: `1`
 * `workTimeout` -- When requesting work, tells the server to automatically fail the requested job(s)
   if more than `workTimeout` milliseconds elapses between updates (`job.progress()`, `job.log()`)
   from the worker, before processing on the job is completed. This is optional, and allows the

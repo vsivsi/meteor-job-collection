@@ -192,7 +192,8 @@ class JobCollectionBase extends Mongo.Collection
     'submitted': () -> _createLogEntry "Job Submitted"
     'completed': (runId) -> _createLogEntry "Job Completed", runId, 'success'
     'resolved': (id, runId) -> _createLogEntry "Dependency resolved", null, 'info', new Date(), {dependency:{id:id,runId:runId}}
-    'failed': (runId, fatal, value) ->
+    'failed': (runId, fatal, err) ->
+      value = err.value
       msg = "Job Failed with#{if fatal then ' Fatal' else ''} Error#{if value? and typeof value is 'string' then ': ' + value else ''}."
       level = if fatal then 'danger' else 'warning'
       _createLogEntry msg, runId, level
@@ -1156,7 +1157,7 @@ class JobCollectionBase extends Mongo.Collection
         failures:
           err
 
-    if logObj = @_logMessage.failed runId, newStatus is 'failed', err.value
+    if logObj = @_logMessage.failed runId, newStatus is 'failed', err
       mods.$push.log = logObj
 
     num = @update(

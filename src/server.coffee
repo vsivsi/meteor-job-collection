@@ -8,6 +8,12 @@ if Meteor.isServer
 
   eventEmitter = Npm.require('events').EventEmitter
 
+  userHelper = (user, connection) ->
+    ret = user ? "[UNAUTHENTICATED]"
+    unless connection
+      ret = "[SERVER]"
+    ret
+
   ################################################################
   ## job-collection server class
 
@@ -21,12 +27,6 @@ if Meteor.isServer
       super root, options
 
       @events = new eventEmitter()
-
-      userHelper = (user, connection) ->
-        ret = user ? "[UNAUTHENTICATED]"
-        unless connection
-          ret = "[SERVER]"
-        ret
 
       @_errorListener = @events.on 'error', @_onError
 

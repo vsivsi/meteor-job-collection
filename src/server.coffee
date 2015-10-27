@@ -8,6 +8,12 @@ if Meteor.isServer
 
   eventEmitter = Npm.require('events').EventEmitter
 
+  userHelper = (user, connection) ->
+    ret = user ? "[UNAUTHENTICATED]"
+    unless connection
+      ret = "[SERVER]"
+    ret
+
   ################################################################
   ## job-collection server class
 
@@ -22,24 +28,13 @@ if Meteor.isServer
 
       @events = new eventEmitter()
 
-      userHelper = (user, connection) ->
-        ret = user ? "[UNAUTHENTICATED]"
-        unless connection
-          ret = "[SERVER]"
-        ret
-
-      @_errorListener = @events.on 'error', (msg) =>
-        user = userHelper msg.userId, msg.connection
-        @_toLog user, msg.method, "#{msg.error}"
+      @_errorListener = @events.on 'error', @_onError
 
       # Add events for all individual successful DDP methods
       @_methodErrorDispatch = @events.on 'error', (msg) =>
         @events.emit msg.method, msg
 
-      @_callListener = @events.on 'call', (msg) =>
-        user = userHelper msg.userId, msg.connection
-        @_toLog user, msg.method, "params: " + JSON.stringify(msg.params)
-        @_toLog user, msg.method, "returned: " + JSON.stringify(msg.returnVal)
+      @_callListener = @events.on 'call', @_onCall
 
       # Add events for all individual successful DDP methods
       @_methodEventDispatch = @events.on 'call', (msg) =>
@@ -91,6 +86,15 @@ if Meteor.isServer
         Job._setDDPApply @_ddp_apply, root
 
         Meteor.methods localMethods
+
+    _onError: (msg) =>
+      user = userHelper msg.userId, msg.connection
+      @_toLog user, msg.method, "#{msg.error}"
+
+    _onCall: (msg) =>
+      user = userHelper msg.userId, msg.connection
+      @_toLog user, msg.method, "params: " + JSON.stringify(msg.params)
+      @_toLog user, msg.method, "returned: " + JSON.stringify(msg.returnVal)
 
     _toLog: (userId, method, message) =>
       @logStream?.write "#{new Date()}, #{userId}, #{method}, #{message}\n"

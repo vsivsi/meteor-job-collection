@@ -64,7 +64,8 @@ if Meteor.isServer
       # remotely, so don't establish local and remotely callable server methods in that case
       unless options.connection?
         # Default indexes, only when not remotely connected!
-        @._ensureIndex { type : 1, status : 1 }
+        @_ensureIndex { type : 1, status : 1 }
+        @_ensureIndex { priority : 1, retryUntil : 1, after : 1 }
         @isSimulation = false
         localMethods = @_generateMethods()
         @_localServerMethods ?= {}

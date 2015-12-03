@@ -1074,9 +1074,7 @@ class JobCollectionBase extends Mongo.Collection
             resolved: id
 
         if options.delayDeps?
-          console.log "In delayDeps processing... #{options.delayDeps}"
           after = new Date(time.valueOf() + options.delayDeps)
-          console.log "New after value: #{after}"
           mods.$max =
             after: after
 

@@ -217,6 +217,30 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
           q.shutdown { level: 'soft', quiet: true }, () ->
             onComplete()
 
+Tinytest.addAsync 'Dependent job with delayDeps is delayed', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.delay 1000 # Ensure that job2 has the opportunity to run first
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    job2.save (err, res) ->
+      test.fail(err) if err
+      test.ok validId(res), "job.save() failed in callback result"
+      count = 0
+      q = testColl.processJobs jobType, { pollInterval: 250 }, (job, cb) ->
+        count++
+        test.equal count, job.data.order
+        timer = new Date()
+        job.done(null, { delayDeps: 1500 })
+        cb()
+        if count is 2
+          test.ok new Date() > timer + 1500
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
+
 Tinytest.addAsync 'Job priority is respected', (test, onComplete) ->
   counter = 0
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

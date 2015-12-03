@@ -985,6 +985,7 @@ class JobCollectionBase extends Mongo.Collection
     check result, Object
     check options, Match.Optional
       repeatId: Match.Optional Boolean
+      delayDeps: Match.Optional(Match.Where(_validIntGTEZero))
 
     options ?= { repeatId: false }
     time = new Date()
@@ -1071,6 +1072,13 @@ class JobCollectionBase extends Mongo.Collection
             depends: id
           $push:
             resolved: id
+
+        if options.delayDeps?
+          console.log "In delayDeps processing... #{options.delayDeps}"
+          after = new Date(time.valueOf() + options.delayDeps)
+          console.log "New after value: #{after}"
+          mods.$max =
+            after: after
 
         if logObj = @_logMessage.resolved id, runId
           mods.$push.log = logObj

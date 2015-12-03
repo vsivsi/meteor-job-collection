@@ -1216,6 +1216,8 @@ object, it will be wrapped in one.
 
 * `repeatId` -- If true, changes the return value of successful call from `true` to be the `_id` of a newly scheduled job if this is a repeating job. Default: `false`
 
+* `delayDeps` -- Integer. If defined, this sets the number of milliseconds before dependent jobs will run. It is equivalent to setting `job.delay(delayDeps)` on each dependent job, with a check to ensure that such jobs will not run sooner than they would have otherwise. Default: undefined.
+
 `callback(error, result)` -- Result is true if completion was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
@@ -1952,6 +1954,12 @@ Returns: `Boolean` - Success or failure
     `Match.Optional({
        repeatId:  Match.Optional(Boolean)
     })`
+
+   * `delayDeps` -- Integer. If defined, this sets the number of milliseconds before dependent jobs will run. It is equivalent to setting `job.delay(delayDeps)` on each dependent job, with a check to ensure that such jobs will not run sooner than they would have otherwise. Default: undefined.
+
+   `Match.Optional({
+      delayDeps:  Match.Optional(Match.Where validIntGTEZero)
+   })`
 
 Returns: `Boolean` - Success or failure unless `repeatId` option is true, when it may return the `_id` value of a created repeating job.
 

@@ -1,5 +1,9 @@
 ## Revision history
 
+### v.NEXT
+
+* Added `delayDeps` option to `job.done()` to allow dependent jobs to be delayed after the completion of an antecedent job.
+
 ### 1.2.3
 
 * Fix issue when very long `promote()` cycles are used, causing waiting jobs that are ready to run at a server restart to be delayed one full promotion cycle. Thanks to @KrishnaPG for reporting this.

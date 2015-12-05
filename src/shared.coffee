@@ -127,7 +127,7 @@ class JobCollectionBase extends Mongo.Collection
 
   jobLogLevels: Job.jobLogLevels
   jobPriorities: Job.jobPriorities
-  jobStatuses: Job.jobPriorities
+  jobStatuses: Job.jobStatuses
   jobStatusCancellable: Job.jobStatusCancellable
   jobStatusPausable: Job.jobStatusPausable
   jobStatusRemovable: Job.jobStatusRemovable

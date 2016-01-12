@@ -304,7 +304,7 @@ ensure that your application performs well.
 The server can easily log all activity (both successes and failures) on a job collection by passing
 any valid node.js writable Stream to `jc.setLogStream(writeStream)`. If you're just getting started try [`process.stdout`](https://nodejs.org/api/process.html#process_process_stdout) to log to your console.
 
-Looking for more control over the output? Define a listener on the [jc.events](https://github.com/vsivsi/meteor-job-collection#jcevents---server) `call` event to implement custom logging.
+Looking for more control over the output? Define a listener on the [jc.events](#jcevents---server) `call` event to implement custom logging.
 
 ## JobCollection API
 
@@ -695,7 +695,8 @@ batches on the server.
 
 `jc.events` is a node.js [Event Emitter](https://nodejs.org/api/events.html) interface that can be used for custom logging, statistics generation, or any other server management.
 
-The server emits two primary events in response to [job-collection DDP method]([job-collection DDP methods]([job-collection DDP](https://github.com/vsivsi/meteor-job-collection#user-content-ddp-method-reference) calls:
+The server emits two primary events in response to [job-collection DDP method](#user-content-ddp-method-reference) calls:
+
 
 * `'call'` -- success
 * `'error'` -- error thrown

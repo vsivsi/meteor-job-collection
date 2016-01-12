@@ -302,7 +302,9 @@ ensure that your application performs well.
 ### Logging
 
 The server can easily log all activity (both successes and failures) on a job collection by passing
-any valid node.js writable Stream to `jc.setLogStream(writeStream)`.
+any valid node.js writable Stream to `jc.setLogStream(writeStream)`. If you're just getting started try [`process.stdout`](https://nodejs.org/api/process.html#process_process_stdout) to log to your console.
+
+Looking for more control over the output? Define a listener on the [jc.events](https://github.com/vsivsi/meteor-job-collection#jcevents---server) `call` event to implement custom logging.
 
 ## JobCollection API
 
@@ -691,14 +693,16 @@ batches on the server.
 ### jc.events - Server
 #### Server Event Emitter
 
-`jc.events` is a node.js [Event Emitter](https://nodejs.org/api/events.html) interface that can be used for custom logging, statistics generation or any other server management purpose. The server implements two primary event types:
+`jc.events` is a node.js [Event Emitter](https://nodejs.org/api/events.html) interface that can be used for custom logging, statistics generation, or any other server management.
 
-* `'call'` -- Emitted for any successful job-collection DDP call
-* `'error'` -- Emitted for any job-collection DDP call that throws an error
+The server emits two primary events in response to [job-collection DDP method]([job-collection DDP methods]([job-collection DDP](https://github.com/vsivsi/meteor-job-collection#user-content-ddp-method-reference) calls:
 
-In addition to the above two primary events, there are specific events defined for each individual DDP call (e.g. `'jobDone'` or `'getWork'`). These call specific events are emitted regardless of if the call was successful or if it threw an error.
+* `'call'` -- success
+* `'error'` -- error thrown
 
-All event handlers are called with a message object using this schema:
+There are also individual events emitted for each DDP method, such as `'jobDone'`, regardless of success or error.
+
+Event handlers are called with a message object using this schema:
 
 ```javascript
 {
@@ -711,10 +715,9 @@ All event handlers are called with a message object using this schema:
 }
 ```
 
-Here is an example usage:
+A simple example to console.log successfully completed jobs:
 
 ```javascript
-  // Set up a simple console.log for successfully completed jobs
   js.events.on('call', function (msg) {
     if (msg.method === 'jobDone') {
       console.log("Job" + msg.params[0] + "finished!");

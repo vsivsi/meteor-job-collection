@@ -302,7 +302,7 @@ ensure that your application performs well.
 
 ### Removing Old Jobs
 
-Unless you do something to prevent it, completed and removed jobs will accumulate in your database. In some scenarios this may be desirable, but if it's not, there are a few options to clean out old jobs from the database:
+Unless you do something to prevent it, completed and canceled jobs will accumulate in your database. In some scenarios this may be desirable, but if it's not, there are a few options to clean out old jobs from the database:
 
 * Add a job cleaning job. This will take care of the most common use cases. It will allow you customize the logic to fit your specific needs. There's an example of a cleaning job in the "playground" [sample app](https://github.com/vsivsi/meteor-job-collection-playground/blob/576f46225d3dc3be81b1f89d6f7f57ad37789b12/play.coffee#L443-L464).
 * Use [events](#jcevents---server) to remove jobs once they complete or are removed.

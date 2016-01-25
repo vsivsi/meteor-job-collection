@@ -186,6 +186,8 @@ ddp.connect(function (err) {
     // from the server whenever it is available.
     // Note: If this worker was running within the Meteor environment,
     // Then only the call below is necessary to setup a worker!
+    // However in that case processJobs is a method on the JobCollection
+    // object, and not Job.
     var workers = Job.processJobs('myJobQueue', 'sendEmail',
       function (job, cb) {
         // This will only be called if a

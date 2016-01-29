@@ -22,12 +22,9 @@ Source code for this demo app is at [meteor-job-collection-playground](https://g
 
 Source code for a plain node.js worker for the demo app is at [meteor-job-collection-playground-worker](https://github.com/vsivsi/meteor-job-collection-playground-worker)
 
-## What's new in v1.2.0?
+## What's new in v1.3.0?
 
-* Workers may now specify a timeout for running jobs to automatically manage "zombie" jobs (workers that crash or lose connectivity.) `getWork()` and `processJobs()` now each have a new option `workTimeout` that sets the number of milliseconds until a job can be automatically failed on the server.
-* Added `repeatId` option to `job.done()` which when `true` will cause the successful return value of a repeating job to be the `_id` of the newly scheduled job.
-* Added `jc.events`, which is a node.js Event Emitter allowing server code to register callbacks to log or generate statistics based upon all job-collection DDP methods. There are two main events: `'call'` for successful DDP method calls, and `'error'` for any errors thrown in such calls. There are also events defined for each of the 18 DDP methods (e.g. `jobDone` or `getWork`).
-* Added new methods `job.ready()` and `jc.readyJobs()` to provide a standard way to promote jobs from `'waiting'` to `'ready'`.
+* Workers may now specify a delay before jobs dependent on the current one will become ready. See the new `delayDeps` option on `job.done()`.
 
 A complete list of changes can be found in the HISTORY file.
 

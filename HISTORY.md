@@ -1,8 +1,11 @@
 ## Revision history
 
-### v.NEXT
+### 1.3.0
 
-* Added `delayDeps` option to `job.done()` to allow dependent jobs to be delayed after the completion of an antecedent job.
+* Added `delayDeps` option to `job.done()` to allow dependent jobs to be delayed after the completion of an antecedent job. Thanks to @a4xrbj1 for suggesting.
+* Fixed bug in `Job.jobStatuses`, Thanks @niceilm
+* Documentation improvements, Thanks @rhyslbw, @mitar and @jdcc !
+* Updated job subproject to v1.3.1
 
 ### 1.2.3
 

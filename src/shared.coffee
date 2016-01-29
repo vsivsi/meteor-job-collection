@@ -161,6 +161,15 @@ class JobCollectionBase extends Mongo.Collection
 
   jobDocPattern: _validJobDoc()
 
+  # Warning Stubs for server-only calls
+  allow: () -> console.warn "WARNING! Server-only function jc.allow() invoked on client."
+  deny: () -> console.warn "WARNING! Server-only function jc.deny() invoked on client."
+  promote: () -> console.warn "WARNING! Server-only function jc.promote() invoked on client."
+  setLogStream: () -> console.warn "WARNING! Server-only function jc.setLogStream() invoked on client."
+
+  # Warning Stubs for client-only calls
+  logConsole: () -> console.warn "WARNING! Client-only function jc.logConsole() invoked on server."
+
   # Deprecated. Remove in next major version
   makeJob: do () ->
     dep = false

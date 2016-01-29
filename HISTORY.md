@@ -4,6 +4,7 @@
 
 * Added `delayDeps` option to `job.done()` to allow dependent jobs to be delayed after the completion of an antecedent job. Thanks to @a4xrbj1 for suggesting.
 * Fixed bug in `Job.jobStatuses`, Thanks @niceilm
+* Invoking server-only or client-only methods in the wrong environment now generates a warning method. Thanks @aardvarkk.
 * Documentation improvements, Thanks @rhyslbw, @mitar and @jdcc !
 * Updated job subproject to v1.3.1
 

@@ -1,5 +1,5 @@
 ############################################################################
-#     Copyright (C) 2014-2015 by Vaughn Iverson
+#     Copyright (C) 2014-2016 by Vaughn Iverson
 #     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
@@ -127,7 +127,7 @@ class JobCollectionBase extends Mongo.Collection
 
   jobLogLevels: Job.jobLogLevels
   jobPriorities: Job.jobPriorities
-  jobStatuses: Job.jobPriorities
+  jobStatuses: Job.jobStatuses
   jobStatusCancellable: Job.jobStatusCancellable
   jobStatusPausable: Job.jobStatusPausable
   jobStatusRemovable: Job.jobStatusRemovable

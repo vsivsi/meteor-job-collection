@@ -39,6 +39,7 @@ A complete list of changes can be found in the HISTORY file.
 - [Use](#user-content-use)
   - [Security](#user-content-security)
   - [Performance](#user-content-performance)
+  - [Removing Old Jobs](#user-content-removing-old-jobs)
   - [Logging](#user-content-logging)
 - [JobCollection API](#user-content-jobcollection-api)
 - [Job API](#user-content-job-api)
@@ -185,6 +186,8 @@ ddp.connect(function (err) {
     // from the server whenever it is available.
     // Note: If this worker was running within the Meteor environment,
     // Then only the call below is necessary to setup a worker!
+    // However in that case processJobs is a method on the JobCollection
+    // object, and not Job.
     var workers = Job.processJobs('myJobQueue', 'sendEmail',
       function (job, cb) {
         // This will only be called if a
@@ -300,10 +303,20 @@ If you anticipate having large job collections (ie. with over 1000 jobs at a tim
 doing custom queires on the database, you will want to create appropriate additional indexes to
 ensure that your application performs well.
 
+### Removing Old Jobs
+
+Unless you do something to prevent it, completed and canceled jobs will accumulate in your database. In some scenarios this may be desirable, but if it's not, there are a few options to clean out old jobs from the database:
+
+* Add a job cleaning job. This will take care of the most common use cases. It will allow you customize the logic to fit your specific needs. There's an example of a cleaning job in the "playground" [sample app](https://github.com/vsivsi/meteor-job-collection-playground/blob/576f46225d3dc3be81b1f89d6f7f57ad37789b12/play.coffee#L443-L464).
+* Use [events](#jcevents---server) to remove jobs once they complete or are removed.
+* Cap your job collection. This is a quick and dirty solution. Meteor [provides access](https://github.com/meteor/meteor/issues/1478) to MongoDB capped collections. Use this with caution as the API isn't officially supported and it's possible to set the cap lower than the number of possible running jobs which could cause running jobs to disappear from the database.
+
 ### Logging
 
 The server can easily log all activity (both successes and failures) on a job collection by passing
-any valid node.js writable Stream to `jc.setLogStream(writeStream)`.
+any valid node.js writable Stream to `jc.setLogStream(writeStream)`. If you're just getting started try [`process.stdout`](https://nodejs.org/api/process.html#process_process_stdout) to log to your console.
+
+Looking for more control over the output? Define a listener on the [jc.events](#jcevents---server) `call` event to implement custom logging.
 
 ## JobCollection API
 
@@ -548,15 +561,13 @@ unreliable workers are an issue, it is straightforward to write a recurring serv
 identifies stale running jobs (whose workers have presumably died) and "autofail" them so that they
 may be retried by another worker.
 
-`getWork` implements a "pull" model, where each call will return zero or more jobs depending on
-availability of work and the value of `maxJobs`. See `jc.processJobs()` below for a "push"-like
-model for automatically obtaining jobs to work on.
+`getWork` implements a "pull" model, where each call will return an array of zero or more jobs
+depending on availability of work and the value of `maxJobs`. See `jc.processJobs()` below for
+a "push"-like model for automatically obtaining jobs to work on.
 
 `options`:
 
-* `maxJobs` -- Maximum number of jobs to get. Default `1`  If `maxJobs > 1` the result will be an
-  array of job objects, otherwise it is a single job object, or `undefined` if no jobs were
-  available
+* `maxJobs` -- Maximum number of jobs to get. Default: `1`
 * `workTimeout` -- When requesting work, tells the server to automatically fail the requested job(s)
   if more than `workTimeout` milliseconds elapses between updates (`job.progress()`, `job.log()`)
   from the worker, before processing on the job is completed. This is optional, and allows the
@@ -694,14 +705,17 @@ batches on the server.
 ### jc.events - Server
 #### Server Event Emitter
 
-`jc.events` is a node.js [Event Emitter](https://nodejs.org/api/events.html) interface that can be used for custom logging, statistics generation or any other server management purpose. The server implements two primary event types:
+`jc.events` is a node.js [Event Emitter](https://nodejs.org/api/events.html) interface that can be used for custom logging, statistics generation, or any other server management.
 
-* `'call'` -- Emitted for any successful job-collection DDP call
-* `'error'` -- Emitted for any job-collection DDP call that throws an error
+The server emits two primary events in response to [job-collection DDP method](#user-content-ddp-method-reference) calls:
 
-In addition to the above two primary events, there are specific events defined for each individual DDP call (e.g. `'jobDone'` or `'getWork'`). These call specific events are emitted regardless of if the call was successful or if it threw an error.
 
-All event handlers are called with a message object using this schema:
+* `'call'` -- success
+* `'error'` -- error thrown
+
+There are also individual events emitted for each DDP method, such as `'jobDone'`, regardless of success or error.
+
+Event handlers are called with a message object using this schema:
 
 ```javascript
 {
@@ -714,10 +728,9 @@ All event handlers are called with a message object using this schema:
 }
 ```
 
-Here is an example usage:
+A simple example to console.log successfully completed jobs:
 
 ```javascript
-  // Set up a simple console.log for successfully completed jobs
   js.events.on('call', function (msg) {
     if (msg.method === 'jobDone') {
       console.log("Job" + msg.params[0] + "finished!");

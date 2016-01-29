@@ -77,11 +77,6 @@ _validJobDoc = () ->
   repeatWait: Match.OneOf(Match.Where(_validIntGTEZero), Match.Where(_validLaterJSObj))
   created: Date
 
-_createLogEntry = (message = '', runId = null, level = 'info', time = new Date(), data = null) ->
-  l = { time: time, runId: runId, message: message, level: level }
-  # console.warn "LOG! ", l
-  return l
-
 class JobCollectionBase extends Mongo.Collection
 
   constructor: (@root = 'queue', options = {}) ->
@@ -108,6 +103,29 @@ class JobCollectionBase extends Mongo.Collection
     delete options.noCollectionSuffix
 
     Job.setDDP(options.connection, @root)
+
+    @_createLogEntry = (message = '', runId = null, level = 'info', time = new Date(), data = null) ->
+      l = { time: time, runId: runId, message: message, level: level }
+      return l
+
+    @_logMessage =
+      'readied': (() -> @_createLogEntry "Promoted to ready").bind(@)
+      'forced': ((id) -> @_createLogEntry "Dependencies force resolved", null, 'warning').bind(@)
+      'rerun': ((id, runId) -> @_createLogEntry "Rerunning job", null, 'info', new Date(), {previousJob:{id:id,runId:runId}}).bind(@)
+      'running': ((runId) -> @_createLogEntry "Job Running", runId).bind(@)
+      'paused': (() -> @_createLogEntry "Job Paused").bind(@)
+      'resumed': (() -> @_createLogEntry "Job Resumed").bind(@)
+      'cancelled': (() -> @_createLogEntry "Job Cancelled", null, 'warning').bind(@)
+      'restarted': (() -> @_createLogEntry "Job Restarted").bind(@)
+      'resubmitted': (() -> @_createLogEntry "Job Resubmitted").bind(@)
+      'submitted': (() -> @_createLogEntry "Job Submitted").bind(@)
+      'completed': ((runId) -> @_createLogEntry "Job Completed", runId, 'success').bind(@)
+      'resolved': ((id, runId) -> @_createLogEntry "Dependency resolved", null, 'info', new Date(), {dependency:{id:id,runId:runId}}).bind(@)
+      'failed': ((runId, fatal, err) ->
+        value = err.value
+        msg = "Job Failed with#{if fatal then ' Fatal' else ''} Error#{if value? and typeof value is 'string' then ': ' + value else ''}."
+        level = if fatal then 'danger' else 'warning'
+        @_createLogEntry msg, runId, level).bind(@)
 
     # Call super's constructor
     super collectionName, options
@@ -162,13 +180,13 @@ class JobCollectionBase extends Mongo.Collection
   jobDocPattern: _validJobDoc()
 
   # Warning Stubs for server-only calls
-  allow: () -> console.warn "WARNING! Server-only function jc.allow() invoked on client."
-  deny: () -> console.warn "WARNING! Server-only function jc.deny() invoked on client."
-  promote: () -> console.warn "WARNING! Server-only function jc.promote() invoked on client."
-  setLogStream: () -> console.warn "WARNING! Server-only function jc.setLogStream() invoked on client."
+  allow: () -> throw new Error "Server-only function jc.allow() invoked on client."
+  deny: () -> throw new Error "Server-only function jc.deny() invoked on client."
+  promote: () -> throw new Error "Server-only function jc.promote() invoked on client."
+  setLogStream: () -> throw new Error "Server-only function jc.setLogStream() invoked on client."
 
   # Warning Stubs for client-only calls
-  logConsole: () -> console.warn "WARNING! Client-only function jc.logConsole() invoked on server."
+  logConsole: () -> throw new Error "Client-only function jc.logConsole() invoked on server."
 
   # Deprecated. Remove in next major version
   makeJob: do () ->
@@ -187,25 +205,6 @@ class JobCollectionBase extends Mongo.Collection
         dep = true
         console.warn "WARNING: jc.createJob() has been deprecated. Use new Job(jc, type, data) instead."
       new Job @root, params...
-
-  _logMessage:
-    'readied': () -> _createLogEntry "Promoted to ready"
-    'forced': (id) -> _createLogEntry "Dependencies force resolved", null, 'warning'
-    'rerun': (id, runId) -> _createLogEntry "Rerunning job", null, 'info', new Date(), {previousJob:{id:id,runId:runId}}
-    'running': (runId) -> _createLogEntry "Job Running", runId
-    'paused': () -> _createLogEntry "Job Paused"
-    'resumed': () -> _createLogEntry "Job Resumed"
-    'cancelled': () -> _createLogEntry "Job Cancelled", null, 'warning'
-    'restarted': () -> _createLogEntry "Job Restarted"
-    'resubmitted': () -> _createLogEntry "Job Resubmitted"
-    'submitted': () -> _createLogEntry "Job Submitted"
-    'completed': (runId) -> _createLogEntry "Job Completed", runId, 'success'
-    'resolved': (id, runId) -> _createLogEntry "Dependency resolved", null, 'info', new Date(), {dependency:{id:id,runId:runId}}
-    'failed': (runId, fatal, err) ->
-      value = err.value
-      msg = "Job Failed with#{if fatal then ' Fatal' else ''} Error#{if value? and typeof value is 'string' then ': ' + value else ''}."
-      level = if fatal then 'danger' else 'warning'
-      _createLogEntry msg, runId, level
 
   _methodWrapper: (method, func) ->
     toLog = @_toLog

@@ -43,7 +43,7 @@ if Meteor.isServer
       @stopped = true
 
       # No client mutators allowed
-      JobCollection.__super__.deny.bind(@)
+      share.JobCollectionBase.__super__.deny.bind(@)
         update: () => true
         insert: () => true
         remove: () => true

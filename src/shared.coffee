@@ -208,10 +208,12 @@ class JobCollectionBase extends Mongo.Collection
 
   _methodWrapper: (method, func) ->
     toLog = @_toLog
+    unblockDDPMethods = @_unblockDDPMethods ? false
     # Return the wrapper function that the Meteor method will actually invoke
     return (params...) ->
       user = this.userId ? "[UNAUTHENTICATED]"
       toLog user, method, "params: " + JSON.stringify(params)
+      this.unblock() if unblockDDPMethods
       retval = func(params...)
       toLog user, method, "returned: " + JSON.stringify(retval)
       return retval

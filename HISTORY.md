@@ -8,7 +8,7 @@
 * Additional indexes added to make built-in queries more efficient for large collections. Thanks @mitar.
 * Internal improvements in event handlers. Thanks @mitar.
 * Documentation improvements, Thanks @rhyslbw, @mitar and @jdcc !
-* Updated job subproject to v1.3.1
+* Updated job subproject to v1.3.2
 
 ### 1.2.3
 

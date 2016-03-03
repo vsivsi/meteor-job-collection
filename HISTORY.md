@@ -1,5 +1,9 @@
 ## Revision history
 
+### V.NEXT
+
+* Documentation improvements (typos)
+
 ### 1.3.0
 
 * Added `delayDeps` option to `job.done()` to allow dependent jobs to be delayed after the completion of an antecedent job. Thanks to @a4xrbj1 for suggesting.

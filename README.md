@@ -290,14 +290,14 @@ project, each remote method can also be individually secured with custom allow/d
 
 ### Performance
 
-The performance of job-collection will be almost entirely dependant on the speed of the MongoDB
+The performance of job-collection will be almost entirely dependent on the speed of the MongoDB
 server it is hosted on. By default job-collection creates these indexes in the underlying database:
 ```javascript
 jc._ensureIndex({ type : 1, status : 1 });
 jc._ensureIndex({ priority : 1, retryUntil : 1, after : 1 });
 ```
 If you anticipate having large job collections (ie. with over 1000 jobs at a time) and you will be
-doing custom queires on the database, you will want to create appropriate additional indexes to
+doing custom queries on the database, you will want to create appropriate additional indexes to
 ensure that your application performs well.
 
 ### Removing Old Jobs

@@ -3,6 +3,7 @@
 ### V.NEXT
 
 * Documentation improvements (typos)
+* Added unit tests for `getJob`, `getJobs`, and `getWork`
 
 ### 1.3.0
 

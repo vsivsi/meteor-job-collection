@@ -122,6 +122,42 @@ Tinytest.addAsync 'Create a job and see that it is added to the collection and r
       q.shutdown { level: 'soft', quiet: true }, () ->
         onComplete()
 
+Tinytest.addAsync 'Create jobs, retrieve with getJobs(), run with getWork()', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { some: 'data' }
+  job2 = new Job testColl, jobType, { other: 'data' }
+  test.ok validJobDoc(job.doc)
+  test.ok validJobDoc(job2.doc)
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    testColl.getJob res, (err, jobObj) ->
+      test.fail(err) if err
+      test.ok(jobObj instanceof Job)
+      test.ok validId(jobObj.doc._id), "job.getJob() failed in callback result"
+      job2.save (err, res) ->
+        test.fail(err) if err
+        test.ok validId(res), "job2.save() failed in callback result"
+        testColl.getJob res, (err, job2Obj) ->
+          test.fail(err) if err
+          test.ok(job2Obj instanceof Job)
+          test.ok validId(job2Obj.doc._id), "job2.getJob() failed in callback result"
+          idList = [jobObj.doc._id, job2Obj.doc._id]
+          testColl.getJobs idList, (err, jobs) ->
+            test.fail(err) if err
+            test.equal jobs.length, 2
+            for j in jobs
+              test.ok(j instanceof Job)
+              test.ok validId(j.doc._id), "getJobs() failed in callback result"
+            testColl.getWork jobType, {maxJobs: 2}, (err, jobs) ->
+              test.fail(err) if err
+              test.equal jobs.length, 2
+              jobs[0].done (err, res) ->
+                test.fail(err) if err
+                jobs[1].done (err, res) ->
+                  test.fail(err) if err
+                  onComplete()
+
 Tinytest.addAsync 'Create an invalid job and see that errors correctly propagate', (test, onComplete) ->
   console.warn "****************************************************************************************************"
   console.warn "***** The following exception dump is a Normal and Expected part of error handling unit tests: *****"

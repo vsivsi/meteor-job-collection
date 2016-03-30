@@ -350,6 +350,24 @@ Tinytest.addAsync 'Autofail and retry a job', (test, onComplete) ->
       2500
     )
 
+Tinytest.addAsync 'Autofail on error', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job(testColl, jobType, {some: 'data'})
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    q = testColl.processJobs jobType, { pollInterval: 250, workTimeout: 500 }, (job, cb) ->
+      throw new Error
+
+    Meteor.setTimeout(() ->
+      job.refresh () ->
+        test.equal job._doc.status, 'failed', "Job didn't successfully autofail"
+        q.shutdown { level: 'soft', quiet: true }, () ->
+          onComplete()
+    ,
+      2500
+    )
+
 if Meteor.isServer
 
   Tinytest.addAsync 'A forever repeating job with "schedule" and "until"', (test, onComplete) ->

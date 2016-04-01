@@ -10,13 +10,13 @@ It solves the following problems (and more):
 
 * Schedule jobs to run (and repeat) in the future, persisting across server restarts
 * Create repeating jobs with complex schedules using [Later.js]
-  (https://bunkat.github.io/later/index.html). See demo [here](http://jcplayground.meteor.com)
+  (https://bunkat.github.io/later/index.html). See demo [here](http://jcplayground.meteorapp.com)
 * Move work out of Meteor's single threaded event-loop
 * Enable work on computationally expensive jobs to run anywhere, on any number of machines
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
-A live demo of job-collection is at [https://jcplayground.meteor.com](https://jcplayground.meteor.com).
+A live demo of job-collection is at [https://jcplayground.meteor.com](https://jcplayground.meteorapp.com).
 
 Source code for this demo app is at [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground)
 

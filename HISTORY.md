@@ -1,7 +1,8 @@
 ## Revision history
 
-### V.NEXT
+### 1.3.1
 
+* Updated package dependencies
 * Documentation improvements (typos)
 
 ### 1.3.0

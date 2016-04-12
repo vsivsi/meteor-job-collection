@@ -696,7 +696,7 @@ batches on the server.
 ### jc.removeJobs(ids, [options], [callback]) - *Anywhere*
 #### Like `job.remove()` except it removes a list of jobs by id
 #### Requires permission: Server, `admin`, `manager` or `jobRemove`
-This is much more efficient than calling `job.resmove()` in a loop because it removes jobs in
+This is much more efficient than calling `job.remove()` in a loop because it removes jobs in
 batches on the server.
 
 ### jc.events - *Server only*

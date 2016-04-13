@@ -352,6 +352,30 @@ Tinytest.addAsync 'Autofail and retry a job', (test, onComplete) ->
 
 if Meteor.isServer
 
+  Tinytest.addAsync 'Add, cancel and remove a large number of jobs', (test, onComplete) ->
+    c = count = 500
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    for i in [1..count]
+      j = new Job(testColl, jobType, { idx: i })
+      j.save (err, res) ->
+        test.fail(err) if err
+        test.fail("job.save() Invalid _id value returned") unless validId(res)
+        c--
+        unless c
+          ids = testColl.find({ type: jobType, status: 'ready'}).map((d) -> d._id)
+          test.equal count, ids.length
+          testColl.cancelJobs ids, (err, res) ->
+            test.fail(err) if err
+            test.fail("cancelJobs Failed") unless res
+            ids = testColl.find({ type: jobType, status: 'cancelled'}).map((d) -> d._id)
+            test.equal count, ids.length
+            testColl.removeJobs ids, (err, res) ->
+              test.fail(err) if err
+              test.fail("removeJobs Failed") unless res
+              ids = testColl.find { type: jobType }
+              test.equal 0, ids.count()
+              onComplete()
+
   Tinytest.addAsync 'A forever repeating job with "schedule" and "until"', (test, onComplete) ->
     counter = 0
     jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

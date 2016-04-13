@@ -1,5 +1,10 @@
 ## Revision history
 
+### 1.3.3
+
+* Fixed error affecting all of the *Jobs functions which caused them to only process the first 256 jobs in the provided list of _id values.
+* Updated package dependencies
+
 ### 1.3.2
 
 * Fix broken links in README

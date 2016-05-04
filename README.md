@@ -1250,7 +1250,8 @@ job.done("Done!");
 
 The job's next state depends on how its `job.retry()` settings are configured. It will either become
 `'failed'` or go to `'waiting'` for the next retry. `error` is any EJSON object and will be saved as
-an object. If passed error is not an object, it will be wrapped in one.
+an object. If passed error is not an object, it will be wrapped in one. If the job becomes `'failed'`,
+all dependent jobs will be cancelled.
 
 `options:`
 

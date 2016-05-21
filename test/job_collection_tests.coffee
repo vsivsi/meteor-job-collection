@@ -351,6 +351,18 @@ Tinytest.addAsync 'Autofail and retry a job', (test, onComplete) ->
     )
 
 if Meteor.isServer
+  
+  Tinytest.addAsync 'Should not be problem to refresh early cancelled job with retried: 0', (test, onComplete) ->
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    job = new Job(testColl, jobType, { foo: "bar" })
+    job.save()
+    job.refresh()
+    job.cancel()
+    job.refresh()
+    job.restart()
+    job.refresh()
+    test.equal job._doc.retried, 0, "job did not update correctly retried field"
+    onComplete()
 
   Tinytest.addAsync 'Add, cancel and remove a large number of jobs', (test, onComplete) ->
     c = count = 500

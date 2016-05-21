@@ -352,6 +352,17 @@ Tinytest.addAsync 'Autofail and retry a job', (test, onComplete) ->
 
 if Meteor.isServer
 
+  Tinytest.addAsync 'Add, cancel, refresh, restart, refresh', (test, onComplete) ->
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    j = new Job(testColl, jobType, { foo: "bar" })
+    j.save()
+    j.refresh()
+    j.cancel()
+    j.refresh()
+    j.restart()
+    j.refresh()
+    onComplete()
+
   Tinytest.addAsync 'Add, cancel and remove a large number of jobs', (test, onComplete) ->
     c = count = 500
     jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

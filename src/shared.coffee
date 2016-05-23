@@ -720,7 +720,7 @@ class JobCollectionBase extends Mongo.Collection
   _DDPMethod_jobRestart: (ids, options) ->
     check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional
-      retries: Match.Optional(Match.Where _validIntGTEOne)
+      retries: Match.Optional(Match.Where _validIntGTEZero)
       until: Match.Optional Date
       antecedents: Match.Optional Boolean
       dependents: Match.Optional Boolean

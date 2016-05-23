@@ -1,5 +1,9 @@
 ## Revision history
 
+### 1.3.4
+
+* Fix an error caused by a check on `retries` when a waiting/ready job is cancelled, restarted and then refreshed. Thanks @huttarichard.
+
 ### 1.3.3
 
 * Fixed error affecting all of the *Jobs functions which caused them to only process the first 256 jobs in the provided list of _id values.

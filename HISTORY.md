@@ -2,7 +2,7 @@
 
 ### 1.3.4
 
-* Fix an error caused by a check on `retries` when a waiting/ready job is cancelled, restarted and then refreshed. Thanks @huttarichard.
+* Fix an error caused by a check on `retries` when a waiting/ready job is cancelled, restarted and then refreshed. This condition also occurs when `job.restart()` is called with option `retries` greater than the current value of `job.retried` (which is the default case after a cancel of a non-running job.) Thanks @huttarichard.
 
 ### 1.3.3
 

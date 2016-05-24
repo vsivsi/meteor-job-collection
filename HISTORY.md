@@ -4,7 +4,7 @@
 
 * Fix an error caused by a check on `retries` when a waiting/ready job is cancelled, restarted and then refreshed. This condition also occurs when `job.restart()` is called with option `retries` greater than the current value of `job.retried` (which is the default case after a cancel of a non-running job.) Thanks @huttarichard.
 
-* In coordination with the above change, the `retries` option of `job.restart()` will now accept a value of zero. It previously required a value >= 1. This preserves the ability to restart a cancelled repeating job without adding to the number of retries for all subsequent runs. However, if a job is being restarted due to failure from exhausting the number of retries, then a value of at least one will need to be provided to the restart option, as before. And this *will* now result in an increase in the number of repeats in subsequent runs.
+* In coordination with the above change, the `retries` option of `job.restart()` will now accept a value of zero.
 
 ### 1.3.3
 

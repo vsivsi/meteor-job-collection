@@ -1,9 +1,9 @@
 ## Revision history
 
-### 1.3.4
+### 1.4.0
 
+* Added support for new "callbackStrict" option to `processJobs()`. When `true` (default `false`) `processJobs()` will throw an error if a worker function calls its callback more than once. Previously it only wrote a message to stderr in all cases. That functionality is preserved with this change.
 * Fix an error caused by a check on `retries` when a waiting/ready job is cancelled, restarted and then refreshed. This condition also occurs when `job.restart()` is called with option `retries` greater than the current value of `job.retried` (which is the default case after a cancel of a non-running job.) Thanks @huttarichard.
-
 * In coordination with the above change, the `retries` option of `job.restart()` will now accept a value of zero.
 
 ### 1.3.3

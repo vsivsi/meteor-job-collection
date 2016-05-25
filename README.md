@@ -619,7 +619,10 @@ the `JobQueue` object API for methods on the returned `jq` object.
 * `payload` -- Maximum number of job objects to provide to each worker, Default: `1` If
   `payload > 1` the first parameter to `worker` will be an array of job objects rather than a single
   job object.
-* `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Any falsy value for this parameter will completely disable polling (see `q.trigger()` for an alternative way to drive the queue), and any truthy, non-numeric value will yield the default poll interval. Default: `5000` (5 seconds)
+* `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Any falsy value
+   for this parameter will completely disable polling (see `q.trigger()` for an alternative way to
+   drive the queue), and any truthy, non-numeric value will yield the default poll interval. Default:
+   `5000` (5 seconds)
 * `prefetch` -- How many extra jobs to request beyond the capacity of all workers
   (`concurrency * payload`) to compensate for latency getting more work.
 * `workTimeout` -- When requesting work, tells the server to automatically fail the requested job(s)
@@ -627,6 +630,9 @@ the `JobQueue` object API for methods on the returned `jq` object.
   from the worker, before processing on the job is completed. This is optional, and allows the
   server to automatically fail running jobs that may never finish because a worker went down or lost
   connectivity. Default: `undefined`
+* `callbackStrict` -- When `true` throws an error if a worker function calls its callback more than
+  once. Even when false, a message will be written to stderr when multiple callbacks are invoked.
+  Default: `false`
 
 `worker(result, callback)`
 

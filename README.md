@@ -1648,30 +1648,31 @@ validJobDoc = {
     Match.Where(validId),
     null
   ),
-  type:         String,
-  status:       Match.Where(validStatus),
-  data:         Object,
-  result:       Match.Optional(Object),
-  failures:     Match.Optional([ Object ]),
-  priority:     Match.Integer,
-  depends:      [ Match.Where(validId) ],
-  resolved:     [ Match.Where(validId) ],
-  after:        Date,
-  updated:      Date,
-  workTimeout:  Match.Optional Match.Where(validIntGTEOne)
-  expiresAfter: Match.Optional Date
-  log:          Match.Optional(validLog()),
-  progress:     validProgress(),
-  retries:      Match.Where(validIntGTEZero),
-  retried:      Match.Where(validIntGTEZero),  // Temporarily Match.Integer
-  retryUntil:   Date,
-  retryWait:    Match.Where(validIntGTEZero),
-  retryBackoff: Match.Where(validRetryBackoff),
-  repeats:      Match.Where(validIntGTEZero),
-  repeated:     Match.Where(validIntGTEZero),
-  repeatUntil:  Date,
-  repeatWait:   Match.OneOf(Match.Where(validIntGTEZero), Match.Where(_validLaterJSObj))
-  created:      Date
+  type:          String,
+  status:        Match.Where(validStatus),
+  data:          Object,
+  result:        Match.Optional(Object),
+  failures:      Match.Optional([ Object ]),
+  priority:      Match.Integer,
+  depends:       [ Match.Where(validId) ],
+  resolved:      [ Match.Where(validId) ],
+  after:         Date,
+  updated:       Date,
+  workTimeout:   Match.Optional Match.Where(validIntGTEOne)
+  expiresAfter:  Match.Optional Date
+  log:           Match.Optional(validLog()),
+  progress:      validProgress(),
+  retries:       Match.Where(validIntGTEZero),
+  retried:       Match.Where(validIntGTEZero),
+  repeatRetries: Match.Optional Match.Where(validIntGTEZero),
+  retryUntil:    Date,
+  retryWait:     Match.Where(validIntGTEZero),
+  retryBackoff:  Match.Where(validRetryBackoff),
+  repeats:       Match.Where(validIntGTEZero),
+  repeated:      Match.Where(validIntGTEZero),
+  repeatUntil:   Date,
+  repeatWait:    Match.OneOf(Match.Where(validIntGTEZero), Match.Where(_validLaterJSObj))
+  created:       Date
 };
 ```
 

@@ -67,7 +67,8 @@ _validJobDoc = () ->
   log: Match.Optional _validLog()
   progress: _validProgress()
   retries: Match.Where _validIntGTEZero
-  retried: Match.Integer  # Temp fix for #183 was: Match.Where _validIntGTEZero
+  retried: Match.Where _validIntGTEZero
+  repeatRetries: Match.Optional Match.Where _validIntGTEZero
   retryUntil: Date
   retryWait: Match.Where _validIntGTEZero
   retryBackoff: Match.Where _validRetryBackoff
@@ -282,7 +283,7 @@ class JobCollectionBase extends Mongo.Collection
     delete doc.workTimeout
     doc.runId = null
     doc.status = "waiting"
-    doc.retries = doc.retries + doc.retried
+    doc.retries = if doc.repeatRetries? then doc.repeatRetries else doc.retries + doc.retried
     doc.retries = @forever if doc.retries > @forever
     doc.retryUntil = repeatUntil
     doc.retried = 0
@@ -750,7 +751,6 @@ class JobCollectionBase extends Mongo.Collection
         updated: time
       $inc:
         retries: options.retries
-        retried: -options.retries  # Keep in balance
 
     if logObj = @_logMessage.restarted()
       mods.$push =

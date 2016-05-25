@@ -1383,8 +1383,9 @@ A restarted job will retain any repeat count state it had when it failed or was 
 
 `options:`
 
-* `retries` -- Number of additional retries to attempt before failing with `job.retry()`. Default:
-  `0`. These retries add to any remaining retries already on the job (such as if it was cancelled).
+* `retries` -- Number of additional retries to attempt before failing with `job.retry()`. These
+  retries add to any remaining retries already on the job (such as if it was cancelled). Can be any
+  non-negative Integer. Default: `1`.
 * `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever
   comes first. Default: Prior value of `until`. Note that if you specify a value for `until` when
   restarting a repeating job, it will only apply to the first run of the job. Any repeated runs of
@@ -1662,7 +1663,7 @@ validJobDoc = {
   log:          Match.Optional(validLog()),
   progress:     validProgress(),
   retries:      Match.Where(validIntGTEZero),
-  retried:      Match.Where(validIntGTEZero),
+  retried:      Match.Where(validIntGTEZero),  // Temporarily Match.Integer
   retryUntil:   Date,
   retryWait:    Match.Where(validIntGTEZero),
   retryBackoff: Match.Where(validRetryBackoff),

@@ -1844,7 +1844,7 @@ Returns: `Boolean` - Success or failure
       `false`
 
     `Match.Optional({
-        retries: Match.Optional(Match.Where validIntGTEOne),
+        retries: Match.Optional(Match.Where validIntGTEZero),
         until: Match.Optional(Date),
         antecedents: Match.Optional(Boolean),
         dependents: Match.Optional(Boolean)

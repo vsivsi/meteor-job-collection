@@ -283,7 +283,8 @@ class JobCollectionBase extends Mongo.Collection
     delete doc.workTimeout
     doc.runId = null
     doc.status = "waiting"
-    doc.retries = if doc.repeatRetries? then doc.repeatRetries else doc.retries + doc.retried
+    doc.repeatRetries = if doc.repeatRetries? then doc.repeatRetries else doc.retries + doc.retried
+    doc.retries = doc.repeatRetries
     doc.retries = @forever if doc.retries > @forever
     doc.retryUntil = repeatUntil
     doc.retried = 0
@@ -818,6 +819,7 @@ class JobCollectionBase extends Mongo.Collection
           status: 'waiting'
           data: doc.data
           retries: doc.retries
+          repeatRetries: if doc.repeatRetries? then doc.repeatRetries else doc.retries + doc.retried
           retryUntil: doc.retryUntil
           retryWait: doc.retryWait
           retryBackoff: doc.retryBackoff

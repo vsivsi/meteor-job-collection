@@ -22,9 +22,11 @@ Source code for this demo app is at [meteor-job-collection-playground](https://g
 
 Source code for a plain node.js worker for the demo app is at [meteor-job-collection-playground-worker](https://github.com/vsivsi/meteor-job-collection-playground-worker)
 
-## What's new in v1.3.0?
+## What's new in v1.4.0?
 
-* Workers may now specify a delay before jobs dependent on the current one will become ready. See the new `delayDeps` option on `job.done()`.
+* `processJobs` now has a `callbackStrict` option which causes an error to be thrown if the worker function invokes its callback more than once.
+* The job document model has gained a new optional attribute `repeatRetries`, which explicitly stores the number of retries for future runs of a repeating job. Previously this calculated from `job.retries + job.retried` which led to some weird edge cases when jobs were cancelled and restarted, including the potential for validation errors. This change is completely backwards and forward compatible with old and new versions.
+* Minor bug fixes and documentation updates.
 
 A complete list of changes can be found in the HISTORY file.
 

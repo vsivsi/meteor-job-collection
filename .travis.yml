@@ -4,6 +4,7 @@ node_js:
 
 before_install:
   - "curl https://install.meteor.com | /bin/sh"
+  - "npm install -g coffee-script"
   - "npm install -g spacejam"
   - "export PATH=$PATH:$HOME/.meteor"
 

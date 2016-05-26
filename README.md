@@ -10,13 +10,13 @@ It solves the following problems (and more):
 
 * Schedule jobs to run (and repeat) in the future, persisting across server restarts
 * Create repeating jobs with complex schedules using [Later.js]
-  (https://bunkat.github.io/later/index.html). See demo [here](http://jcplayground.meteorapp.com)
+  (https://bunkat.github.io/later/index.html). See demo [here](https://jcplayground.meteorapp.com)
 * Move work out of Meteor's single threaded event-loop
 * Enable work on computationally expensive jobs to run anywhere, on any number of machines
 * Track jobs and their progress, and automatically retry failed jobs
 * Easily build an admin UI to manage all of the above using Meteor's reactivity and UI goodness
 
-A live demo of job-collection is at [http://jcplayground.meteorapp.com](http://jcplayground.meteorapp.com).
+A live demo of job-collection is at [https://jcplayground.meteorapp.com](https://jcplayground.meteorapp.com).
 
 Source code for this demo app is at [meteor-job-collection-playground](https://github.com/vsivsi/meteor-job-collection-playground)
 
@@ -619,7 +619,10 @@ the `JobQueue` object API for methods on the returned `jq` object.
 * `payload` -- Maximum number of job objects to provide to each worker, Default: `1` If
   `payload > 1` the first parameter to `worker` will be an array of job objects rather than a single
   job object.
-* `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Any falsy value for this parameter will completely disable polling (see `q.trigger()` for an alternative way to drive the queue), and any truthy, non-numeric value will yield the default poll interval. Default: `5000` (5 seconds)
+* `pollInterval` -- How often to ask the remote job Collection for more work, in ms. Any falsy value
+   for this parameter will completely disable polling (see `q.trigger()` for an alternative way to
+   drive the queue), and any truthy, non-numeric value will yield the default poll interval. Default:
+   `5000` (5 seconds)
 * `prefetch` -- How many extra jobs to request beyond the capacity of all workers
   (`concurrency * payload`) to compensate for latency getting more work.
 * `workTimeout` -- When requesting work, tells the server to automatically fail the requested job(s)
@@ -627,6 +630,9 @@ the `JobQueue` object API for methods on the returned `jq` object.
   from the worker, before processing on the job is completed. This is optional, and allows the
   server to automatically fail running jobs that may never finish because a worker went down or lost
   connectivity. Default: `undefined`
+* `callbackStrict` -- When `true` throws an error if a worker function calls its callback more than
+  once. Even when false, a message will be written to stderr when multiple callbacks are invoked.
+  Default: `false`
 
 `worker(result, callback)`
 
@@ -1384,8 +1390,9 @@ A restarted job will retain any repeat count state it had when it failed or was 
 
 `options:`
 
-* `retries` -- Number of additional retries to attempt before failing with `job.retry()`. Default:
-  `0`. These retries add to any remaining retries already on the job (such as if it was cancelled).
+* `retries` -- Number of additional retries to attempt before failing with `job.retry()`. These
+  retries add to any remaining retries already on the job (such as if it was cancelled). Can be any
+  non-negative Integer. Default: `1`.
 * `until` -- Keep retrying until this `Date`, or until the number of retries is exhausted, whichever
   comes first. Default: Prior value of `until`. Note that if you specify a value for `until` when
   restarting a repeating job, it will only apply to the first run of the job. Any repeated runs of
@@ -1648,30 +1655,31 @@ validJobDoc = {
     Match.Where(validId),
     null
   ),
-  type:         String,
-  status:       Match.Where(validStatus),
-  data:         Object,
-  result:       Match.Optional(Object),
-  failures:     Match.Optional([ Object ]),
-  priority:     Match.Integer,
-  depends:      [ Match.Where(validId) ],
-  resolved:     [ Match.Where(validId) ],
-  after:        Date,
-  updated:      Date,
-  workTimeout:  Match.Optional Match.Where(validIntGTEOne)
-  expiresAfter: Match.Optional Date
-  log:          Match.Optional(validLog()),
-  progress:     validProgress(),
-  retries:      Match.Where(validIntGTEZero),
-  retried:      Match.Where(validIntGTEZero),
-  retryUntil:   Date,
-  retryWait:    Match.Where(validIntGTEZero),
-  retryBackoff: Match.Where(validRetryBackoff),
-  repeats:      Match.Where(validIntGTEZero),
-  repeated:     Match.Where(validIntGTEZero),
-  repeatUntil:  Date,
-  repeatWait:   Match.OneOf(Match.Where(validIntGTEZero), Match.Where(_validLaterJSObj))
-  created:      Date
+  type:          String,
+  status:        Match.Where(validStatus),
+  data:          Object,
+  result:        Match.Optional(Object),
+  failures:      Match.Optional([ Object ]),
+  priority:      Match.Integer,
+  depends:       [ Match.Where(validId) ],
+  resolved:      [ Match.Where(validId) ],
+  after:         Date,
+  updated:       Date,
+  workTimeout:   Match.Optional Match.Where(validIntGTEOne)
+  expiresAfter:  Match.Optional Date
+  log:           Match.Optional(validLog()),
+  progress:      validProgress(),
+  retries:       Match.Where(validIntGTEZero),
+  retried:       Match.Where(validIntGTEZero),
+  repeatRetries: Match.Optional Match.Where(validIntGTEZero),
+  retryUntil:    Date,
+  retryWait:     Match.Where(validIntGTEZero),
+  retryBackoff:  Match.Where(validRetryBackoff),
+  repeats:       Match.Where(validIntGTEZero),
+  repeated:      Match.Where(validIntGTEZero),
+  repeatUntil:   Date,
+  repeatWait:    Match.OneOf(Match.Where(validIntGTEZero), Match.Where(_validLaterJSObj))
+  created:       Date
 };
 ```
 
@@ -1844,7 +1852,7 @@ Returns: `Boolean` - Success or failure
       `false`
 
     `Match.Optional({
-        retries: Match.Optional(Match.Where validIntGTEOne),
+        retries: Match.Optional(Match.Where validIntGTEZero),
         until: Match.Optional(Date),
         antecedents: Match.Optional(Boolean),
         dependents: Match.Optional(Boolean)

@@ -1,5 +1,13 @@
 ## Revision history
 
+### 1.4.0
+
+* Added support for new "callbackStrict" option to `processJobs()`. When `true` (default `false`) `processJobs()` will throw an error if a worker function calls its callback more than once. Previously it only wrote a message to stderr in all cases. That functionality is preserved with this change.
+* Added `job.repeatRetries` as an optional (for backward compatibility) attribute of the job document model. This attribute is used (when present) for the number of retries to attempt for the new instance of a repeating job. When missing (such as will be the case for jobs created by older versions of meteor-job) the old method of using `job.retries + job.retried` is used.
+* Fix an error caused by a check on `retries` when a waiting/ready job is cancelled, restarted and then refreshed. This condition also occurs when `job.restart()` is called with option `retries` greater than the current value of `job.retried` (which is the default case after a cancel of a non-running job.) Thanks @huttarichard.
+* In coordination with the above change, the `retries` option of `job.restart()` will now accept a value of zero.
+* Fixed race condition in `processJobs()` that could cause `Job.getWork()` to run after the queue is paused or stopped, leading to a zombie job on the server.
+
 ### 1.3.3
 
 * Fixed error affecting all of the *Jobs functions which caused them to only process the first 256 jobs in the provided list of _id values.

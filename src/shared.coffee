@@ -68,6 +68,7 @@ _validJobDoc = () ->
   progress: _validProgress()
   retries: Match.Where _validIntGTEZero
   retried: Match.Where _validIntGTEZero
+  repeatRetries: Match.Optional Match.Where _validIntGTEZero
   retryUntil: Date
   retryWait: Match.Where _validIntGTEZero
   retryBackoff: Match.Where _validRetryBackoff
@@ -282,7 +283,8 @@ class JobCollectionBase extends Mongo.Collection
     delete doc.workTimeout
     doc.runId = null
     doc.status = "waiting"
-    doc.retries = doc.retries + doc.retried
+    doc.repeatRetries = if doc.repeatRetries? then doc.repeatRetries else doc.retries + doc.retried
+    doc.retries = doc.repeatRetries
     doc.retries = @forever if doc.retries > @forever
     doc.retryUntil = repeatUntil
     doc.retried = 0
@@ -720,7 +722,7 @@ class JobCollectionBase extends Mongo.Collection
   _DDPMethod_jobRestart: (ids, options) ->
     check ids, Match.OneOf(Match.Where(_validId), [ Match.Where(_validId) ])
     check options, Match.Optional
-      retries: Match.Optional(Match.Where _validIntGTEOne)
+      retries: Match.Optional(Match.Where _validIntGTEZero)
       until: Match.Optional Date
       antecedents: Match.Optional Boolean
       dependents: Match.Optional Boolean
@@ -750,7 +752,6 @@ class JobCollectionBase extends Mongo.Collection
         updated: time
       $inc:
         retries: options.retries
-        retried: -options.retries  # Keep in balance
 
     if logObj = @_logMessage.restarted()
       mods.$push =
@@ -818,6 +819,7 @@ class JobCollectionBase extends Mongo.Collection
           status: 'waiting'
           data: doc.data
           retries: doc.retries
+          repeatRetries: if doc.repeatRetries? then doc.repeatRetries else doc.retries + doc.retried
           retryUntil: doc.retryUntil
           retryWait: doc.retryWait
           retryBackoff: doc.retryBackoff

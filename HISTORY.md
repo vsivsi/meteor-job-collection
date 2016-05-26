@@ -7,6 +7,8 @@
 * Fix an error caused by a check on `retries` when a waiting/ready job is cancelled, restarted and then refreshed. This condition also occurs when `job.restart()` is called with option `retries` greater than the current value of `job.retried` (which is the default case after a cancel of a non-running job.) Thanks @huttarichard.
 * In coordination with the above change, the `retries` option of `job.restart()` will now accept a value of zero.
 * Fixed race condition in `processJobs()` that could cause `Job.getWork()` to run after the queue is paused or stopped, leading to a zombie job on the server.
+* Documentation improvements
+* Updated package dependencies
 
 ### 1.3.3
 

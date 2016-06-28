@@ -1075,7 +1075,7 @@ job.repeat({
 
 // Using later.js
 job.repeat({
-  schedule: jc.later.parse.text('every 5 mins');   // Rerun this job every 5 minutes
+  schedule: jc.later.parse.text('every 5 mins')   // Rerun this job every 5 minutes
 });
 ```
 

@@ -1,5 +1,11 @@
 ## Revision history
 
+#### 1.5.0
+
+* Added `errorCallback` option to `processJobs()`. This gives workers a way to log network and other errors and do something other than write them to `console.error` (the default and previous behavior).
+* Documentation improvements
+* Updated package dependencies.
+
 ### 1.4.0
 
 * Added support for new "callbackStrict" option to `processJobs()`. When `true` (default `false`) `processJobs()` will throw an error if a worker function calls its callback more than once. Previously it only wrote a message to stderr in all cases. That functionality is preserved with this change.

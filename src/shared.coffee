@@ -797,9 +797,12 @@ class JobCollectionBase extends Mongo.Collection
     doc.retryUntil = time if doc.retryUntil < time
     doc.repeatUntil = time if doc.repeatUntil < time
 
+    if @scheduleRepeat? doc
+      # There is a custom hook to process repeatWait defined, and it returned true
+      # to signal that it processed the doc (potentially setting doc.after to a new value).
     # If doc.repeatWait is a later.js object, then don't run before
     # the first valid scheduled time that occurs after doc.after
-    if @later? and typeof doc.repeatWait isnt 'number'
+    else if @later? and typeof doc.repeatWait isnt 'number'
       unless next = @later?.schedule(doc.repeatWait).next(1, doc.after)
         console.warn "No valid available later.js times in schedule after #{doc.after}"
         return null

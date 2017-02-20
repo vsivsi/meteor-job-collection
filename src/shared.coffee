@@ -800,7 +800,10 @@ class JobCollectionBase extends Mongo.Collection
     # If doc.repeatWait is a later.js object, then don't run before
     # the first valid scheduled time that occurs after doc.after
     if @later? and typeof doc.repeatWait isnt 'number'
-      unless next = @later?.schedule(doc.repeatWait).next(1, doc.after)
+      # Using a workaround to find next time after doc.after.
+      # See: https://github.com/vsivsi/meteor-job-collection/issues/217
+      schedule = @later?.schedule(doc.repeatWait)
+      unless schedule and next = schedule.next(2, schedule.prev(1, doc.after))[1]
         console.warn "No valid available later.js times in schedule after #{doc.after}"
         return null
       nextDate = new Date(next)

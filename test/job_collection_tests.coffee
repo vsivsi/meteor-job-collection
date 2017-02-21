@@ -391,7 +391,7 @@ if Meteor.isServer
     jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
     job = new Job(testColl, jobType, {some: 'data'})
       .repeat({
-        until: new Date(new Date().valueOf() + 2500),
+        until: new Date(new Date().valueOf() + 3500),
         schedule: testColl.later.parse.text("every 1 second")})
       .delay(1000)
     job.save (err, res) ->

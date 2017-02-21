@@ -1062,7 +1062,6 @@ class JobCollectionBase extends Mongo.Collection
             if (d - time > 500) or (next.length > 1)
               if d - time <= 500
                 d = new Date(next[1])
-              else
               wait = d - time
               if doc.repeatUntil - wait >= time
                 jobId = @_rerun_job doc, doc.repeats - 1, wait

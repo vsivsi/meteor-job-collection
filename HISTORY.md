@@ -2,7 +2,8 @@
 
 ### V.NEXT
 
-* Added workaround for bug/feature in later.js that caused the first run of periodic jobs to sometimes occur immediately after scheduling. Thanks @mitar!
+* Added workaround for bug/feature in later.js that caused the first run of periodic jobs to sometimes occur immediately after scheduling. Thanks @mitar.
+* Removed section recommending capped collections for managing removal of old finished jobs. This no longer works as of MongoDB 3.2. Thanks @mcoenca.
 * Documentation improvements
 * Updated package dependencies
 

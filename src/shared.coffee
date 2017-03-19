@@ -797,9 +797,13 @@ class JobCollectionBase extends Mongo.Collection
     doc.retryUntil = time if doc.retryUntil < time
     doc.repeatUntil = time if doc.repeatUntil < time
 
-    if @scheduleRepeat? doc
-      # There is a custom hook to process repeatWait defined, and it returned true
+    if warning = @scheduleRepeatFirst? doc
+      # There is a custom hook defined to process repeatWait, and it returned true
       # to signal that it processed the doc (potentially setting doc.after to a new value).
+      # If the returned value is a string, it is used as a warning and further execution stops.
+      if typeof warning is 'string'
+        console.warn warning
+        return null
     # If doc.repeatWait is a later.js object, then don't run before
     # the first valid scheduled time that occurs after doc.after
     else if @later? and typeof doc.repeatWait isnt 'number'
@@ -1050,7 +1054,12 @@ class JobCollectionBase extends Mongo.Collection
     )
     if num is 1
       if doc.repeats > 0
-        if typeof doc.repeatWait is 'number'
+        if jobId = @scheduleRepeatNext? doc
+          # There is a custom hook defined to process repeatWait, and it returned jobId
+          # to signal that it processed the doc (potentially by calling @_rerun_job).
+          # If jobId is literally true, then we just do not process repeating further.
+          jobId = undefined if jobId is true
+        else if typeof doc.repeatWait is 'number'
           if doc.repeatUntil - doc.repeatWait >= time
             jobId = @_rerun_job doc
         else

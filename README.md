@@ -735,14 +735,14 @@ Event handlers are called with a message object using this schema:
 A simple example to console.log successfully completed jobs:
 
 ```javascript
-  js.events.on('call', function (msg) {
+  jc.events.on('call', function (msg) {
     if (msg.method === 'jobDone') {
       console.log("Job" + msg.params[0] + "finished!");
     }
   });
 
   // The above is equivalent to:
-  js.events.on('jobDone', function (msg) {
+  jc.events.on('jobDone', function (msg) {
     if (!msg.error) {
       console.log("Job" + msg.params[0] + "finished!");
     }

@@ -634,6 +634,9 @@ the `JobQueue` object API for methods on the returned `jq` object.
 * `callbackStrict` -- When `true` throws an error if a worker function calls its callback more than
   once. Even when false, a message will be written to stderr when multiple callbacks are invoked.
   Default: `false`
+* `errorCallback` -- An optional function (`ec(err)`) that is called anytime an error occurs within
+  the running JobQueue object. If not provided a default function is provided that writes errors to
+  `console.error`.
 
 `worker(result, callback)`
 

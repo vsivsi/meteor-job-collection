@@ -1,7 +1,8 @@
 ## Revision history
 
-### V.NEXT
+#### V.NEXT
 
+* Added `errorCallback` option to `processJobs()`. This gives workers a way to log network and other errors and do something other than write them to `console.error` (the default and previous behavior).
 * Added workaround for bug/feature in later.js that caused the first run of periodic jobs to sometimes occur immediately after scheduling. Thanks @mitar.
 * Removed section recommending capped collections for managing removal of old finished jobs. This no longer works as of MongoDB 3.2. Thanks @mcoenca.
 * Documentation improvements

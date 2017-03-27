@@ -85,7 +85,7 @@ class JobCollectionBase extends Mongo.Collection
       return new JobCollectionBase(@root, options)
 
     unless @ instanceof Mongo.Collection
-      throw new Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
+      throw new Meteor.Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
 
     unless Mongo.Collection is Mongo.Collection.prototype.constructor
       throw new Meteor.Error 'The global definition of Mongo.Collection has been patched by another package, and the prototype constructor has been left in an inconsistent state. Please see this link for a workaround: https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592'
@@ -779,6 +779,58 @@ class JobCollectionBase extends Mongo.Collection
   # Job creator methods
 
   _DDPMethod_jobSave: (doc, options) ->
+
+    checkDeps = (d) =>
+      cancel = false
+      resolved = []
+      log = []
+      if d.depends.length > 0
+        deps = @find({_id: { $in: d.depends }}).fetch()
+
+        if deps.length isnt d.depends.length
+          @_DDPMethod_jobLog d._id, null, "One or more antecedent jobs missing at save"
+          cancel = true
+
+        for depJob in deps
+          unless depJob.status in @jobStatusCancellable
+            switch depJob.status
+              when "completed"
+                resolved.push depJob._id
+                log.push @_logMessage.resolved depJob._id, depJob.runId
+              when "failed", "cancelled"
+                cancel = true
+                @_DDPMethod_jobLog d._id, null, "Antecedent job #{depJob.status} before save"
+              else  # Unknown status
+                throw new Meteor.Error "Unknown status in jobSave Dependency check"
+
+        if resolved.length > 0
+          mods =
+            $pull:
+              depends:
+                $in: resolved
+            $push:
+              resolved:
+                $each: resolved
+              log:
+                $each: log
+
+          n = @update(
+            {
+              _id: d._id
+              status: 'waiting'
+            }
+            mods
+          )
+
+          unless n
+            console.warn "Update for job #{d._id} during dependency check failed."
+
+        if cancel
+          @_DDPMethod_jobCancel d._id
+          return false
+
+      return true
+
     check doc, _validJobDoc()
     check options, Match.Optional
       cancelRepeats: Match.Optional Boolean
@@ -847,7 +899,8 @@ class JobCollectionBase extends Mongo.Collection
         mods
       )
 
-      if num
+      if num # and checkDeps doc
+        checkDeps doc
         @_DDPMethod_jobReady doc._id
         return doc._id
       else
@@ -867,9 +920,13 @@ class JobCollectionBase extends Mongo.Collection
         ).forEach (d) => @_DDPMethod_jobCancel d._id, {}
       doc.created = time
       doc.log.push @_logMessage.submitted()
-      newId = @insert doc
-      @_DDPMethod_jobReady newId
-      return newId
+      doc._id = @insert doc
+      if doc._id # and checkDeps doc
+        checkDeps doc
+        @_DDPMethod_jobReady doc._id
+        return doc._id
+      else
+        return null
 
   # Worker methods
 

@@ -199,7 +199,7 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }
   job2 = new Job testColl, jobType, { order: 2 }
-  job.delay 1000 # Ensure that job2 has the opportunity to run first
+  job.delay 1000 # Ensure that job 1 has the opportunity to run first
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
@@ -216,6 +216,29 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
         if count is 2
           q.shutdown { level: 'soft', quiet: true }, () ->
             onComplete()
+
+Tinytest.addAsync 'Dependent job saved after completion of antecedent still runs', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    count = 0
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (j, cb) ->
+      count++
+      j.done "Job #{j.data.order} Done", (err, res) ->
+        test.fail(err) if err
+        test.ok res
+        if j.data.order is 1
+          job2.save (err, res) ->
+            test.fail(err) if err
+            test.ok validId(res), "job2.save() failed in callback result"
+        else
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
+      cb()
 
 Tinytest.addAsync 'Dependent job with delayDeps is delayed', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

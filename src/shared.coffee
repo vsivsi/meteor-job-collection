@@ -899,8 +899,7 @@ class JobCollectionBase extends Mongo.Collection
         mods
       )
 
-      if num # and checkDeps doc
-        checkDeps doc
+      if num and checkDeps doc
         @_DDPMethod_jobReady doc._id
         return doc._id
       else
@@ -921,8 +920,7 @@ class JobCollectionBase extends Mongo.Collection
       doc.created = time
       doc.log.push @_logMessage.submitted()
       doc._id = @insert doc
-      if doc._id # and checkDeps doc
-        checkDeps doc
+      if doc._id and checkDeps doc
         @_DDPMethod_jobReady doc._id
         return doc._id
       else

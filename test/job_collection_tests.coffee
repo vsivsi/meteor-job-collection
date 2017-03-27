@@ -240,6 +240,60 @@ Tinytest.addAsync 'Dependent job saved after completion of antecedent still runs
             onComplete()
       cb()
 
+Tinytest.addAsync 'Dependent job saved after failure of antecedent is cancelled', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (j, cb) ->
+      j.fail "Job #{j.data.order} Failed", (err, res) ->
+        test.fail(err) if err
+        test.ok res
+        job2.save (err, res) ->
+          test.fail(err) if err
+          test.isNull res, "job2.save() failed in callback result"
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
+      cb()
+
+Tinytest.addAsync 'Dependent job saved after cancelled antecedent is also cancelled', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    job.cancel (err, res) ->
+      test.fail(err) if err
+      test.ok res
+      job2.save (err, res) ->
+        test.fail(err) if err
+        test.isNull res, "job2.save() failed in callback result"
+        onComplete()
+
+Tinytest.addAsync 'Dependent job saved after removed antecedent is cancelled', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    job.cancel (err, res) ->
+      test.fail(err) if err
+      test.ok res
+      job.remove (err, res) ->
+        test.fail(err) if err
+        test.ok res
+        job2.save (err, res) ->
+          test.fail(err) if err
+          test.isNull res, "job2.save() failed in callback result"
+          onComplete()
+
 Tinytest.addAsync 'Dependent job with delayDeps is delayed', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }

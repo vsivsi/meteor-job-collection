@@ -311,15 +311,21 @@ class JobCollectionBase extends Mongo.Collection
       console.warn "Job rerun/repeat failed to reschedule!", id, runId
     return null
 
-  _checkDeps: (job) ->
+  _checkDeps: (job, dryRun = false) ->
     cancel = false
     resolved = []
+    failed = []
+    cancelled = []
+    removed = []
     log = []
     if job.depends.length > 0
-      deps = @find({_id: { $in: job.depends }}).fetch()
+      deps = @find({_id: { $in: job.depends }},{ fields: { _id: 1, runId: 1, status: 1 } }).fetch()
 
       if deps.length isnt job.depends.length
-        @_DDPMethod_jobLog job._id, null, "One or more antecedent jobs missing at save"
+        foundIds = deps.map (d) -> d._id
+        for j in job.depends when not (j in foundIds)
+          @_DDPMethod_jobLog job._id, null, "Antecedent job #{j} missing at save" unless dryRun
+          removed.push j
         cancel = true
 
       for depJob in deps
@@ -328,13 +334,18 @@ class JobCollectionBase extends Mongo.Collection
             when "completed"
               resolved.push depJob._id
               log.push @_logMessage.resolved depJob._id, depJob.runId
-            when "failed", "cancelled"
+            when "failed"
               cancel = true
-              @_DDPMethod_jobLog job._id, null, "Antecedent job #{depJob.status} before save"
+              failed.push depJob._id
+              @_DDPMethod_jobLog job._id, null, "Antecedent job failed before save" unless dryRun
+            when "cancelled"
+              cancel = true
+              cancelled.push depJob._id
+              @_DDPMethod_jobLog job._id, null, "Antecedent job cancelled before save" unless dryRun
             else  # Unknown status
               throw new Meteor.Error "Unknown status in jobSave Dependency check"
 
-      if resolved.length > 0
+      unless resolved.length is 0 or dryRun
         mods =
           $pull:
             depends:
@@ -356,11 +367,20 @@ class JobCollectionBase extends Mongo.Collection
         unless n
           console.warn "Update for job #{job._id} during dependency check failed."
 
-      if cancel
+      if cancel and not dryRun
         @_DDPMethod_jobCancel job._id
         return false
 
-    return true
+    if dryRun and cancel or resolved.length > 0
+      return {
+        jobId: job._id
+        resolved: resolved
+        failed: failed
+        cancelled: cancelled
+        removed: removed
+      }
+    else
+      return true
 
   _DDPMethod_startJobServer: (options) ->
     check options, Match.Optional {}

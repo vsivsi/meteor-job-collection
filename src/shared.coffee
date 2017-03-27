@@ -311,7 +311,7 @@ class JobCollectionBase extends Mongo.Collection
       console.warn "Job rerun/repeat failed to reschedule!", id, runId
     return null
 
-  _checkDeps: (job, dryRun = false) ->
+  _checkDeps: (job, dryRun = true) ->
     cancel = false
     resolved = []
     failed = []
@@ -371,14 +371,17 @@ class JobCollectionBase extends Mongo.Collection
         @_DDPMethod_jobCancel job._id
         return false
 
-    if dryRun and cancel or resolved.length > 0
-      return {
-        jobId: job._id
-        resolved: resolved
-        failed: failed
-        cancelled: cancelled
-        removed: removed
-      }
+    if dryRun
+      if cancel or resolved.length > 0
+        return {
+          jobId: job._id
+          resolved: resolved
+          failed: failed
+          cancelled: cancelled
+          removed: removed
+        }
+      else
+        return false
     else
       return true
 
@@ -918,7 +921,7 @@ class JobCollectionBase extends Mongo.Collection
         mods
       )
 
-      if num and @_checkDeps doc
+      if num and @_checkDeps doc, false
         @_DDPMethod_jobReady doc._id
         return doc._id
       else
@@ -939,7 +942,7 @@ class JobCollectionBase extends Mongo.Collection
       doc.created = time
       doc.log.push @_logMessage.submitted()
       doc._id = @insert doc
-      if doc._id and @_checkDeps doc
+      if doc._id and @_checkDeps doc, false
         @_DDPMethod_jobReady doc._id
         return doc._id
       else

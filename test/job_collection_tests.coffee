@@ -217,6 +217,38 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
           q.shutdown { level: 'soft', quiet: true }, () ->
             onComplete()
 
+if Meteor.isServer
+  Tinytest.addAsync 'Dry run of dependency check returns status object', (test, onComplete) ->
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    job = new Job testColl, jobType, { order: 1 }
+    job2 = new Job testColl, jobType, { order: 2 }
+    job3 = new Job testColl, jobType, { order: 3 }
+    job4 = new Job testColl, jobType, { order: 4 }
+    job5 = new Job testColl, jobType, { order: 5 }
+    job.save()
+    job2.save()
+    job3.save()
+    job4.save()
+    job5.depends [job, job2, job3, job4]
+    job5.save (err, res) ->
+      test.fail(err) if err
+      test.ok validId(res), "job2.save() failed in callback result"
+      # This creates an inconsistent state
+      testColl.update { _id: job.doc._id, status: 'ready' }, { $set: { status: 'cancelled' }}
+      testColl.update { _id: job2.doc._id, status: 'ready' }, { $set: { status: 'failed' }}
+      testColl.update { _id: job3.doc._id, status: 'ready' }, { $set: { status: 'completed' }}
+      testColl.remove { _id: job4.doc._id }
+      dryRunRes = testColl._checkDeps job5.doc
+      test.equal dryRunRes.cancelled.length, 1
+      test.equal dryRunRes.cancelled[0], job.doc._id
+      test.equal dryRunRes.failed.length, 1
+      test.equal dryRunRes.failed[0], job2.doc._id
+      test.equal dryRunRes.resolved.length, 1
+      test.equal dryRunRes.resolved[0], job3.doc._id
+      test.equal dryRunRes.removed.length, 1
+      test.equal dryRunRes.removed[0], job4.doc._id
+      onComplete()
+
 Tinytest.addAsync 'Dependent job saved after completion of antecedent still runs', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }
@@ -263,68 +295,26 @@ Tinytest.addAsync 'Dependent job saved after cancelled antecedent is also cancel
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }
   job2 = new Job testColl, jobType, { order: 2 }
-  job.save (err, res) ->
+  job.save()
+  job2.depends [job]
+  job.cancel()
+  job2.save (err, res) ->
     test.fail(err) if err
-    test.ok validId(res), "job.save() failed in callback result"
-    job2.depends [job]
-    job.cancel (err, res) ->
-      test.fail(err) if err
-      test.ok res
-      job2.save (err, res) ->
-        test.fail(err) if err
-        test.isNull res, "job2.save() failed in callback result"
-        onComplete()
-
-if Meteor.isServer
-  Tinytest.addAsync 'Dry run of dependency check returns status object', (test, onComplete) ->
-    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
-    job = new Job testColl, jobType, { order: 1 }
-    job2 = new Job testColl, jobType, { order: 2 }
-    job3 = new Job testColl, jobType, { order: 3 }
-    job4 = new Job testColl, jobType, { order: 4 }
-    job5 = new Job testColl, jobType, { order: 5 }
-    job.save()
-    job2.save()
-    job3.save()
-    job4.save()
-    job5.depends [job, job2, job3, job4]
-    job5.save (err, res) ->
-      test.fail(err) if err
-      test.ok validId(res), "job2.save() failed in callback result"
-      # This creates an inconsistent state
-      testColl.update { _id: job.doc._id, status: 'ready' }, { $set: { status: 'cancelled' }}
-      testColl.update { _id: job2.doc._id, status: 'ready' }, { $set: { status: 'failed' }}
-      testColl.update { _id: job3.doc._id, status: 'ready' }, { $set: { status: 'completed' }}
-      testColl.remove { _id: job4.doc._id }
-      dryRunRes = testColl._checkDeps job5.doc, true
-      test.equal dryRunRes.cancelled.length, 1
-      test.equal dryRunRes.cancelled[0], job.doc._id
-      test.equal dryRunRes.failed.length, 1
-      test.equal dryRunRes.failed[0], job2.doc._id
-      test.equal dryRunRes.resolved.length, 1
-      test.equal dryRunRes.resolved[0], job3.doc._id
-      test.equal dryRunRes.removed.length, 1
-      test.equal dryRunRes.removed[0], job4.doc._id
-      onComplete()
+    test.isNull res, "job2.save() failed in callback result"
+    onComplete()
 
 Tinytest.addAsync 'Dependent job saved after removed antecedent is cancelled', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }
   job2 = new Job testColl, jobType, { order: 2 }
-  job.save (err, res) ->
+  job.save()
+  job2.depends [job]
+  job.cancel()
+  job.remove()
+  job2.save (err, res) ->
     test.fail(err) if err
-    test.ok validId(res), "job.save() failed in callback result"
-    job2.depends [job]
-    job.cancel (err, res) ->
-      test.fail(err) if err
-      test.ok res
-      job.remove (err, res) ->
-        test.fail(err) if err
-        test.ok res
-        job2.save (err, res) ->
-          test.fail(err) if err
-          test.isNull res, "job2.save() failed in callback result"
-          onComplete()
+    test.isNull res, "job2.save() failed in callback result"
+    onComplete()
 
 Tinytest.addAsync 'Dependent job with delayDeps is delayed', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

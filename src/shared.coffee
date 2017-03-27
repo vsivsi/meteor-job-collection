@@ -311,6 +311,57 @@ class JobCollectionBase extends Mongo.Collection
       console.warn "Job rerun/repeat failed to reschedule!", id, runId
     return null
 
+  _checkDeps: (job) ->
+    cancel = false
+    resolved = []
+    log = []
+    if job.depends.length > 0
+      deps = @find({_id: { $in: job.depends }}).fetch()
+
+      if deps.length isnt job.depends.length
+        @_DDPMethod_jobLog job._id, null, "One or more antecedent jobs missing at save"
+        cancel = true
+
+      for depJob in deps
+        unless depJob.status in @jobStatusCancellable
+          switch depJob.status
+            when "completed"
+              resolved.push depJob._id
+              log.push @_logMessage.resolved depJob._id, depJob.runId
+            when "failed", "cancelled"
+              cancel = true
+              @_DDPMethod_jobLog job._id, null, "Antecedent job #{depJob.status} before save"
+            else  # Unknown status
+              throw new Meteor.Error "Unknown status in jobSave Dependency check"
+
+      if resolved.length > 0
+        mods =
+          $pull:
+            depends:
+              $in: resolved
+          $push:
+            resolved:
+              $each: resolved
+            log:
+              $each: log
+
+        n = @update(
+          {
+            _id: job._id
+            status: 'waiting'
+          }
+          mods
+        )
+
+        unless n
+          console.warn "Update for job #{job._id} during dependency check failed."
+
+      if cancel
+        @_DDPMethod_jobCancel job._id
+        return false
+
+    return true
+
   _DDPMethod_startJobServer: (options) ->
     check options, Match.Optional {}
     options ?= {}
@@ -779,58 +830,6 @@ class JobCollectionBase extends Mongo.Collection
   # Job creator methods
 
   _DDPMethod_jobSave: (doc, options) ->
-
-    checkDeps = (d) =>
-      cancel = false
-      resolved = []
-      log = []
-      if d.depends.length > 0
-        deps = @find({_id: { $in: d.depends }}).fetch()
-
-        if deps.length isnt d.depends.length
-          @_DDPMethod_jobLog d._id, null, "One or more antecedent jobs missing at save"
-          cancel = true
-
-        for depJob in deps
-          unless depJob.status in @jobStatusCancellable
-            switch depJob.status
-              when "completed"
-                resolved.push depJob._id
-                log.push @_logMessage.resolved depJob._id, depJob.runId
-              when "failed", "cancelled"
-                cancel = true
-                @_DDPMethod_jobLog d._id, null, "Antecedent job #{depJob.status} before save"
-              else  # Unknown status
-                throw new Meteor.Error "Unknown status in jobSave Dependency check"
-
-        if resolved.length > 0
-          mods =
-            $pull:
-              depends:
-                $in: resolved
-            $push:
-              resolved:
-                $each: resolved
-              log:
-                $each: log
-
-          n = @update(
-            {
-              _id: d._id
-              status: 'waiting'
-            }
-            mods
-          )
-
-          unless n
-            console.warn "Update for job #{d._id} during dependency check failed."
-
-        if cancel
-          @_DDPMethod_jobCancel d._id
-          return false
-
-      return true
-
     check doc, _validJobDoc()
     check options, Match.Optional
       cancelRepeats: Match.Optional Boolean
@@ -899,7 +898,7 @@ class JobCollectionBase extends Mongo.Collection
         mods
       )
 
-      if num and checkDeps doc
+      if num and @_checkDeps doc
         @_DDPMethod_jobReady doc._id
         return doc._id
       else
@@ -920,7 +919,7 @@ class JobCollectionBase extends Mongo.Collection
       doc.created = time
       doc.log.push @_logMessage.submitted()
       doc._id = @insert doc
-      if doc._id and checkDeps doc
+      if doc._id and @_checkDeps doc
         @_DDPMethod_jobReady doc._id
         return doc._id
       else

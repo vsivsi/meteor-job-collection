@@ -987,7 +987,10 @@ var sendJob = new Job(myJobs, 'sendEmail', {
   address: 'bozo@clowns.com',
   subject: 'Critical rainbow hair shortage',
   message: 'LOL; JK, KThxBye.'
-}).save();
+});
+
+// Save it
+sendJob.save();
 
 // Assuming synchronous style with Fibers...
 // archiveJob will not run until sendJob has

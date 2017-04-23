@@ -1091,7 +1091,6 @@ class JobCollectionBase extends Mongo.Collection
         fields:
           log: 0
           failures: 0
-          progress: 0
           updated: 0
           after: 0
           status: 0
@@ -1108,8 +1107,8 @@ class JobCollectionBase extends Mongo.Collection
         status: "completed"
         result: result
         progress:
-          completed: 1
-          total: 1
+          completed: doc.progress.total or 1
+          total: doc.progress.total or 1
           percent: 100
         updated: time
 
@@ -1245,10 +1244,6 @@ class JobCollectionBase extends Mongo.Collection
         status: newStatus
         runId: null
         after: after
-        progress:
-          completed: 0
-          total: 1
-          percent: 0
         updated: time
       $push:
         failures:

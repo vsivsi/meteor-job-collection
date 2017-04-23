@@ -1,5 +1,5 @@
 ############################################################################
-#     Copyright (C) 2014-2016 by Vaughn Iverson
+#     Copyright (C) 2014-2017 by Vaughn Iverson
 #     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
@@ -85,7 +85,7 @@ class JobCollectionBase extends Mongo.Collection
       return new JobCollectionBase(@root, options)
 
     unless @ instanceof Mongo.Collection
-      throw new Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
+      throw new Meteor.Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
 
     unless Mongo.Collection is Mongo.Collection.prototype.constructor
       throw new Meteor.Error 'The global definition of Mongo.Collection has been patched by another package, and the prototype constructor has been left in an inconsistent state. Please see this link for a workaround: https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592'
@@ -310,6 +310,80 @@ class JobCollectionBase extends Mongo.Collection
     else
       console.warn "Job rerun/repeat failed to reschedule!", id, runId
     return null
+
+  _checkDeps: (job, dryRun = true) ->
+    cancel = false
+    resolved = []
+    failed = []
+    cancelled = []
+    removed = []
+    log = []
+    if job.depends.length > 0
+      deps = @find({_id: { $in: job.depends }},{ fields: { _id: 1, runId: 1, status: 1 } }).fetch()
+
+      if deps.length isnt job.depends.length
+        foundIds = deps.map (d) -> d._id
+        for j in job.depends when not (j in foundIds)
+          @_DDPMethod_jobLog job._id, null, "Antecedent job #{j} missing at save" unless dryRun
+          removed.push j
+        cancel = true
+
+      for depJob in deps
+        unless depJob.status in @jobStatusCancellable
+          switch depJob.status
+            when "completed"
+              resolved.push depJob._id
+              log.push @_logMessage.resolved depJob._id, depJob.runId
+            when "failed"
+              cancel = true
+              failed.push depJob._id
+              @_DDPMethod_jobLog job._id, null, "Antecedent job failed before save" unless dryRun
+            when "cancelled"
+              cancel = true
+              cancelled.push depJob._id
+              @_DDPMethod_jobLog job._id, null, "Antecedent job cancelled before save" unless dryRun
+            else  # Unknown status
+              throw new Meteor.Error "Unknown status in jobSave Dependency check"
+
+      unless resolved.length is 0 or dryRun
+        mods =
+          $pull:
+            depends:
+              $in: resolved
+          $push:
+            resolved:
+              $each: resolved
+            log:
+              $each: log
+
+        n = @update(
+          {
+            _id: job._id
+            status: 'waiting'
+          }
+          mods
+        )
+
+        unless n
+          console.warn "Update for job #{job._id} during dependency check failed."
+
+      if cancel and not dryRun
+        @_DDPMethod_jobCancel job._id
+        return false
+
+    if dryRun
+      if cancel or resolved.length > 0
+        return {
+          jobId: job._id
+          resolved: resolved
+          failed: failed
+          cancelled: cancelled
+          removed: removed
+        }
+      else
+        return false
+    else
+      return true
 
   _DDPMethod_startJobServer: (options) ->
     check options, Match.Optional {}
@@ -854,7 +928,7 @@ class JobCollectionBase extends Mongo.Collection
         mods
       )
 
-      if num
+      if num and @_checkDeps doc, false
         @_DDPMethod_jobReady doc._id
         return doc._id
       else
@@ -874,9 +948,12 @@ class JobCollectionBase extends Mongo.Collection
         ).forEach (d) => @_DDPMethod_jobCancel d._id, {}
       doc.created = time
       doc.log.push @_logMessage.submitted()
-      newId = @insert doc
-      @_DDPMethod_jobReady newId
-      return newId
+      doc._id = @insert doc
+      if doc._id and @_checkDeps doc, false
+        @_DDPMethod_jobReady doc._id
+        return doc._id
+      else
+        return null
 
   # Worker methods
 
@@ -1021,7 +1098,6 @@ class JobCollectionBase extends Mongo.Collection
         fields:
           log: 0
           failures: 0
-          progress: 0
           updated: 0
           after: 0
           status: 0
@@ -1038,8 +1114,8 @@ class JobCollectionBase extends Mongo.Collection
         status: "completed"
         result: result
         progress:
-          completed: 1
-          total: 1
+          completed: doc.progress.total or 1
+          total: doc.progress.total or 1
           percent: 100
         updated: time
 
@@ -1074,7 +1150,6 @@ class JobCollectionBase extends Mongo.Collection
             if (d - time > 500) or (next.length > 1)
               if d - time <= 500
                 d = new Date(next[1])
-              else
               wait = d - time
               if doc.repeatUntil - wait >= time
                 jobId = @_rerun_job doc, doc.repeats - 1, wait
@@ -1181,10 +1256,6 @@ class JobCollectionBase extends Mongo.Collection
         status: newStatus
         runId: null
         after: after
-        progress:
-          completed: 0
-          total: 1
-          percent: 0
         updated: time
       $push:
         failures:

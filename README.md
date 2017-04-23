@@ -22,11 +22,10 @@ Source code for this demo app is at [meteor-job-collection-playground](https://g
 
 Source code for a plain node.js worker for the demo app is at [meteor-job-collection-playground-worker](https://github.com/vsivsi/meteor-job-collection-playground-worker)
 
-## What's new in v1.4.0?
+## What's new in v1.5.0?
 
-* `processJobs` now has a `callbackStrict` option which causes an error to be thrown if the worker function invokes its callback more than once.
-* The job document model has gained a new optional attribute `repeatRetries`, which explicitly stores the number of retries for future runs of a repeating job. Previously this calculated from `job.retries + job.retried` which led to some weird edge cases when jobs were cancelled and restarted, including the potential for validation errors. This change is completely backwards and forward compatible with old and new versions.
-* Minor bug fixes and documentation updates.
+* Added `errorCallback` option to `processJobs()`. This gives workers a way to log network and other errors and do something other than write them to `console.error` (the default and previous behavior).
+* Progress information is now preserved in the job document on 'done' or 'fail', previously it was set to hard coded values.
 
 A complete list of changes can be found in the HISTORY file.
 
@@ -308,7 +307,6 @@ Unless you do something to prevent it, completed and canceled jobs will accumula
 
 * Add a job cleaning job. This will take care of the most common use cases. It will allow you customize the logic to fit your specific needs. There's an example of a cleaning job in the "playground" [sample app](https://github.com/vsivsi/meteor-job-collection-playground/blob/576f46225d3dc3be81b1f89d6f7f57ad37789b12/play.coffee#L443-L464).
 * Use [events](#jcevents---server) to remove jobs once they complete or are removed.
-* Cap your job collection. This is a quick and dirty solution. Meteor [provides access](https://github.com/meteor/meteor/issues/1478) to MongoDB capped collections. Use this with caution as the API isn't officially supported and it's possible to set the cap lower than the number of possible running jobs which could cause running jobs to disappear from the database.
 
 ### Logging
 
@@ -635,6 +633,9 @@ the `JobQueue` object API for methods on the returned `jq` object.
 * `callbackStrict` -- When `true` throws an error if a worker function calls its callback more than
   once. Even when false, a message will be written to stderr when multiple callbacks are invoked.
   Default: `false`
+* `errorCallback` -- An optional function (`ec(err)`) that is called anytime an error occurs within
+  the running JobQueue object. If not provided a default function is provided that writes errors to
+  `console.error`.
 
 `worker(result, callback)`
 
@@ -736,14 +737,14 @@ Event handlers are called with a message object using this schema:
 A simple example to console.log successfully completed jobs:
 
 ```javascript
-  js.events.on('call', function (msg) {
+  jc.events.on('call', function (msg) {
     if (msg.method === 'jobDone') {
       console.log("Job" + msg.params[0] + "finished!");
     }
   });
 
   // The above is equivalent to:
-  js.events.on('jobDone', function (msg) {
+  jc.events.on('jobDone', function (msg) {
     if (!msg.error) {
       console.log("Job" + msg.params[0] + "finished!");
     }
@@ -985,7 +986,10 @@ var sendJob = new Job(myJobs, 'sendEmail', {
   address: 'bozo@clowns.com',
   subject: 'Critical rainbow hair shortage',
   message: 'LOL; JK, KThxBye.'
-}).save();
+});
+
+// Save it
+sendJob.save();
 
 // Assuming synchronous style with Fibers...
 // archiveJob will not run until sendJob has

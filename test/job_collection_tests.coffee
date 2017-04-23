@@ -1,5 +1,5 @@
 ############################################################################
-#     Copyright (C) 2014-2016 by Vaughn Iverson
+#     Copyright (C) 2014-2017 by Vaughn Iverson
 #     job-collection is free software released under the MIT/X11 license.
 #     See included LICENSE file for details.
 ############################################################################
@@ -199,7 +199,7 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }
   job2 = new Job testColl, jobType, { order: 2 }
-  job.delay 1000 # Ensure that job2 has the opportunity to run first
+  job.delay 1000 # Ensure that job 1 has the opportunity to run first
   job.save (err, res) ->
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
@@ -216,6 +216,115 @@ Tinytest.addAsync 'Dependent jobs run in the correct order', (test, onComplete) 
         if count is 2
           q.shutdown { level: 'soft', quiet: true }, () ->
             onComplete()
+
+if Meteor.isServer
+  Tinytest.addAsync 'Dry run of dependency check returns status object', (test, onComplete) ->
+    jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+    job = new Job testColl, jobType, { order: 1 }
+    job2 = new Job testColl, jobType, { order: 2 }
+    job3 = new Job testColl, jobType, { order: 3 }
+    job4 = new Job testColl, jobType, { order: 4 }
+    job5 = new Job testColl, jobType, { order: 5 }
+    job.save()
+    job2.save()
+    job3.save()
+    job4.save()
+    job5.depends [job, job2, job3, job4]
+    job5.save (err, res) ->
+      test.fail(err) if err
+      test.ok validId(res), "job2.save() failed in callback result"
+      # This creates an inconsistent state
+      testColl.update { _id: job.doc._id, status: 'ready' }, { $set: { status: 'cancelled' }}
+      testColl.update { _id: job2.doc._id, status: 'ready' }, { $set: { status: 'failed' }}
+      testColl.update { _id: job3.doc._id, status: 'ready' }, { $set: { status: 'completed' }}
+      testColl.remove { _id: job4.doc._id }
+      dryRunRes = testColl._checkDeps job5.doc
+      test.equal dryRunRes.cancelled.length, 1
+      test.equal dryRunRes.cancelled[0], job.doc._id
+      test.equal dryRunRes.failed.length, 1
+      test.equal dryRunRes.failed[0], job2.doc._id
+      test.equal dryRunRes.resolved.length, 1
+      test.equal dryRunRes.resolved[0], job3.doc._id
+      test.equal dryRunRes.removed.length, 1
+      test.equal dryRunRes.removed[0], job4.doc._id
+      onComplete()
+
+Tinytest.addAsync 'Dependent job saved after completion of antecedent still runs', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    count = 0
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (j, cb) ->
+      count++
+      j.done "Job #{j.data.order} Done", (err, res) ->
+        test.fail(err) if err
+        test.ok res
+        if j.data.order is 1
+          job2.save (err, res) ->
+            test.fail(err) if err
+            test.ok validId(res), "job2.save() failed in callback result"
+        else
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
+      cb()
+
+Tinytest.addAsync 'Dependent job saved after failure of antecedent is cancelled', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    q = testColl.processJobs jobType, { pollInterval: 250 }, (j, cb) ->
+      j.fail "Job #{j.data.order} Failed", (err, res) ->
+        test.fail(err) if err
+        test.ok res
+        job2.save (err, res) ->
+          test.fail(err) if err
+          test.isNull res, "job2.save() failed in callback result"
+          q.shutdown { level: 'soft', quiet: true }, () ->
+            onComplete()
+      cb()
+
+Tinytest.addAsync 'Dependent job saved after cancelled antecedent is also cancelled', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    job.cancel (err, res) ->
+      test.fail(err) if err
+      test.ok res
+      job2.save (err, res) ->
+        test.fail(err) if err
+        test.isNull res, "job2.save() failed in callback result"
+        onComplete()
+
+Tinytest.addAsync 'Dependent job saved after removed antecedent is cancelled', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, { order: 1 }
+  job2 = new Job testColl, jobType, { order: 2 }
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job2.depends [job]
+    job.cancel (err, res) ->
+      test.fail(err) if err
+      test.ok res
+      job.remove (err, res) ->
+        test.fail(err) if err
+        test.ok res
+        job2.save (err, res) ->
+          test.fail(err) if err
+          test.isNull res, "job2.save() failed in callback result"
+          onComplete()
 
 Tinytest.addAsync 'Dependent job with delayDeps is delayed', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"

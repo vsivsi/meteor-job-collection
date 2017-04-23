@@ -1,11 +1,12 @@
 language: node_js
-node_js:
-  - "0.10.40"
 
+node_js:
+  - "7"
 before_install:
-  - "curl https://install.meteor.com | /bin/sh"
+  - "curl -L https://raw.githubusercontent.com/arunoda/travis-ci-meteor-packages/master/configure.sh | /bin/sh"
+before_script:
   - "npm install -g coffee-script"
   - "npm install -g spacejam"
-  - "export PATH=$PATH:$HOME/.meteor"
+  - "export PATH=$HOME/.meteor:$PATH"
 
 script: "spacejam test-packages ./"

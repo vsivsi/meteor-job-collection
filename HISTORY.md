@@ -1,5 +1,15 @@
 ## Revision history
 
+#### 1.5.0
+
+* Added `errorCallback` option to `processJobs()`. This gives workers a way to log network and other errors and do something other than write them to `console.error` (the default and previous behavior).
+* Added workaround for bug/feature in later.js that caused the first run of periodic jobs to sometimes occur immediately after scheduling. Thanks @mitar.
+* Progress information is now preserved in the job document on 'done' or 'fail', previously it was set to hard coded values. Thanks @mitar.
+* Removed section recommending capped collections for managing removal of old finished jobs. This no longer works as of MongoDB 3.2. Thanks @mcoenca.
+* Jobs that complete before their dependents have even been saved will no longer result in unresolved dependencies. Thanks @serkandurusoy.
+* Documentation improvements
+* Updated package dependencies
+
 ### 1.4.0
 
 * Added support for new "callbackStrict" option to `processJobs()`. When `true` (default `false`) `processJobs()` will throw an error if a worker function calls its callback more than once. Previously it only wrote a message to stderr in all cases. That functionality is preserved with this change.

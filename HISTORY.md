@@ -6,6 +6,7 @@
 * Added workaround for bug/feature in later.js that caused the first run of periodic jobs to sometimes occur immediately after scheduling. Thanks @mitar.
 * Progress information is now preserved in the job document on 'done' or 'fail', previously it was set to hard coded values. Thanks @mitar.
 * Removed section recommending capped collections for managing removal of old finished jobs. This no longer works as of MongoDB 3.2. Thanks @mcoenca.
+* Jobs that complete before their dependents have even been saved will no longer result in unresolved dependencies. Thanks @serkandurusoy.
 * Documentation improvements
 * Updated package dependencies
 

@@ -1188,7 +1188,7 @@ is already saved and paused, then most properties of the job may change (but not
   jobs of the same job type. This is useful for background maintenance jobs that may get added on
   each server restart (potentially with new parameters). Default is `false`.
 
-`callback(error, result)` -- Result is true if save was successful. When running as
+`callback(error, result)` -- Result is the job `_id` value if save was successful. When running as
 `Meteor.isServer` with fibers, the callback may be omitted and the return value is the result.
 
 ```javascript

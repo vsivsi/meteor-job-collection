@@ -232,6 +232,7 @@ class JobCollectionBase extends Mongo.Collection
     # Dependents: jobs that list one of the ids in their depends list
     # Antecedents: jobs with an id listed in the depends list of one of the jobs in ids
     dependsQuery = []
+    dependsIds = []
     if dependents
       dependsQuery.push
         depends:
@@ -254,8 +255,7 @@ class JobCollectionBase extends Mongo.Collection
         dependsQuery.push
           _id:
             $in: antsArray
-    if dependsQuery
-      dependsIds = []
+    if dependsQuery.length > 0
       @find(
         {
           status:

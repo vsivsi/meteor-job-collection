@@ -1,8 +1,12 @@
 ## Revision history
 
+#### V.NEXT
+
+* Fixed an issue under some circumstances when `job.cancel()` was run on a job with option `{ dependents: false }`. Thanks @gbhrdt.
+
 #### 1.5.1
 
-* Fixed issue introduced in 1.5.0 which caused `processJobs()` with arrays of jobType strings to fail a new type check.  Thanks @danielparas!
+* Fixed issue introduced in 1.5.0 which caused `processJobs()` with arrays of jobType strings to fail a new type check.  Thanks @danielparas.
 
 #### 1.5.0
 

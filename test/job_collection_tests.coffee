@@ -326,6 +326,18 @@ Tinytest.addAsync 'Dependent job saved after removed antecedent is cancelled', (
           test.isNull res, "job2.save() failed in callback result"
           onComplete()
 
+Tinytest.addAsync 'Cancel succeeds for job without deps, with using option dependents: false', (test, onComplete) ->
+  jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
+  job = new Job testColl, jobType, {}
+  job.save (err, res) ->
+    test.fail(err) if err
+    test.ok validId(res), "job.save() failed in callback result"
+    job.cancel { dependents: false }, (err, res) ->
+       console.error "Error?", err
+       test.fail(err) if err
+       test.ok res
+       onComplete()
+
 Tinytest.addAsync 'Dependent job with delayDeps is delayed', (test, onComplete) ->
   jobType = "TestJob_#{Math.round(Math.random()*1000000000)}"
   job = new Job testColl, jobType, { order: 1 }

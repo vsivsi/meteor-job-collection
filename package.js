@@ -16,8 +16,8 @@ Package.describe({
 Package.onUse(function(api) {
   api.use('mrt:later@1.6.1', ['server','client']);
   // api.use('coffeescript@1.11.1_4', ['server','client']);
-  api.use('coffeescript@1.12.3_1', ['server','client']);
-  api.use('mongo@1.1.16', ['server','client']);
+  api.use('coffeescript@1.12.6_1', ['server','client']);
+  api.use('mongo@1.1.18', ['server','client']);
   api.use('check@1.2.5', ['server','client']);
   api.addFiles('job/src/job_class.coffee', ['server','client']);
   api.addFiles('src/shared.coffee', ['server','client']);
@@ -31,7 +31,7 @@ Package.onTest(function (api) {
   api.use('vsivsi:job-collection@' + currentVersion, ['server','client']);
   api.use('mrt:later@1.6.1', ['server','client']);
   // api.use('coffeescript@1.11.1_4', ['server','client']);
-  api.use('coffeescript@1.12.3_1', ['server','client']);
+  api.use('coffeescript@1.12.6_1', ['server','client']);
   api.use('check@1.2.5', ['server','client']);
   api.use('tinytest@1.0.12', ['server','client']);
   api.use('test-helpers@1.0.11', ['server','client']);

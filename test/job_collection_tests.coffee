@@ -333,7 +333,6 @@ Tinytest.addAsync 'Cancel succeeds for job without deps, with using option depen
     test.fail(err) if err
     test.ok validId(res), "job.save() failed in callback result"
     job.cancel { dependents: false }, (err, res) ->
-       console.error "Error?", err
        test.fail(err) if err
        test.ok res
        onComplete()

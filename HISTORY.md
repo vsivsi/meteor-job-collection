@@ -1,6 +1,6 @@
 ## Revision history
 
-#### V.NEXT
+#### 1.5.2
 
 * Fixed an issue under some circumstances when `job.cancel()` was run on a job with option `{ dependents: false }`. Thanks @gbhrdt.
 

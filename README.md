@@ -1596,8 +1596,7 @@ q.shutdown({ quiet: true, level: 'soft' }, function () {
 
 ## Job document data models
 
-The definitions below use a slight shorthand of the Meteor [Match pattern]
-(http://docs.meteor.com/#matchpatterns) syntax to describe the valid structure of a job document. As
+The definitions below use a slight shorthand of the Meteor [Match pattern](http://docs.meteor.com/api/check.html#matchpatterns) syntax to describe the valid structure of a job document. As
 a user of job-collection this is mostly for your information because jobs are automatically built
 and maintained by the package.
 

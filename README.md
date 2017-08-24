@@ -1552,7 +1552,7 @@ jc.find({ type: 'jobType', status: 'ready' })
   });
 ```
 
-Non-Meteor node.js worker scripts cannot use the `jc.find(...).observe(...)` portion of the above example. Please see the [documetnation for the meteor-job npm package](https://www.npmjs.com/package/meteor-job#q-trigger) for an alternative approach that works outside of the Meteor environment.
+Non-Meteor node.js worker scripts cannot use the `jc.find(...).observe(...)` portion of the above example. Please see the [documentation for the meteor-job npm package](https://www.npmjs.com/package/meteor-job#q-trigger) for an alternative approach that works outside of the Meteor environment.
 
 ### q.shutdown([options], [callback]) - *Anywhere*
 #### Shuts down the queue, with several possible levels of urgency

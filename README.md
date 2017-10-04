@@ -1495,8 +1495,7 @@ created.
 
 ## JobQueue API
 
-JobQueue is similar in spirit to the [async.js](https://github.com/caolan/async) [queue]
-(https://github.com/caolan/async#queue) and [cargo]([queue](https://github.com/caolan/async#cargo))
+JobQueue is similar in spirit to the `async.js` [queue](http://caolan.github.io/async/docs.html#queue) and [cargo](http://caolan.github.io/async/docs.html#cargo)
 except that it gets its work from the job collection via calls to `jc.getWork()`
 
 New jobQueues are created by calling the following job-collection method (documented above):

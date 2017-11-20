@@ -20,8 +20,7 @@ job-collection is a powerful and easy to use job manager designed and built for 
 It solves the following problems (and more):
 
 * Schedule jobs to run (and repeat) in the future, persisting across server restarts
-* Create repeating jobs with complex schedules using [Later.js]
-  (https://bunkat.github.io/later/index.html). See demo [here](https://jcplayground.meteorapp.com)
+* Create repeating jobs with complex schedules using [Later.js](https://bunkat.github.io/later/index.html). See demo [here](https://jcplayground.meteorapp.com)
 * Move work out of Meteor's single threaded event-loop
 * Enable work on computationally expensive jobs to run anywhere, on any number of machines
 * Track jobs and their progress, and automatically retry failed jobs

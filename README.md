@@ -54,6 +54,7 @@ A complete list of changes can be found in the HISTORY file.
 - [JobQueue API](#user-content-jobqueue-api)
 - [Job document data models](#user-content-job-document-data-models)
 - [DDP Method reference](#user-content-ddp-method-reference)
+- [Zombie jobs](#user-content-zombie-jobs)
 
 ### Quick example
 
@@ -2020,3 +2021,57 @@ Returns: `Boolean` - Success or failure unless `repeatId` option is true, when i
     })`
 
 Returns: `Boolean` - Success or failure
+
+## Zombie jobs
+
+Zombie jobs are those, whose worker stopped without any notification. When a job is started by a worker, it receives the status `'running'`. If the worker now stops without notifying the database, the job is actually a zombie job, because it looks like someone is working on it but it isn't. Now - what can we do to prevent these zombie jobs? Well, there are two techniques who will help you here.
+
+__1. Mark every still running job as failed if the process of the worker needs to stop.__
+
+This is the best case, because it prevents the raise of zombie jobs - but there are certain cases where this doesn't work. You can f.e. use this if the process is stopped by a `SIGTERM` signal, but it won't work for a `SIGKILL` signal. If you have jobs running on the same process meteor runs, you can add the following code to your project to make use of this:
+
+```js
+const cleanup = Meteor.bindEnvironment(() => {
+  // Copied from the ddp-method shutdownJobServer, but without setInterval().
+  const cursor = StripesJobs.find({ status: 'running' }, { transform: null });
+
+  const failedJobs = cursor.count();
+  if (failedJobs !== 0) {
+    console.warn(`Failing ${failedJobs} jobs on queue stop.`);
+  }
+
+  cursor.forEach(d => StripesJobs._DDPMethod_jobFail(d._id, d.runId, { message: 'Running at Job Server shutdown.' }));
+
+  if (StripesJobs.logStream) {
+    // Shutting down closes the logStream!
+    StripesJobs.logStream.end();
+    StripesJobs.logStream = null;
+  }
+});
+
+// When this app is terminated by process.exit(), which now includes SIGINT, SIGTERM and SIGHUP.
+process.on('exit', () => cleanup());
+
+function exitHandler() {
+  process.exit();
+}
+
+// catches ctrl+c event
+process.on('SIGINT', exitHandler);
+
+// catches a SIGTERM, sent by a posix-os
+process.on('SIGTERM', exitHandler);
+
+// catches closing the parent-process (f.e. console window)
+process.on('SIGHUP', exitHandler);
+```
+
+An example for a remote job-queue can be found here: https://github.com/vsivsi/meteor-job-collection-playground-worker/blob/master/work.coffee#L120
+
+This will also work on Windows but - as on POSIX-systems - there are limitations.
+
+__2. Assume that every job that didn't responded for the last X seconds is a zombie.__
+
+Because the first approach can't cover all cases, there's also a second approach, which doesn't prevent the rise of zombies, but shoots them once they are discovered. You have to be careful so you do not also hit a normal job.
+
+Every worker-queue (started by `jc.processJobs()`) has a second, optional parameter which accepts a property called `workTimeout`. If a queue discoveres, that there are jobs in the database, set to `'running'` but their last update (done by f.e. `job.process()` or `job.log()`) was more than X milliseconds ago, it marks this job as `'failed'`. According to this definition, a job has to report something within `workTimeout` milliseconds. Just make sure, that this time cannot be hit under normal conditions, and you're fine.

@@ -66,7 +66,7 @@ on such jobs.
 // Server
 if (Meteor.isServer) {
 
-  var myJobs = JobCollection('myJobQueue');
+  var myJobs = new JobCollection('myJobQueue');
   myJobs.allow({
     // Grant full permission to any authenticated user
     admin: function (userId, method, params) {
@@ -94,7 +94,7 @@ Alright, the server is set-up and running, now let's add some client code to cre
 // Client
 if (Meteor.isClient) {
 
-  var myJobs = JobCollection('myJobQueue');
+  var myJobs = new JobCollection('myJobQueue');
 
   Meteor.startup(function () {
     Meteor.subscribe('allJobs');
@@ -348,8 +348,8 @@ methods, which may be secured using allow/deny rules specific to `JobCollection`
 documentation for `jc.allow()` and `jc.deny()` for more information.
 
 ```javascript
-// the "new" is optional
-jc = JobCollection('defaultJobCollection');
+// the "new" is required
+jc = new JobCollection('defaultJobCollection');
 ```
 
 ### jc.setLogStream(writeStream) - *Server only*

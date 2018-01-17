@@ -15,7 +15,8 @@ Package.describe({
 
 Package.onUse(function(api) {
   api.use('mrt:later@1.6.1', ['server','client']);
-  api.use('coffeescript@1.12.6_1', ['server','client']);
+  api.use('coffeescript@2.0.3_3', ['server','client']);
+  api.use('ecmascript@0.9.0', ['server','client']);
   api.use('mongo@1.1.18', ['server','client']);
   api.use('check@1.2.5', ['server','client']);
   api.addFiles('job/src/job_class.coffee', ['server','client']);
@@ -29,7 +30,8 @@ Package.onUse(function(api) {
 Package.onTest(function (api) {
   api.use('vsivsi:job-collection@' + currentVersion, ['server','client']);
   api.use('mrt:later@1.6.1', ['server','client']);
-  api.use('coffeescript@1.12.6_1', ['server','client']);
+  api.use('coffeescript@2.0.3_3', ['server','client']);
+  api.use('ecmascript@0.9.0', ['server','client']);
   api.use('check@1.2.5', ['server','client']);
   api.use('tinytest@1.0.12', ['server','client']);
   api.use('test-helpers@1.0.11', ['server','client']);

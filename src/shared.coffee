@@ -78,23 +78,22 @@ _validJobDoc = () ->
   repeatWait: Match.OneOf(Match.Where(_validIntGTEZero), Match.Where(_validLaterJSObj))
   created: Date
 
+_getAllProperties = (obj) ->
+  names = new Set()
+  properties = []
+  while obj
+    for name in Object.getOwnPropertyNames(obj) when name not in names
+      properties.push([name, obj[name]])
+      names.add(name)
+    obj = Object.getPrototypeOf(obj)
+  properties
+
 class JobCollectionBase extends Mongo.Collection
 
-  constructor: (@root = 'queue', options = {}) ->
-    unless @ instanceof JobCollectionBase
-      return new JobCollectionBase(@root, options)
-
-    unless @ instanceof Mongo.Collection
-      throw new Meteor.Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
-
-    unless Mongo.Collection is Mongo.Collection.prototype.constructor
-      throw new Meteor.Error 'The global definition of Mongo.Collection has been patched by another package, and the prototype constructor has been left in an inconsistent state. Please see this link for a workaround: https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592'
-
-    @later = later  # later object, for convenience
-
+  constructor: (root = 'queue', options = {}) ->
     options.noCollectionSuffix ?= false
 
-    collectionName = @root
+    collectionName = root
 
     unless options.noCollectionSuffix
       collectionName += '.jobs'
@@ -103,7 +102,20 @@ class JobCollectionBase extends Mongo.Collection
     # calling Mongo.Collection constructor
     delete options.noCollectionSuffix
 
-    Job.setDDP(options.connection, @root)
+    Job.setDDP(options.connection, root)
+
+    # Call super's constructor
+    super collectionName, options
+
+    unless @ instanceof Mongo.Collection
+      throw new Meteor.Error 'The global definition of Mongo.Collection has changed since the job-collection package was loaded. Please ensure that any packages that redefine Mongo.Collection are loaded before job-collection.'
+
+    unless Mongo.Collection is Mongo.Collection.prototype.constructor
+      throw new Meteor.Error 'The global definition of Mongo.Collection has been patched by another package, and the prototype constructor has been left in an inconsistent state. Please see this link for a workaround: https://github.com/vsivsi/meteor-file-sample-app/issues/2#issuecomment-120780592'
+
+    @root = root
+
+    @later = later  # later object, for convenience
 
     @_createLogEntry = (message = '', runId = null, level = 'info', time = new Date(), data = null) ->
       l = { time: time, runId: runId, message: message, level: level }
@@ -127,9 +139,6 @@ class JobCollectionBase extends Mongo.Collection
         msg = "Job Failed with#{if fatal then ' Fatal' else ''} Error#{if value? and typeof value is 'string' then ': ' + value else ''}."
         level = if fatal then 'danger' else 'warning'
         @_createLogEntry msg, runId, level).bind(@)
-
-    # Call super's constructor
-    super collectionName, options
 
   _validNumGTEZero: _validNumGTEZero
   _validNumGTZero: _validNumGTZero
@@ -222,7 +231,7 @@ class JobCollectionBase extends Mongo.Collection
   _generateMethods: () ->
     methodsOut = {}
     methodPrefix = '_DDPMethod_'
-    for methodName, methodFunc of @ when methodName[0...methodPrefix.length] is methodPrefix
+    for [methodName, methodFunc] in _getAllProperties(@) when methodName[0...methodPrefix.length] is methodPrefix
       baseMethodName = methodName[methodPrefix.length..]
       methodsOut["#{@root}_#{baseMethodName}"] = @_methodWrapper(baseMethodName, methodFunc.bind(@))
     return methodsOut

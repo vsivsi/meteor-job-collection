@@ -30,9 +30,6 @@ if Meteor.isClient
   class JobCollection extends share.JobCollectionBase
 
     constructor: (root = 'queue', options = {}) ->
-      unless @ instanceof JobCollection
-        return new JobCollection(root, options)
-
       # Call super's constructor
       super root, options
 

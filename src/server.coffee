@@ -20,9 +20,6 @@ if Meteor.isServer
   class JobCollection extends share.JobCollectionBase
 
     constructor: (root = 'queue', options = {}) ->
-      unless @ instanceof JobCollection
-        return new JobCollection(root, options)
-
       # Call super's constructor
       super root, options
 
@@ -43,7 +40,7 @@ if Meteor.isServer
       @stopped = true
 
       # No client mutators allowed
-      share.JobCollectionBase.__super__.deny.bind(@)
+      Meteor.Collection.prototype.deny.bind(@)
         update: () => true
         insert: () => true
         remove: () => true

@@ -4,7 +4,7 @@
 
 * Package updated to CoffeeScript 2. Now is required to create an instance
   of the class with `new JobCollection`, just calling `JobCollection` does
-  not work anymore.
+  not work anymore. Same for `new Job`.
 
 #### 1.5.2
 

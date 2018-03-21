@@ -31,8 +31,12 @@ Package.onTest(function (api) {
   api.use('mrt:later@1.6.1', ['server','client']);
   api.use('coffeescript@1.12.6_1', ['server','client']);
   api.use('check@1.2.5', ['server','client']);
-  api.use('tinytest@1.0.12', ['server','client']);
-  api.use('test-helpers@1.0.11', ['server','client']);
+  api.use('meteortesting:mocha@0.4.1', ['server','client']);
   api.use('ddp@1.2.5', 'client');
+
+  Npm.depends({
+    chai: '4.1.2',
+  });
+
   api.addFiles('test/job_collection_tests.coffee', ['server', 'client']);
 });

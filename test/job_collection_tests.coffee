@@ -1,4 +1,5 @@
-assert = require('chai').assert;
+chai = Npm.require 'chai'
+assert = chai.assert
 
 ############################################################################
 #     Copyright (C) 2014-2017 by Vaughn Iverson

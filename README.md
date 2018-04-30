@@ -245,11 +245,11 @@ To add to your project, run:
 
 The package exposes a global object `JobCollection` on both client and server.
 
-To run tests (using Meteor tiny-test) run from within the `job-collection` subdirectory:
+To run tests (using Meteor `meteortesting:mocha`) run from within the `job-collection` subdirectory:
 
-    meteor test-packages ./
+    meteor test-packages ./ --driver-package meteortesting:mocha
 
-Load `http://localhost:3000/` and the tests should run in your browser and on the server.
+Load `http://localhost:3000/` to run the client-tests in the browser or follow the instructions on https://github.com/meteortesting/meteor-mocha#run-client-tests-headless.
 
 A basic sample application that implements a basic image gallery with upload/download support and
 automatic generation of thumbnail images is available. It also implements a basic job manager UI
